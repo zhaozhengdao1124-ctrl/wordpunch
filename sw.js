@@ -2,7 +2,7 @@
 // 预缓存清单 sw-precache.json 由 src/gen_pwa.py 生成（打包前跑一次）：只含「核心」文件，不含按需词库 data/bank_*.js 和 data/*.json。
 // 按需词库（考研/雅思/托福/SAT/新概念）：玩家第一次选到时才下载，下完存进单独的 BANKS 缓存（升级版本也不会丢），之后离线也能用。
 // 其他清单外的文件走「先缓存、再联网」。
-const CACHE = 'wordfight-v1.8.1-book2';
+const CACHE = 'wordfight-v1.9-mobile1';
 const BANKS = 'wordfight-banks';          // 不随版本清理
 const isBank = u => /\/data\/bank_[a-z0-9]+\.js$/.test(new URL(u).pathname);
 self.addEventListener('install', e => {

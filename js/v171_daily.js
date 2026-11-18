@@ -11,7 +11,7 @@
     { id: 'city2', name: '打通 2 座城市', desc: '闯关里打通任意 2 座城市', goal: 2, reward: 80 },
     { id: 'combo10', name: '10 连对', desc: '一次连续答对 10 题', goal: 1, reward: 60, fmt: (n, b) => n >= 1 ? '达成' : `最高 ${b || 0}/10 连` },
     { id: 'ult1', name: '放 1 次必杀', desc: '任何模式放出 1 次必杀', goal: 1, reward: 60 },
-    { id: 'review20', name: '复习错题 20 个', desc: '错题对战或闯关休息点「复习错题」答 20 个错题本里的词', goal: 20, reward: 60 },
+    { id: 'review20', name: '复习错题 20 个', desc: '在错题对战里答 20 个错题本里的词', goal: 20, reward: 60 },
   ];
   const BONUS = 100, PER_DAY = 3;
   const offset = () => { try { return +localStorage.getItem('wf_daily_offset') || 0; } catch (e) { return 0; } };
@@ -83,13 +83,7 @@
     }
     for (const t of done) this.dailyToastShow(t);
   };
-  // 闯关休息点「复习错题」也算复习
-  const baseRev = G.campReviewAnswer;
-  G.campReviewAnswer = function (idx) {
-    const r = this.camp && this.camp.review, before = r && r.pick;
-    baseRev.call(this, idx);
-    if (r && before == null && r.pick != null && this.menu.p1) { const t = D.add(this.menu.p1, 'review20', 1); if (t) this.dailyToastShow(t); }
-  };
+  // （v1.9：闯关休息点的「复习」已取消，复习错题只在错题对战里计数）
   // 对战（非闯关）打完一场
   const baseShow = G.showResult;
   G.showResult = function () {

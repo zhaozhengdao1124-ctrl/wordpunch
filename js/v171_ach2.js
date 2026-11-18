@@ -73,13 +73,13 @@
   add('char', 'all_lv5', '雨露均沾', '所有角色都升到 Lv5', cnt((L, g, pid) => ROSTER.filter(id => lvOf(pid, id) >= 5).length, ROSTER.length));
   add('char', 'all_lv10', '全员精英', '所有角色都升到 Lv10', cnt((L, g, pid) => ROSTER.filter(id => lvOf(pid, id) >= 10).length, ROSTER.length));
   // 道具
-  const NITEM = C.ITEMS.length;
-  add('item', 'items10', '小收藏家', '闯关里拿到过 10 种不同道具', cnt(L => Object.keys(L.items).length, 10));
-  add('item', 'items20', '大收藏家', '闯关里拿到过 20 种不同道具', cnt(L => Object.keys(L.items).length, 20));
-  add('item', 'items_all', '图鉴全开', `${NITEM} 种道具全部拿到过`, cnt(L => Object.keys(L.items).length, NITEM));
-  add('item', 'fullbar', '满满当当', '道具栏 10 格同时装满', flag('fullbar'));
-  add('item', 'swap1', '喜新厌旧', '背包满时换掉一件道具', cnt(L => L.swaps, 1));
-  add('item', 'swap10', '倒爷', '累计换掉 10 件道具', cnt(L => L.swaps, 10));
+  // v1.9：只数「可见、非霉运」的道具（隐藏道具另有汇总成就）；删掉满满当当 / 喜新厌旧 / 倒爷（背包上限和换道具都取消了）
+  const VIS = () => C.ITEMS.filter(d => d.kind !== 'debuff' && !d.hidden).map(d => d.id);
+  const NITEM = VIS().length;
+  const itemN = L => Object.keys(L.items).filter(id => { const d = C.ITEMS.find(x => x.id === id); return d && d.kind !== 'debuff'; }).length;
+  add('item', 'items10', '小收藏家', '闯关里拿到过 10 种不同道具', cnt(L => itemN(L), 10));
+  add('item', 'items20', '大收藏家', '闯关里拿到过 20 种不同道具', cnt(L => itemN(L), 20));
+  add('item', 'items_all', '图鉴全开', `${NITEM} 种道具全部拿到过（不含隐藏道具）`, cnt(L => VIS().filter(id => L.items[id]).length, NITEM));
   // 词库
   const NB = () => (WF.game && WF.game.banks || []).length || 11;
   add('bank', 'bank3', '换换口味', '在 3 个不同词库里各答 10 题以上', cnt(L => banksPlayed(L), 3));
@@ -110,7 +110,6 @@
   H('h_same20', '老搭档', '连续 20 局闯关都用同一个角色', 'same20');
   H('h_buzzer', '压哨绝杀', '一道题拖到 15 秒以后才答对', 'buzzer');
   H('h_nemesis', '冤家路窄', '同一局里同一个词答错 3 次', 'nemesis');
-  H('h_discard5', '眼光挑剔', '背包满时放弃新道具 5 次', 'discard5');
   H('h_noult', '佛系通关', '全部通关，而且一次必杀都没放', 'noult');
   H('h_perfectboss', '毫发无伤', '城市对手战从头到尾一滴血没掉', 'perfectBoss');
   H('h_speedrun', '赶飞机', '一局全部通关只用了 12 分钟以内', 'speedrun');
@@ -179,7 +178,6 @@
     if (cp) { if (this._a2Kills == null || this._a2KillsCp !== cp) { this._a2KillsCp = cp; this._a2Kills = cp.kills || 0; } if ((cp.kills || 0) > this._a2Kills) { L.minions += cp.kills - this._a2Kills; this._a2Kills = cp.kills; } }
     if (cp) {
       for (const it of cp.items) L.items[it.id] = 1;
-      if (cp.items.length >= KC.SLOTS) L.f.fullbar = 1;
       if (this.paused && !prevP) { cp._pauses = (cp._pauses || 0) + 1; if (cp._pauses >= 10) L.f.pause10 = 1; }
       const n = cp.cleared.length; if (n > this._a2Cities) { if (cp._sawed) { L.f.sawSurvive = 1; cp._sawed = false; } this._a2Cities = n; }
       // 城市对手战：记开打时的血量
@@ -277,16 +275,21 @@
   G.render = function () {
     baseRender.apply(this, arguments);
     const q = this.achQ; if (!q || !q.length) return;
-    const it = q[0]; if (it.t0 == null) it.t0 = this.t;
+    const it = q[0];
+    if (WF.touch && this.camp && this.campModal && this.campModal() && this.camp.toasts.length >= 2) { if (it.t0 != null) it.t0++; return; }   // v1.9 触屏：右上角被第 2 条提示占着 → 成就先等一等（不计时）
+    if (it.t0 == null) it.t0 = this.t;
     const age = this.t - it.t0, L = 75; if (age > L) { q.shift(); return; }
     const c = this.ctx; c.save(); c.setTransform(1, 0, 0, 1, 0, 0);
-    const k = Math.min(1, age / 5, (L - age) / 8), w = 340, h = 42, x = C.SCREEN_W - w - 16, y = 186;
+    const T = WF.touch, k = Math.min(1, age / 5, (L - age) / 8), w = T ? 460 : 340, h = T ? 72 : 42, x = T ? C.SCREEN_W - w - 10 : C.SCREEN_W - w - 16, y = T ? 2 : 186;   // v1.9 触屏：右上角（标题那一带没有按钮），说明折两行，字 ≥ 16
+    const fl = this._tfloor; if (T) this._tfloor = WF.TOUCH_FONT || 16;
     c.globalAlpha = Math.max(0, k);
     this.box(x, y, w, h, 'rgba(40,26,6,0.94)', '#ffd23c', 2);
-    this.box(x + 6, y + 6, 30, 30, '#ffd23c', '#7a4a00', 2);
-    this.txt('★', x + 21, y + 22, 20, '#7a1414', 'center', { stroke: false });
-    this.txt(`成就解锁${it.a.hidden ? '（隐藏）' : ''}：${it.a.name}`, x + 44, y + 14, 15, '#ffd23c', 'left', { sw: 4, weight: 700, maxW: w - 52 });
-    this.txt(it.a.desc, x + 44, y + 31, 11, '#ffffff', 'left', { sw: 3, weight: 700, maxW: w - 52 });
+    this.box(x + 6, y + (h - 30) / 2, 30, 30, '#ffd23c', '#7a4a00', 2);
+    this.txt('★', x + 21, y + h / 2 + 1, 20, '#7a1414', 'center', { stroke: false });
+    this.txt(`成就解锁${it.a.hidden ? '（隐藏）' : ''}：${it.a.name}`, x + 44, y + (T ? 15 : 14), 15, '#ffd23c', 'left', { sw: 4, weight: 700, maxW: w - 52 });
+    if (T) this.wrapLines(it.a.desc, w - 52, 16, 2).forEach((ln, j) => this.txt(ln, x + 44, y + 36 + j * 20, 16, '#ffffff', 'left', { sw: 3, weight: 700 }));
+    else this.txt(it.a.desc, x + 44, y + 31, 11, '#ffffff', 'left', { sw: 3, weight: 700, maxW: w - 52 });
+    this._tfloor = fl; if (T) (this._toastRects = this._toastRects || []).push({ x, y, w, h });
     c.restore();
   };
 

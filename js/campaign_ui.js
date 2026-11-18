@@ -266,6 +266,7 @@
     this.txt('← → 选择   1 2 3 / Enter 确定   鼠标也可点', C.SCREEN_W / 2, 470, 16, '#bfb3d6', 'center', { sw: 4, weight: 700 });
   };
   G.wrapTxt = function (s, cx, y, maxW, size, color) {
+    size = Math.max(size, this._tfloor || 0);   // v1.9 触屏字号下限（v19_touch.js）
     const c = this.ctx; c.font = `700 ${size}px ${WF.CFG.FONT}`;
     const lines = []; let cur = '';
     for (const ch of s) { if (c.measureText(cur + ch).width > maxW && cur) { lines.push(cur); cur = ch; } else cur += ch; }
@@ -292,6 +293,7 @@
   };
   // v1.7 背包满：新道具和身上每件道具都写出这一级的效果，方便对比再决定换哪件（10 格 = 5×2）
   G.wrapLines = function (text, maxW, size, n) {
+    size = Math.max(size, this._tfloor || 0);   // v1.9 触屏字号下限（v19_touch.js）
     const c = this.ctx; c.font = `700 ${size}px ${WF.CFG.FONT}`;
     const out = []; let line = '';
     for (const ch of String(text)) {
@@ -299,7 +301,7 @@
       else line += ch;
     }
     if (out.length < n && line) out.push(line);
-    else if (out.length === n && line && out.join('').length < String(text).length) out[n - 1] = out[n - 1].slice(0, -1) + '…';
+    else if (out.length === n && line && out.join('').length < String(text).length) { out[n - 1] = out[n - 1].slice(0, -1) + '…'; if (this._txtLog) this._txtLog.push({ cut: String(text) }); }
     return out.slice(0, n);
   };
   G.drawSwap = function () {

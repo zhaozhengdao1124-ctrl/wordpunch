@@ -7,12 +7,16 @@
     const c = this.ctx;
     c.font = `${o.weight || 900} ${size}px ${o.font || WF.CFG.FONT}`;
     c.textAlign = align; c.textBaseline = o.base || 'middle';
-    if (o.maxW) { let w = c.measureText(s).width; if (w > o.maxW) { size = Math.floor(size * o.maxW / w); c.font = `${o.weight || 900} ${size}px ${o.font || WF.CFG.FONT}`; } }
+    const fl = this._tfloor || 0;   // v1.9 触屏：新界面的字不小于 fl（逻辑像素），见 v19_touch.js
+    if (fl && size < fl) { size = fl; c.font = `${o.weight || 900} ${size}px ${o.font || WF.CFG.FONT}`; }
+    if (o.maxW) { let w = c.measureText(s).width; if (w > o.maxW) { size = Math.max(fl, Math.floor(size * o.maxW / w)); c.font = `${o.weight || 900} ${size}px ${o.font || WF.CFG.FONT}`; } }
+    if (this._txtLog) { const m = c.measureText(s), tf = c.getTransform(); this._txtLog.push({ s: String(s), x: x + tf.e, y: y + tf.f, xf: tf.a !== 1 || tf.d !== 1 || !!tf.b || !!tf.c, size, align, w: m.width, maxW: o.maxW || 0, base: o.base || 'middle', l: m.actualBoundingBoxLeft, r: m.actualBoundingBoxRight, a: m.actualBoundingBoxAscent, d: m.actualBoundingBoxDescent }); }
     if (o.stroke !== false) { c.lineJoin = 'round'; c.lineWidth = o.sw || Math.max(3, size / 6); c.strokeStyle = o.stroke || '#120c1c'; c.strokeText(s, x, y); }
     c.fillStyle = color; c.fillText(s, x, y);
   };
   G.box = function (x, y, w, h, fill, stroke, lw = 2) {
     const c = this.ctx; c.fillStyle = fill; c.fillRect(x, y, w, h);
+    if (this._txtLog && w * h > 900) { const a = /^rgba\(.*,\s*([\d.]+)\)$/.exec(String(fill)); if (!a || +a[1] >= 0.85) this._txtLog.push({ cover: true, x, y, w, h }); }   // 布局自检：不透明面板会盖住先画的字
     if (stroke) { c.strokeStyle = stroke; c.lineWidth = lw; c.strokeRect(x + lw / 2, y + lw / 2, w - lw, h - lw); }
   };
 
@@ -98,6 +102,7 @@
       const sc = p.t < 4 ? 1.5 - p.t * 0.12 : 1;
       this.ctx.globalAlpha = k > 0.7 ? (1 - k) / 0.3 : 1;
       this.txt(p.text, x, y, Math.round(p.size * sc), p.color, 'center', { sw: 6 });
+      if (p.coin && WF.drawStrip19) { this.ctx.font = `900 ${Math.round(p.size * sc)}px ${WF.CFG.FONT}`; const tw = this.ctx.measureText(p.text).width; WF.drawStrip19(this.ctx, 'gold_coin_spin', p.t, Math.round(x - tw / 2 - 26), Math.round(y - 11), 20); }   // v1.9 掉落金币（I4 旋转帧）
       this.ctx.globalAlpha = 1;
     }
   };
