@@ -11,7 +11,7 @@
     COMP: { easy: 'IIIIGGHHE', normal: 'IIIIGHHDE', hard: 'IIIIGHXDE', shura: 'IIIIGHXDE' },
     TIER: { elite: { gold: 55, heal: 0.20, hurt: 0.08 }, city: { gold: 110, heal: 0.30, hurt: 0.12 } },
     GOLD_JITTER: 0.2,
-    HURT_MUL: { easy: 0.5, normal: 1, hard: 1.25, shura: 1.5 }, HURT_FLOOR: 0.10,
+    HURT_MUL: { easy: 0.5, normal: 1, hard: 1.25, shura: 1.35 }, HURT_FLOOR: 0.10,
     PITY: { badRun: 2, noGoodRun: 3 },
     REVEAL: { own: 38, pause: 14, others: 20 },      // 自己那张（翻面 12 + 光框 26）→ 停顿 → 其余 8 张同时翻开
     ERASER_P: { elite: 0.03, city: 0.05 },            // 每盘一次判定：命中则 1 张道具牌换成神奇橡皮擦（沿用原 精英 3% / 对手 5%）
@@ -20,7 +20,7 @@
   K.REST = { HEAL: 0.35, UPGRADE_PRICE: { common: 70, rare: 140, legend: 280, curse: 105 }, UPGRADE_FLOAT: false };
   K.GOLD = {
     DROP: { minion: [1, 3], elite: [15, 25], opponent: [40, 70], final: [100, 140] },
-    DIFF_MUL: { easy: 1.25, normal: 1, hard: 0.85, shura: 0.7 },
+    DIFF_MUL: { easy: 1.25, normal: 1, hard: 0.85, shura: 0.75 },   // v1.10.1：修罗 0.7 → 0.75
     CITY_MUL: i => 1 + 0.1 * i,
   };
   K.SHOP = {

@@ -13,14 +13,14 @@
       easy:   { oppHp: 0.75, acc: -0.10, delay: 1.30, fast: +1.5, timeout: +5, minionHp: 0.80, taken: 0.70, ultAt: 6, score: 0.7, xp: 0.8 },
       normal: { oppHp: 1.00, acc: 0.00, delay: 1.00, fast: 0, timeout: 0, minionHp: 1.00, taken: 1.00, ultAt: 5, score: 1.0, xp: 1.0 },
       hard:   { oppHp: 1.25, acc: +0.05, delay: 0.85, fast: -0.5, timeout: -2, minionHp: 1.20, taken: 1.25, ultAt: 5, score: 1.3, xp: 1.2 },
-      shura:  { oppHp: 1.50, acc: +0.08, delay: 0.70, fast: -1.0, timeout: -5, minionHp: 1.40, taken: 1.50, ultAt: 4, score: 1.7, xp: 1.5 },
+      shura:  { oppHp: 1.35, acc: +0.07, delay: 0.76, fast: -0.8, timeout: -4, minionHp: 1.28, taken: 1.33, ultAt: 4, score: 1.7, xp: 1.5 },   // v1.10.1 适度降低（原 1.50 / +0.08 / 0.70 / -1.0 / -5 / 1.40 / 1.50），仍明显难于困难
     },
     // 陪练：电脑正确率、作答延迟 ×、玩家速答窗口 + 秒、电脑放必杀要连续速答几次、对手血量 ×
     CPU: {
       easy:   { acc: 0.72, delay: 1.00, fast: 0, ultAt: 5, hp: 1.00 },
       normal: { acc: 0.80, delay: 0.80, fast: 0, ultAt: 5, hp: 1.00 },
       hard:   { acc: 0.87, delay: 0.65, fast: -0.5, ultAt: 5, hp: 1.15 },
-      shura:  { acc: 0.93, delay: 0.50, fast: -1.0, ultAt: 4, hp: 1.30 },
+      shura:  { acc: 0.91, delay: 0.56, fast: -0.8, ultAt: 4, hp: 1.24 },   // v1.10.1 适度降低（原 0.93 / 0.50 / -1.0 / 1.30）
     },
   };
   const ls = (k, v) => { try { if (v === undefined) return localStorage.getItem(k); localStorage.setItem(k, v); } catch (e) { return null; } };
