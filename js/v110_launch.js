@@ -420,30 +420,109 @@
   // 时机条期间不画底部题目面板（上一题已经答完；手机上这块给大按钮用）
   const basePanel = G.drawPanel;
   G.drawPanel = function () { const rk = this.rocket; if (rk && rk.ln && (rk.quick || rk.cpuStage)) return; return basePanel.apply(this, arguments); };
+  // ---------- v1.10.2 像素 UI：发射按钮 + 面板边框 ----------
+  // 素材 assets/launch_ui.png（src/gen_launch_ui.py 生成）：圆顶按钮 6 态 / 金属底座 / 光晕 / 键帽 / 小火箭。坐标表和脚本打印的一致。
+  const UI = {
+    src: 'assets/launch_ui.png',
+    dome: { idle: [0, 0], idleB: [36, 0], hot: [72, 0], flash: [108, 0], down: [144, 0], spent: [180, 0] }, DW: 36, DH: 30, DX: 8, DY: 6,
+    base: [0, 30, 52, 45], halo: [52, 30, 62, 55], rocket: [130, 30, 7, 11],
+    key: { enter: { up: [0, 85, 31, 12], dn: [32, 85, 31, 12] }, space: { up: [64, 85, 31, 12], dn: [96, 85, 31, 12] }, tap: { up: [128, 85, 21, 12], dn: [150, 85, 21, 12] } },
+    BW: 52, BH: 45, KEYY: 36,   // 键帽挂在底座下沿（顶边在底座第 36 行）
+  };
+  if (WF.FX && WF.FX.img) WF.FX.img(UI.src);   // 一加载就预取
+  const uiImg = () => { const im = WF.FX.img(UI.src); return im.complete && im.naturalWidth ? im : null; };
+  const spr = (c, im, r, x, y, S, a) => { if (a != null) c.globalAlpha = a; c.drawImage(im, r[0], r[1], r[2], r[3], Math.round(x), Math.round(y), r[2] * S, r[3] * S); if (a != null) c.globalAlpha = 1; };
   G.launchLayout = function () {
-    const touch = !!WF.touch, W = WF.CFG.SCREEN_W;
+    const touch = !!WF.touch, W = WF.CFG.SCREEN_W, H = WF.CFG.SCREEN_H;
     const p = touch ? { x: 150, y: 62, w: 660, h: 132 } : { x: 190, y: 62, w: 580, h: 132 };
     const rk = this.rocket, boss = !!(rk && rk.ln && !rk.ln.human);   // 电脑发射没有按钮：条拉满整块面板
     const bar = touch || boss ? { x: p.x + 112, y: p.y + 50, w: p.w - 136, h: touch ? 36 : 34 } : { x: p.x + 104, y: p.y + 50, w: 336, h: 34 };
-    const btn = touch ? { x: W - 286, y: 352, w: 264, h: 170 } : { x: p.x + p.w - 122, y: p.y + 30, w: 108, h: 88 };
+    // 按钮（含挂在下沿的键帽）：桌面 2 倍像素 = 104×96；手机 3 倍 = 156×144（≈108 CSS，够大又不是一整块）
+    const S = touch ? 3 : 2, bw = UI.BW * S, bh = (UI.KEYY + 12) * S;
+    const btn = touch ? { x: W - bw - 30, y: H - bh - 16, w: bw, h: bh, S } : { x: p.x + p.w - 14 - bw, y: p.y + Math.round((p.h - bh) / 2), w: bw, h: bh, S };
     return { p, bar, btn, touch };
+  };
+  // 面板边框（缓存成一张离屏图，不用每帧重画）：黑描边 + 斜角、顶部黄黑警示条、钢板边、铆钉、凹进去的深色内框
+  const frameCache = {};
+  G.launchFrame = function (p, boss, u, bay) {   // bay = 桌面玩家版：右侧留给按钮的宽度（深色内框到按钮前面就停）
+    const key = [p.w, p.h, boss, u, bay || 0].join('|'); if (frameCache[key]) return frameCache[key];
+    const cv = document.createElement('canvas'); cv.width = p.w; cv.height = p.h; const c = cv.getContext('2d');
+    const R = (x, y, w, h, col) => { c.fillStyle = col; c.fillRect(x * u, y * u, w * u, h * u); };
+    const Wc = Math.floor(p.w / u), Hc = Math.floor(p.h / u);
+    const pal = boss ? { f: '#7a1418', hi: '#a82a30', lo: '#560e12' } : { f: '#1a6a34', hi: '#2c9250', lo: '#124e26' };
+    const K = '#25202e';
+    R(0, 0, Wc, Hc, K);                                   // 外轮廓
+    for (const [x, y] of [[0, 0], [Wc - 1, 0], [0, Hc - 1], [Wc - 1, Hc - 1], [1, 0], [Wc - 2, 0], [1, Hc - 1], [Wc - 2, Hc - 1], [0, 1], [Wc - 1, 1], [0, Hc - 2], [Wc - 1, Hc - 2]]) c.clearRect(x * u, y * u, u, u);   // 斜切角
+    R(1, 1, Wc - 2, Hc - 2, '#5a5468');                   // 钢板边
+    R(1, 1, Wc - 2, 1, '#8a8498'); R(1, 1, 1, Hc - 2, '#8a8498'); R(1, Hc - 2, Wc - 2, 1, '#3a3548'); R(Wc - 2, 1, 1, Hc - 2, '#3a3548');
+    c.clearRect(0, 0, u, u); c.clearRect((Wc - 1) * u, 0, u, u); c.clearRect(0, (Hc - 1) * u, u, u); c.clearRect((Wc - 1) * u, (Hc - 1) * u, u, u);
+    // 顶部警示条（黄黑斜纹，两端留出铆钉位）
+    const hz0 = 5, hz1 = Wc - 5;
+    for (let y = 2; y <= 3; y++) for (let x = hz0; x < hz1; x++) R(x, y, 1, 1, ((x + y) >> 1) % 2 ? '#2a2230' : '#ffd23c');
+    R(hz0 - 1, 2, 1, 2, K); R(hz1, 2, 1, 2, K); R(hz0, 1, hz1 - hz0, 1, K); R(hz0, 4, hz1 - hz0, 1, K);
+    // 彩色底板（人 = 绿 / 电脑 = 红）+ 上亮下暗
+    const ix = 3, iy = 5, iw = Wc - 6, ih = Hc - iy - 3;
+    R(ix, iy, iw, ih, pal.f); R(ix, iy, iw, 1, pal.hi); R(ix, iy + ih - 1, iw, 1, pal.lo); R(ix, iy, 1, ih, pal.hi); R(ix + iw - 1, iy, 1, ih, pal.lo);
+    R(ix - 1, iy - 1, iw + 2, 1, K); R(ix - 1, iy + ih, iw + 2, 1, K); R(ix - 1, iy, 1, ih, K); R(ix + iw, iy, 1, ih, K);
+    // 凹进去的深色内框（放时机条 / 数字）
+    const wx = Math.ceil(10 / u), wy = Math.ceil(32 / u), ww = Wc - 2 * wx - Math.ceil((bay || 0) / u), wh = Hc - wy - Math.ceil(10 / u);
+    R(wx - 1, wy - 1, ww + 2, wh + 2, K); R(wx, wy, ww, wh, '#120c1c'); R(wx, wy, ww, 1, '#06030c'); R(wx, wy + wh - 1, ww, 1, pal.hi); R(wx + ww - 1, wy, 1, wh, pal.hi * 0 || pal.lo);
+    // 铆钉
+    for (const [x, y] of [[2, 2], [Wc - 3, 2], [2, Hc - 3], [Wc - 3, Hc - 3]]) { R(x, y, 1, 1, '#e8e0f4'); }
+    return (frameCache[key] = cv);
+  };
+  // 像素箭头（指针头）：dir = 1 朝下 / -1 朝上
+  const arrow = (c, cx, y, dir, fill, K) => {
+    for (let r = 0; r < 6; r++) { const hw = 6 - r, yy = dir > 0 ? y + r * 2 : y - r * 2 - 2; c.fillStyle = K; c.fillRect(cx - hw - 2, yy, (hw + 2) * 2, 2); }
+    for (let r = 0; r < 5; r++) { const hw = 5 - r, yy = dir > 0 ? y + 2 + r * 2 : y - r * 2 - 4; c.fillStyle = fill; c.fillRect(cx - hw, yy, hw * 2, 2); }
+  };
+  G.drawLaunchBtn = function (ln, b) {
+    const c = this.ctx, im = uiImg(), S = b.S;
+    if (!im) { c.fillStyle = '#25202e'; c.fillRect(b.x, b.y, b.w, b.h - 12 * S); c.fillStyle = '#d8282e'; c.fillRect(b.x + 3, b.y + 3, b.w - 6, b.h - 12 * S - 8); this.txt('发射', b.x + b.w / 2, b.y + b.h / 2 - 10, 30, '#ffffff', 'center', { sw: 6, stroke: '#3a0d0d' }); return; }
+    const P = L(), tt = ln.t / ln.total, t = ln.t | 0;
+    const inY = !ln.res && tt >= ln.c - ln.g / 2 - ln.y && tt <= ln.c + ln.g / 2 + ln.y, inG = inY && tt >= ln.c - ln.g / 2 && tt <= ln.c + ln.g / 2;
+    const bt = ln.btnT || 0;
+    if (bt > 0 && !this.paused) ln.btnT--;
+    let st, halo;
+    if (bt > 3) { st = 'flash'; halo = 0.9; }
+    else if (bt > 0 || (ln.res && ln.after < 10)) { st = 'down'; halo = 0; }
+    else if (ln.res) { st = 'spent'; halo = 0; }
+    else if (inG) { st = 'hot'; halo = 0.78 + 0.22 * Math.sin(t * 0.62); }      // 绿区：亮、快闪
+    else if (inY) { st = 'hot'; halo = 0.5 + 0.2 * Math.sin(t * 0.36); }                                // 黄区：亮、中速
+    else { st = (t % 40) < 12 ? 'idleB' : 'idle'; halo = 0.08 + 0.1 * (0.5 + 0.5 * Math.sin(t * 0.16)); } // 待机：呼吸
+    c.save(); c.imageSmoothingEnabled = false;
+    if (halo > 0.01) spr(c, im, UI.halo, b.x - 5 * S, b.y - 5 * S, S, Math.max(0, Math.min(1, halo)));
+    spr(c, im, UI.base, b.x, b.y, S);
+    spr(c, im, [UI.dome[st][0], UI.dome[st][1], UI.DW, UI.DH], b.x + UI.DX * S, b.y + UI.DY * S, S);
+    if (inG && (t >> 1) % 3 !== 0) {   // 绿区：圆顶左上角闪一颗小星
+      const sx = b.x + (UI.DX + 8) * S, sy = b.y + (UI.DY + 4) * S; c.fillStyle = '#fff8d0';
+      c.fillRect(sx, sy, S, S); c.fillRect(sx - 2 * S, sy, S, S); c.fillRect(sx + 2 * S, sy, S, S); c.fillRect(sx, sy - 2 * S, S, S); c.fillRect(sx, sy + 2 * S, S, S);
+      c.fillStyle = 'rgba(255,248,208,0.55)'; c.fillRect(sx - S, sy, S, S); c.fillRect(sx + S, sy, S, S); c.fillRect(sx, sy - S, S, S); c.fillRect(sx, sy + S, S, S);
+    }
+    const kind = this._lnKeyKind || 'tap', down = st === 'down' || st === 'flash' || st === 'spent';
+    const kr = UI.key[kind][down ? 'dn' : 'up'];
+    spr(c, im, kr, b.x + (b.w - kr[2] * S) / 2, b.y + UI.KEYY * S, S);
+    c.restore();
   };
   G.drawLaunchHud = function (rk) {
     const ln = rk.ln, c = this.ctx, Lo = this.launchLayout(), { p, bar, btn, touch } = Lo, boss = !ln.human, P = L();
     const fs = n => touch ? Math.max(16, n) : n;
-    const col = boss ? '#7a1418' : '#1a6a34';
-    c.fillStyle = '#25202e'; c.fillRect(p.x, p.y, p.w, p.h); if (this._txtLog) this._txtLog.push({ cover: true, x: p.x, y: p.y, w: p.w, h: p.h }); c.fillStyle = col; c.fillRect(p.x + 4, p.y + 4, p.w - 8, p.h - 8); c.fillStyle = '#120c1c'; c.fillRect(p.x + 10, p.y + 32, p.w - 20, p.h - 42);
+    const u = touch ? 3 : 2;
+    c.drawImage(this.launchFrame(p, boss, u, touch || boss ? 0 : p.x + p.w - btn.x - 6), p.x, p.y); if (this._txtLog) this._txtLog.push({ cover: true, x: p.x, y: p.y, w: p.w, h: p.h });
     if (ln.res) {   // 按下以后：标题换成结果（金芯 / 绿 / 黄 / 失败 各一种颜色）
       const r = ln.res, k = r.kind, colR = k === 'super' ? ((ln.after >> 1) % 2 ? '#fff3da' : '#ffdc86') : k === 'perfect' ? '#ffd23c' : k === 'normal' ? '#7dff9a' : '#c8c4d6';
       const t = `${boss ? rk.A.mv.name + ' ' : ''}${NAME[k]}${r.why ? '（' + WHY[r.why] + '）' : ''} ×${P.MULT[k]}`;
-      this.txt(t, p.x + 18, p.y + 17, Math.round((k === 'fail' ? 20 : 24) * (ln.after < 4 ? 1.2 : 1)), colR, 'left', { sw: 5, stroke: '#120c1c', maxW: p.w - 40 });
+      this.txt(t, p.x + 18, p.y + 23, Math.round((k === 'fail' ? 20 : 24) * (ln.after < 4 ? 1.2 : 1)), colR, 'left', { sw: 5, stroke: '#120c1c', maxW: p.w - 40 });
     } else {
       const who = boss ? `${rk.A.mv.name}按下发射钮…` : (this.camp || this.menu.cpu) ? '看准绿区，发射！' : `P${ln.side + 1} 看准绿区，发射！`;
-      this.txt(who, p.x + 18, p.y + 18, fs(17), boss ? '#ffd0d0' : '#d0ffd8', 'left', { sw: 4 });
+      const im = uiImg(), bob = Math.round(Math.sin(ln.t * 0.25));
+      if (im && !boss) { c.save(); c.imageSmoothingEnabled = false; spr(c, im, UI.rocket, p.x + 14, p.y + 12 + bob * u, u === 3 ? 2 : 2); c.restore(); }
+      this.txt(who, p.x + (boss ? 18 : 18 + 7 * 2 + 10), p.y + 22, fs(17), boss ? '#ffd0d0' : '#d0ffd8', 'left', { sw: 4 });
     }
     if (ln.pity && !boss && !ln.res) {
       const s = `手感加成 · 判定区 ×${ln.k}`; c.font = `900 ${fs(14)}px ${WF.CFG.FONT}`; const tw = c.measureText(s).width + 16;
-      this.box(p.x + p.w - 14 - tw, p.y + 7, tw, 22, '#3a2a08', '#ffd23c', 2); this.txt(s, p.x + p.w - 14 - tw / 2, p.y + 18, fs(14), '#ffd23c', 'center', { stroke: false });
+      const rx = touch ? p.x + p.w - 20 : btn.x - 16;
+      this.box(rx - tw, p.y + 11, tw, 22, '#3a2a08', '#ffd23c', 2); this.txt(s, rx - tw / 2, p.y + 22, fs(14), '#ffd23c', 'center', { stroke: false });
     }
     // 倒数数字
     const sec = ln.res ? 0 : Math.max(1, Math.ceil((ln.total - ln.t) / (rk.cpuStage ? ln.total : rk.step)));
@@ -460,15 +539,20 @@
     c.fillStyle = '#ffd23c'; c.fillRect(X(y0), bar.y + 3, X(ln.c + ln.g / 2 + ln.y) - X(y0), bar.h - 6);
     c.fillStyle = '#1f9a4c'; c.fillRect(X(g0), bar.y, X(ln.c + ln.g / 2) - X(g0), bar.h);
     c.fillStyle = '#3ad06a'; c.fillRect(X(g0), bar.y + 3, X(ln.c + ln.g / 2) - X(g0), bar.h - 6);
+    // 区间交界的暗线 + 顶部高光（让色块像一整条凹槽里的发光带，而不是平涂）
+    c.fillStyle = '#25202e'; c.fillRect(X(g0) - 1, bar.y, 2, bar.h); c.fillRect(X(ln.c + ln.g / 2) - 1, bar.y, 2, bar.h);
+    c.fillStyle = 'rgba(255,255,255,0.28)'; c.fillRect(X(y0), bar.y + 3, X(ln.c + ln.g / 2 + ln.y) - X(y0), 3);
     const sx = X(ln.c - ln.s / 2), sw = Math.max(4, X(ln.c + ln.s / 2) - sx);
     c.fillStyle = '#fff3da'; c.fillRect(sx, bar.y + 2, sw, bar.h - 4); c.fillStyle = '#ffae4b'; c.fillRect(sx, bar.y + 2, sw, 2); c.fillRect(sx, bar.y + bar.h - 4, sw, 2);
+    c.fillStyle = 'rgba(0,0,0,0.38)'; c.fillRect(bar.x, bar.y, bar.w, 3);   // 槽口上沿的内阴影
     for (let i = 1; i < 3 && !rk.cpuStage; i++) { c.fillStyle = '#120c1c'; c.fillRect(X(i * rk.step / ln.total) - 1, bar.y + bar.h - 7, 2, 7); }
-    // 指针
+    // 指针：竖线 + 上下两个像素箭头
     const pos = ln.res ? (ln.res.pos == null ? 1 : ln.res.pos) : this.launchPos(ln, 0), px = X(pos);
     const pc = ln.res ? (ln.res.kind === 'fail' ? '#ff8a8a' : ln.res.kind === 'normal' ? '#fff3a0' : '#ffffff') : (ln.armTap ? '#8a8498' : '#ffffff');
-    c.fillStyle = '#25202e'; c.fillRect(px - 3, bar.y - 9, 6, bar.h + 18);
-    c.fillStyle = pc; c.fillRect(px - 1, bar.y - 7, 2, bar.h + 14);
-    c.fillStyle = '#25202e'; c.fillRect(px - 7, bar.y - 13, 14, 6); c.fillStyle = pc; c.fillRect(px - 5, bar.y - 12, 10, 4);
+    c.fillStyle = '#25202e'; c.fillRect(px - 3, bar.y - 4, 6, bar.h + 8);
+    c.fillStyle = pc; c.fillRect(px - 1, bar.y - 3, 2, bar.h + 6);
+    arrow(c, px, bar.y - 16, 1, pc, '#25202e');
+    arrow(c, px, bar.y + bar.h + 16, -1, pc, '#25202e');
     if (ln.res && ln.res.kind !== 'fail' && ln.after < 10 && ln.after % 4 < 2) { c.strokeStyle = '#ffffff'; c.lineWidth = 2; c.strokeRect(X(y0) - 2, bar.y - 2, X(ln.c + ln.g / 2 + ln.y) - X(y0) + 4, bar.h + 4); }
     // 图例
     const lg = touch ? '绿区 完美×1.5 · 黄区 ×1 · 金芯 ×2' : '绿区 完美 ×1.5　黄区 发射 ×1　金芯 超级 ×2　其他 失败 ×0.5';
@@ -476,18 +560,10 @@
     // 发射按钮
     this._lnBtn = null;
     if (!boss) {
-      const down = (ln.btnT || 0) > 0 || !!ln.res, o = down ? 3 : 0, b = btn;
-      if (ln.btnT > 0 && !this.paused) ln.btnT--;
-      if (!down) { c.fillStyle = '#25202e'; c.fillRect(b.x, b.y + 4, b.w, b.h); }
-      c.fillStyle = '#25202e'; c.fillRect(b.x, b.y + o, b.w, b.h - 2);
-      const glow = !ln.res && ln.t / ln.total >= ln.c - ln.g / 2 - ln.y && ln.t / ln.total <= ln.c + ln.g / 2 + ln.y;
-      c.fillStyle = down ? '#8a1c1c' : glow ? '#ff5a3a' : '#d8282e'; c.fillRect(b.x + 3, b.y + 3 + o, b.w - 6, b.h - 8);
-      c.fillStyle = down ? '#6a1418' : '#ff8a6a'; c.fillRect(b.x + 6, b.y + 6 + o, b.w - 12, 4);
-      this.txt('发射', b.x + b.w / 2, b.y + o + (touch ? b.h / 2 - 12 : b.h / 2 - 10), touch ? 46 : 30, '#ffffff', 'center', { sw: 6, stroke: '#3a0d0d' });
-      const kl = touch ? '点按钮或屏幕任意处' : this.launchKeyLabel(ln.side);
-      if (touch) this.txt(kl, b.x + b.w / 2, b.y + o + b.h - 34, 16, '#ffe0d0', 'center', { stroke: false });
-      else { c.font = `900 15px ${WF.CFG.FONT}`; const kw = c.measureText(kl).width + 14; this.box(b.x + b.w / 2 - kw / 2, b.y + o + b.h - 32, kw, 20, '#f0e6d0', '#25202e', 2); this.txt(kl, b.x + b.w / 2, b.y + o + b.h - 22, 15, '#25202e', 'center', { stroke: false }); }
-      this._lnBtn = { x: b.x, y: b.y, w: b.w, h: b.h };
+      this._lnKeyKind = touch ? 'tap' : this.launchKeyLabel(ln.side) === '空格' ? 'space' : 'enter';
+      this.drawLaunchBtn(ln, btn);
+      if (touch && !ln.res) this.txt('点按钮或屏幕任意处', btn.x + btn.w, btn.y - 12, 16, '#f0e6d0', 'right', { sw: 4, stroke: '#25202e' });
+      this._lnBtn = { x: btn.x, y: btn.y, w: btn.w, h: btn.h };
     }
   };
   G.drawLaunchMsg = function () {

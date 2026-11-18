@@ -479,7 +479,7 @@
     const C = WF.CFG, bob = Math.sin(this.t / 18) * 3;
     this.txt('单词格斗', C.SCREEN_W / 2 + 5, 78 + bob + 6, 72, '#7a1414', 'center', { font: C.FONT_TITLE, sw: 0, stroke: false });
     this.txt('单词格斗', C.SCREEN_W / 2, 78 + bob, 72, '#ffd23c', 'center', { font: C.FONT_TITLE, sw: 12, stroke: '#2a0a0a' });
-    this.txt('WORD FIGHT  ·  试玩版 v1.10.1', C.SCREEN_W / 2, 130, 16, '#e9d7a6', 'center', { sw: 4, weight: 700 });
+    this.txt('WORD FIGHT  ·  试玩版 v1.10.2', C.SCREEN_W / 2, 130, 16, '#e9d7a6', 'center', { sw: 4, weight: 700 });
 
     this.menuRects = [];
     const pw = 230, ph = 48, px = C.SCREEN_W - pw - 16, py = 14;

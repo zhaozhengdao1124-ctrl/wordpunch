@@ -15,7 +15,17 @@ WF.Audio = (function () {
   ];
   // v1.7 马西克 Boss 战占位曲：Grok Bot 用代码合成的原创芯片曲（audio_drafts/maxike_bgm_v1），144 BPM、A 小调、无缝循环
   const EXTRA = { maxike: { id: 'maxike', name: '马西克 · 发射倒计时', file: 'audio/maxike_bgm_v1.ogg', credit: '《我的拳》原创（Grok Bot 代码合成）', license: '项目自有' } };
-  let override = null;
+  let override = null, wantMusic = false, retryArmed = false;
+  // play() 被浏览器拒了（还没有用户手势）→ 下一次手势再试一次，成功就不再监听
+  function armRetry() {
+    if (retryArmed || typeof window === 'undefined' || !window.addEventListener) return; retryArmed = true;
+    const go = () => {
+      if (!wantMusic || !musicOn || !bgm) { done(); return; }
+      const pr = bgm.play(); if (pr && pr.then) pr.then(done).catch(() => {}); else done();
+    };
+    const done = () => { retryArmed = false; ['pointerdown', 'touchend', 'keydown', 'mousedown'].forEach(e => window.removeEventListener(e, go, true)); };
+    ['pointerdown', 'touchend', 'keydown', 'mousedown'].forEach(e => window.addEventListener(e, go, true));
+  }
   function trackById(id) { return TRACKS.find(t => t.id === id) || TRACKS[0]; }
   if (!TRACKS.some(t => t.id === trackId)) trackId = 'vigour';
   const noiseCache = new WeakMap();
@@ -216,7 +226,7 @@ WF.Audio = (function () {
       trackId = tr.id;
       try { localStorage.setItem('wf_bgm', trackId); } catch (e) {}
       const playing = !!(bgm && !bgm.paused);
-      if (bgm) { bgm.pause(); bgm.src = ''; bgm = null; }
+      if (bgm) { bgm.pause(); bgm.setAttribute('data-id', ''); }   // 同一个元素，下次 startMusic 会换成新曲
       if (preview && musicOn) A.startMusic();
       else if (playing && musicOn) A.startMusic();
       return tr;
@@ -229,18 +239,20 @@ WF.Audio = (function () {
     setOverride(id) { const tr = id ? (EXTRA[id] || null) : null; override = tr; },
     get override() { return override; },
     get playingId() { return bgm && !bgm.paused ? bgm.getAttribute('data-id') : (bgm ? bgm.getAttribute('data-id') + '(paused)' : null); },
+    // v1.10.2：整局只用【一个】<audio> 元素，换曲 = 换 src。原来换曲（进马西克 Boss 战）会 new 一个新的 Audio，
+    //   而 iOS / Safari 只允许「用户点过的那个元素」继续播放；新元素在游戏循环里 play() 会被静默拒绝 → 马西克一出场就没有音乐。
+    //   play() 被拒时记下来，玩家下一次点屏幕 / 按键就补播（music 想放但没放上 = wantMusic）。
     startMusic(o = {}) {
       if (!musicOn || recording) return;
+      wantMusic = true;
       const tr = override || trackById(trackId);
       if (o.keep && bgm && !bgm.paused && bgm.getAttribute('data-id') === tr.id) return; // 已在放就接着放（地图飞行 → 进城）
-      if (!bgm || bgm.getAttribute('data-id') !== tr.id) {
-        if (bgm) { bgm.pause(); }
-        bgm = new Audio(tr.file); bgm.loop = true; bgm.volume = 0.32; bgm.setAttribute('data-id', tr.id);
-      }
+      if (!bgm) { bgm = new Audio(); bgm.loop = true; bgm.volume = 0.32; bgm.preload = 'auto'; }
+      if (bgm.getAttribute('data-id') !== tr.id) { bgm.pause(); bgm.setAttribute('data-id', tr.id); bgm.src = tr.file; }
       try { bgm.currentTime = 0; } catch (e) {}
-      const pr = bgm.play(); if (pr && pr.catch) pr.catch(() => {});
+      const pr = bgm.play(); if (pr && pr.catch) pr.catch(() => { armRetry(); });
     },
-    stopMusic() { if (bgm) bgm.pause(); },
+    stopMusic() { wantMusic = false; if (bgm) bgm.pause(); },
     // —— 录屏用：把一段时间内的音效记录下来，再离线渲染成 WAV ——
     startRecording() { recording = []; },
     stopRecording() { const r = recording; recording = null; return r || []; },

@@ -35,15 +35,18 @@
     else if (o.key === 'upgrade') { const sel0 = Math.max(0, this.upgradeCands().findIndex(it => R.upgradePrice(it.id) <= cp.gold)); cp.modal = { type: 'upgrade', sel: sel0, t: 0, confirm: null, back: cp.modal }; this.state = 'upgrade'; }
     else if (o.key === 'shop') this.shopOpen(cp.modal);
   };
+  // v1.10.2：休息点刚出现的 0.5 秒（30 帧）不收输入——上一个界面（翻牌「按任意键继续」）连按 / 双击会直接落在这里，替玩家选了「回血」，商店按钮根本来不及看
+  const REST_GUARD = 30;
   G.restKey = function (code) {
     const m = this.camp.modal, n = this.restOpts().length;
+    if (m.t < REST_GUARD) return;
     if (code === 'ArrowLeft' || code === 'KeyA') { m.sel = (m.sel + n - 1) % n; WF.Audio.play('menu'); }
     else if (code === 'ArrowRight' || code === 'KeyD') { m.sel = (m.sel + 1) % n; WF.Audio.play('menu'); }
     else if (/^(Digit|Numpad)[1-3]$/.test(code)) { const i = +code.slice(-1) - 1; if (i < n) this.campRestChoose(i); }
     else if (code === 'KeyS' && m.shop) this.campRestChoose(2);
     else if (code === 'Enter' || code === 'NumpadEnter' || code === 'Space') this.campRestChoose(m.sel);
   };
-  G.restClick = function (hit) { if (hit && hit.key === 'opt') { this.camp.modal.sel = hit.i; this.campRestChoose(hit.i); } };
+  G.restClick = function (hit) { if (this.camp.modal.t < REST_GUARD) return; if (hit && hit.key === 'opt') { this.camp.modal.sel = hit.i; this.campRestChoose(hit.i); } };
 
   G.drawRest = function () {
     const m = this.camp.modal, P = this.p[0], cp = this.camp, opts = this.restOpts();
@@ -67,7 +70,8 @@
     });
     if (m.shop) {   // 商店按钮：不占名额
       const sel = m.sel === 2, T = WF.touch, bw = T ? 480 : 420, bx = (C.SCREEN_W - bw) / 2, by = T ? 396 : 394, bh = T ? 72 : 52;   // 触屏：72 高（≈50 CSS 像素）
-      this.box(bx, by, bw, bh, sel ? 'rgba(122,31,43,0.95)' : 'rgba(70,16,30,0.92)', sel ? '#ffd23c' : '#d3263c', sel ? 4 : 3);
+      const pulse = Math.floor(m.t / 18) % 2 === 0;   // v1.10.2：商店按钮会闪（金 / 红边），一眼看到
+      this.box(bx, by, bw, bh, sel ? 'rgba(122,31,43,0.95)' : 'rgba(70,16,30,0.92)', sel || pulse ? '#ffd23c' : '#d3263c', sel ? 4 : 3);
       this.campRects.push({ x: bx, y: by, w: bw, h: bh, key: 'opt', i: 2 });
       if (!T) this.txt('3', bx + 18, by + 18, 16, '#ffd23c', 'center', { sw: 4 });
       this.txt('胭脂的杂货铺开着！进去逛逛（不占名额）', bx + bw / 2 + (T ? 0 : 8), by + (T ? 24 : 20), 18, '#ffe0e6', 'center', { sw: 4, weight: 900, maxW: bw - 50 });
