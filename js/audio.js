@@ -154,20 +154,49 @@ WF.Audio = (function () {
     cough(c, out, t) { nz(c, out, t, 'bandpass', 750, 2.2, 0.09, 0.32); nz(c, out, t + 0.12, 'bandpass', 620, 2.2, 0.07, 0.22); },
   };
 
+  // v1.10.1 输出链：其他音效照旧走 master(0.8) → 压缩器(-14dB, 4:1)；击打音效（hit：拳脚 / 暴击 / 必杀收尾 / 火箭擦过）单独一条：
+  // ×HIT_GAIN → 软削波（-6dBFS 以下线性，最高 -1dBFS）→ 跟主路一起进最后一道软削波保护 → 输出。
+  // 不走主压缩器（走主压缩器的话 4:1 会把加的音量又压回去）；软削波保证不爆音（Chrome 的压缩器节点会把小声音也拉低，所以保护级不用压缩器）。数值按 wftest/v1101/sfx_levels.js 实测定的。
+  const HIT_GAIN = 0.85;   // 实测：普通击打比 v1.10 响 ≈ +5 dB（因为不再经过主压缩器，所以这里的数字看着小）
+  const HIT_CRIT = 1.4;  // 暴击 / 必杀收尾再 ×1.4，保证暴击依然明显比普通击打响
+  const HIT_NAMES = { hit: 1 };
+  // 软削波：knee 以下完全线性（小声音一点不动），knee 以上用 tanh 圆滑地压到 ceil，永远到不了 0dBFS
+  function softClip(c, knee, ceil) {
+    const w = c.createWaveShaper(), n = 4097, curve = new Float32Array(n), r = ceil - knee;
+    for (let i = 0; i < n; i++) {
+      const x = (i / (n - 1)) * 2 - 1, ax = Math.abs(x);
+      const y = ax <= knee ? ax : knee + r * Math.tanh((ax - knee) / r);
+      curve[i] = x < 0 ? -y : y;
+    }
+    w.curve = curve; w.oversample = 'none'; return w;   // WaveShaper 的输入范围固定是 -1..1（超出按两端算）；不开过采样，免得降采样滤波过冲
+  }
+  function busFor(ch, name, p) { return HIT_NAMES[name] ? (p && p.crit ? ch.crit : ch.hit) : ch.main; }
+  function buildChain(c) {
+    const safe = softClip(c, 0.8, 0.97);   // 最后一道（两路叠加时防冲顶）；平时信号都在 0.8 以下，完全不动作
+    safe.connect(c.destination);
+    const comp = c.createDynamicsCompressor();
+    comp.threshold.value = -14; comp.ratio.value = 4; comp.attack.value = 0.003; comp.release.value = 0.15;
+    const m = c.createGain(); m.gain.value = 0.8; m.connect(comp); comp.connect(safe);
+    const hg = c.createGain(); hg.gain.value = 0.8 * HIT_GAIN;
+    const sc = softClip(c, 0.5, 0.89);    // 击打专用：-6dBFS 以下线性，以上圆滑压住，最高 -1dBFS
+    hg.connect(sc); sc.connect(safe);
+    const hc = c.createGain(); hc.gain.value = HIT_CRIT; hc.connect(hg);
+    return { main: m, hit: hg, crit: hc };
+  }
+  let bus = null;
   function ensure() {
     if (ac) return ac;
     const AC = window.AudioContext || window.webkitAudioContext;
     if (!AC) return null;
     ac = new AC();
-    const comp = ac.createDynamicsCompressor();
-    comp.threshold.value = -14; comp.ratio.value = 4; comp.attack.value = 0.003; comp.release.value = 0.15;
-    master = ac.createGain(); master.gain.value = 0.8;
-    master.connect(comp); comp.connect(ac.destination);
+    bus = buildChain(ac); master = bus.main;
     return ac;
   }
 
   const A = {
-    SFX,
+    SFX, HIT_GAIN, HIT_CRIT, BGM_VOL: 0.32,
+    buildChain(c, name, p) { return busFor(buildChain(c), name, p); },
+    chain(c) { return buildChain(c); }, busFor,   // 测音量用（wftest/v1101/sfx_levels.js）
     get sfxOn() { return sfxOn; }, set sfxOn(v) { sfxOn = !!v; try { localStorage.setItem('wf_sfx', v ? '1' : '0'); } catch (e) {} },
     get musicOn() { return musicOn; },
     set musicOn(v) { musicOn = !!v; try { localStorage.setItem('wf_music', v ? '1' : '0'); } catch (e) {} if (!v) A.stopMusic(); },
@@ -176,7 +205,7 @@ WF.Audio = (function () {
       if (recording) { recording.push({ t: WF.frameNo / WF.CFG.FPS, name, p }); return; }
       if (!sfxOn) return;
       const c = ensure(); if (!c || c.state !== 'running') return;
-      try { SFX[name](c, master, c.currentTime + 0.005, p); } catch (e) { console.warn('sfx', name, e); }
+      try { SFX[name](c, busFor(bus, name, p), c.currentTime + 0.005, p); } catch (e) { console.warn('sfx', name, e); }
     },
     TRACKS,
     get trackId() { return trackId; },
@@ -217,10 +246,8 @@ WF.Audio = (function () {
     stopRecording() { const r = recording; recording = null; return r || []; },
     async renderOffline(events, seconds, rate = 44100) {
       const c = new OfflineAudioContext(2, Math.ceil(seconds * rate), rate);
-      const comp = c.createDynamicsCompressor();
-      comp.threshold.value = -14; comp.ratio.value = 4; comp.attack.value = 0.003; comp.release.value = 0.15;
-      const m = c.createGain(); m.gain.value = 0.8; m.connect(comp); comp.connect(c.destination);
-      for (const e of events) { try { SFX[e.name](c, m, e.t + 0.01, e.p || {}); } catch (err) {} }
+      const ch = buildChain(c);
+      for (const e of events) { try { SFX[e.name](c, busFor(ch, e.name, e.p), e.t + 0.01, e.p || {}); } catch (err) {} }
       const buf = await c.startRendering();
       return wav(buf);
     },
