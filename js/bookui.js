@@ -30,7 +30,7 @@
 #wf-dict button{appearance:none;-webkit-appearance:none;font-family:${FONT};cursor:pointer;touch-action:manipulation;}
 #wf-dict .wf-bar{flex:0 0 auto;display:flex;flex-direction:column;gap:6px;padding:8px 14px 6px;border-bottom:2px solid #3a2f55;background:linear-gradient(180deg,#1a1230,#140c22);}
 #wf-dict .wf-row1{display:flex;align-items:center;gap:8px;min-width:0;}
-#wf-dict .wf-btn{flex:0 0 auto;min-height:36px;min-width:44px;padding:0 12px;border:1px solid #5d4f86;background:#1b1430;color:#e9d7a6;font-weight:700;font-size:14px;border-radius:8px;white-space:nowrap;}
+#wf-dict .wf-btn{flex:0 0 auto;min-height:44px;min-width:44px;padding:0 12px;border:1px solid #5d4f86;background:#1b1430;color:#e9d7a6;font-weight:700;font-size:14px;border-radius:8px;white-space:nowrap;}
 #wf-dict .wf-btn:hover,#wf-dict .wf-tab:hover{border-color:#ffd23c;color:#ffd23c;}
 #wf-dict .wf-btn.hot{border-color:#ffd23c;background:#ffd23c22;color:#ffd23c;}
 #wf-dict h1{margin:0;flex:0 1 auto;min-width:0;font:700 18px ${FONT};color:#ffd23c;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-shadow:0 0 8px #ffd23c55;}
@@ -44,7 +44,7 @@
 #wf-dict .wf-status{flex:0 0 auto;display:flex;gap:4px;padding-right:6px;border-right:1px solid #3a2f55;}
 #wf-dict .wf-tabs{flex:1 1 auto;min-width:0;display:flex;gap:6px;overflow-x:auto;overflow-y:hidden;scrollbar-width:none;touch-action:pan-x;-webkit-overflow-scrolling:touch;}
 #wf-dict .wf-tabs::-webkit-scrollbar{display:none;}
-#wf-dict .wf-tab{flex:0 0 auto;min-height:36px;padding:0 12px;border:1px solid #4a3d72;background:#1b1430;color:#e8e0f4;font-weight:600;font-size:14px;border-radius:999px;white-space:nowrap;}
+#wf-dict .wf-tab{flex:0 0 auto;min-height:44px;padding:0 12px;border:1px solid #4a3d72;background:#1b1430;color:#e8e0f4;font-weight:600;font-size:14px;border-radius:999px;white-space:nowrap;}
 #wf-dict .wf-tab.on{background:#ffd23c22;border-color:#ffd23c;color:#ffd23c;}
 #wf-dict .wf-st{border-radius:6px;padding:0 9px;}
 #wf-dict .wf-st.on{background:#7df9ff1c;border-color:#7df9ff;color:#7df9ff;}
@@ -117,6 +117,7 @@
   function masteryOf(g, w) { return P ? WF.Profiles.mastery(P.id, bankIdOf(g, w), w.word) : 'new'; }
   // 一行用的短释义：前 2 个义项「词性 + 中文」
   function shortMeaning(w) {
+    if (w.kind === 'phrase') return [{ pos: '', zh: w.meaning || '' }];
     const ss = WF.Quiz.senses(w).filter(s => s && (s.zh || s.pos)).slice(0, 2);
     return ss.map(s => ({ pos: s.pos || '', zh: String(s.zh || '').replace(/\s+/g, ' ') }));
   }
@@ -193,7 +194,7 @@
     const isWrong = mode === 'wrong';
     els.tabs.innerHTML = '';
     const items = isWrong
-      ? [{ id: 'all', name: '全部' }].concat((g.banks || []).map(b => ({ id: b.id, name: b.name })))
+      ? [{ id: 'all', name: '全部' }, { id: 'phrases', name: '短语' }].concat((g.banks || []).map(b => ({ id: b.id, name: b.name })))
       : (g.banks || []).map((b, i) => ({ id: i, name: b.name }));
     items.forEach((t) => {
       const on = isWrong ? (g.ui.bankFilter || 'all') === t.id : (g.ui.bank === t.id);
@@ -256,7 +257,7 @@
     if (!list.length) {
       const lb = mode !== 'wrong' && (g.banks || [])[g.ui.bank];
       let msg = '没有符合条件的词。';
-      if (mode === 'wrong') msg = '这一类还没有错题。对战里答错的单词会自动收进来。';
+      if (mode === 'wrong') msg = '这一类还没有错题。对战里答错的单词和短语会自动收进来。';
       else if (lb && lb.lazy && !lb.loaded) msg = WF.Banks.state(lb) === 'error' ? '「' + lb.name + '」词库下载失败，请检查网络后再点一次这个标签重试。' : '「' + lb.name + '」词库下载中…（首次约 ' + WF.Banks.sizeText(lb) + '）';
       els.list.insertBefore(el('div', 'wf-empty', msg), els.inner);
     }
@@ -290,6 +291,7 @@
     const m = mode === 'wrong' ? 'wrong' : masteryOf(g, w);
     if (m !== 'new') { const dt = el('span', 'wf-dot'); dt.style.background = (TAGS[m] || TAGS.new).color; dt.title = (TAGS[m] || TAGS.new).name; wc.appendChild(dt); }
     wc.appendChild(el('b', '', w.word || ''));
+    if (w.kind === 'phrase') wc.appendChild(el('span', 'wf-miss', '短语'));
     r.appendChild(wc);
     const mc = el('div', 'wf-m ' + (revealed(w) ? 'open' : 'mask')), sp = el('span');
     const sm = shortMeaning(w);
@@ -358,7 +360,7 @@
     head.appendChild(el('div', 'wf-dhint', isTouch() ? '双击返回' : '双击 / Esc 返回'));
     d.appendChild(head);
     const body = el('div', 'wf-dbody');
-    const senses = WF.Quiz.senses(w), missed = new Set(w.wrongSenses || []);
+    const senses = w.kind === 'phrase' ? [{ zh: w.meaning || '', ex: w.ex ? [{ en: w.ex, zh: w.exZh || '' }] : [] }] : WF.Quiz.senses(w), missed = new Set(w.wrongSenses || []);
     senses.forEach(sn => {
       const row = el('div', 'wf-sense'), hd = el('div', 'wf-meaning');
       if (sn.pos) hd.appendChild(el('span', 'wf-pos', sn.pos));
@@ -369,7 +371,7 @@
       if (ph.length) {
         row.appendChild(el('div', 'wf-lbl', '常用搭配'));
         const pr = el('div', 'wf-phr');
-        ph.forEach(x => { const s = el('span', '', x.en); if (x.zh) s.appendChild(el('i', '', x.zh)); pr.appendChild(s); });
+        ph.forEach(x => { const s = el('span', '', x.en); if (x.zh) s.appendChild(el('i', '', x.zh)); if (P && WF.Profiles.phraseWrong(P.id, bankIdOf(g, w), x.en)) s.appendChild(el('span', 'wf-miss', '答错过')); pr.appendChild(s); });
         row.appendChild(pr);
       }
       const exs = (sn.ex || []).map(x => partsOf(g, { ex: x.en, exZh: x.zh })).filter(x => x.en || x.zh);

@@ -115,7 +115,7 @@
     if (cp.dice === 6) mul += 0.30;
     if (cp.peBoost) { mul += 0.20; cp.peBoost = false; }
     if (cp.swissHit) { mul *= cp.swissHit; cp.swissHit = 0; pop('瑞士军刀！', '#ffd23c'); }
-    if (this.lvOf('last_second') && sec != null && sec >= this.campTimeout() - 1) { mul *= this.num('last_second'); pop('最后一秒！', '#ff5a8a'); }
+    if (this.lvOf('last_second') && sec != null && sec >= this.timeoutS() - 1) { mul *= this.num('last_second'); pop('最后一秒！', '#ff5a8a'); }
     if (this.lvOf('twins') && this.rand() < this.num('twins')) { mul *= 1.5; pop('双胞胎！', '#8fd0ff'); }
     mul = Math.min(K().ITEMS_V19.MULT_CAP, mul);
     v = Math.round((v + add) * mul);

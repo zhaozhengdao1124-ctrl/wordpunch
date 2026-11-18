@@ -105,10 +105,11 @@
     isMath(q) { return !!(q && (q.kind === 'math' || q.bank === 'math' || q.math)); },
     qKey(q) {
       if (this.isMath(q)) return 'math\t' + (q.word || '');
-      return (q.bank || '') + '\t' + (q.word || '');
+      return (q.bank || '') + '\t' + (q.kind === 'phrase' ? 'ph:' : '') + (q.word || '');
     },
     rec(id, q) {
       const p = this.get(id); if (!p || !q) return null;
+      p.history = p.history || {};
       const k = this.qKey(q);
       const math = this.isMath(q);
       if (!p.history[k]) {
@@ -121,6 +122,12 @@
         };
       }
       const h = p.history[k];
+      if (q.kind === 'phrase') {
+        h.kind = 'phrase'; h.phraseId = q.phraseId || h.phraseId;
+        h.fmt = q.fmt || h.fmt || 'mc';
+        h.pos = '';
+        if (q.ex) { h.ex = typeof q.ex === 'object' ? q.ex.en || '' : q.ex; h.exZh = typeof q.ex === 'object' ? q.ex.zh || '' : q.exZh || ''; }
+      }
       if (math) {
         h.kind = 'math'; h.bank = 'math';
         if (q.math) h.math = q.math;
@@ -159,7 +166,11 @@
         if (sid) { h.wrongSenses = (h.wrongSenses || []).filter(x => x !== sid).concat([sid]); h.senseId = sid; h.meaning = q.meaning; h.pos = q.pos || h.pos; }
       }
       const p = this.get(id);
-      if (p) { p.stats.answered++; if (ok) p.stats.correct++; }
+      if (p) {
+        p.stats = Object.assign({ answered: 0, correct: 0 }, p.stats || {});
+        p.stats.answered++;
+        if (ok) { p.stats.correct++; if (q.kind === 'phrase') p.stats.phraseCorrect = (p.stats.phraseCorrect || 0) + 1; }
+      }
       this.save();
     },
     markMatch(id, win) {
@@ -171,12 +182,23 @@
     },
     mastery(id, bank, word) {
       const p = this.get(id); if (!p) return 'new';
-      const h = p.history[(bank || '') + '\t' + word];
+      const h = (p.history || {})[(bank || '') + '\t' + word];
       if (!h) return 'new';
       if (h.inBook) return 'wrong';
       if (h.streak >= 3) return 'mastered';
       if (h.seen || h.correct) return 'seen';
       return 'new';
+    },
+    phraseMastery(id, bank, phrase) {
+      const p = this.get(id), h = p && (p.history || {})[(bank || '') + '\tph:' + phrase];
+      if (!h || h.kind !== 'phrase') return 'new';
+      if (h.inBook) return 'wrong';
+      if (h.streak >= 3) return 'mastered';
+      return h.seen || h.correct ? 'seen' : 'new';
+    },
+    phraseWrong(id, bank, phrase) {
+      const p = this.get(id), h = p && (p.history || {})[(bank || '') + '\tph:' + phrase];
+      return !!(h && h.kind === 'phrase' && h.wrongCount > 0);
     },
     wrongList(id, bankFilter) {
       const p = this.get(id); if (!p) return [];
@@ -186,7 +208,8 @@
         if (!h.inBook) continue;
         if (this.isMathEntry(h, k)) continue;
         const bank = h.bank || '';
-        if (bankFilter && bankFilter !== 'all' && bank !== bankFilter) continue;
+        if (bankFilter === 'phrases') { if (h.kind !== 'phrase') continue; }
+        else if (bankFilter && bankFilter !== 'all' && bank !== bankFilter) continue;
         out.push(h);
       }
       out.sort((a, b) => (b.lastWrong || 0) - (a.lastWrong || 0));
@@ -197,7 +220,7 @@
       for (const id of ids) {
         if (!id) continue;
         for (const h of this.wrongList(id, bankFilter)) {
-          const k = (h.bank || '') + '\t' + h.word;
+          const k = this.qKey(h);
           if (!map.has(k)) map.set(k, h);
         }
       }

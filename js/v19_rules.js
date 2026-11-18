@@ -109,7 +109,7 @@
   // wrong = 错题本条目 [{word, bank}]；fill = 当前词库的补词候选（已按「学过未掌握」优先排好），返回 3 个互不相同的词条
   R.haggleWords = function (rng, wrong, fillSeen, fillAny) {
     const N = K().SHOP.HAGGLE.N, key = e => (e.bank || '') + '\t' + e.word, out = [], seen = new Set();
-    const take = (list) => { for (const e of R.shuffle(rng, list || [])) { if (out.length >= N) return; if (!e || !e.word || seen.has(key(e)) || out.some(x => x.word === e.word)) continue; seen.add(key(e)); out.push(e); } };
+    const take = (list) => { for (const e of R.shuffle(rng, list || [])) { if (out.length >= N) return; if (!e || e.kind === 'phrase' || !e.word || seen.has(key(e)) || out.some(x => x.word === e.word)) continue; seen.add(key(e)); out.push(e); } };
     take(wrong); const fromBook = out.length;
     take(fillSeen); take(fillAny);
     return { words: out.length >= N ? out : [], fromBook, filled: out.length >= N ? N - fromBook : 0, ok: out.length >= N };

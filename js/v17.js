@@ -289,7 +289,7 @@
     if (this._easy && this._easyFor === this.bank) return this._easy; this._easyFor = this.bank;
     const id = U2().ROCKET.EASY_BANK, cur = this.bank, easyOwn = cur && /^(starter|primary|pep\d)$/.test(cur.id);   // 小学词库本来就简单：直接用当前词库
     const b = easyOwn ? cur : (this.banks.find(x => x.id === id) || this.banks[0]);
-    this._easy = WF.makeSource({ mode: 'word', bank: b, rnd: this.rnd, banks: this.banks });
+    this._easy = WF.makeSource({ mode: 'word', bank: b, rnd: this.rnd, banks: this.banks, phrases: false });
     return this._easy;
   };
   G.rocketUltSeq = function* (A, D) {

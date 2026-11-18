@@ -141,7 +141,7 @@
     if (S.hw) return S.hw;
     const prof = WF.Profiles.get(this.menu.p1), pid = prof && prof.id;
     const loaded = id => { const b = this.banks.find(x => x.id === id); return !!(b && b.words && b.words.length && (!WF.Banks || WF.Banks.isLoaded(b))); };
-    const wrong = pid ? WF.Profiles.wrongList(pid, 'all').filter(e => e.word && loaded(e.bank)) : [];
+    const wrong = pid ? WF.Profiles.wrongList(pid, 'all').filter(e => e.kind !== 'phrase' && e.word && loaded(e.bank)) : [];
     const bank = this.bank && this.bank.words && this.bank.words.length ? this.bank : null;
     const seen = [], any = [];
     if (bank) for (const w of bank.words) { const e = { word: w.word, bank: bank.id }; const ms = pid ? WF.Profiles.mastery(pid, bank.id, w.word) : 'new'; (ms === 'seen' || ms === 'wrong' ? seen : any).push(e); }

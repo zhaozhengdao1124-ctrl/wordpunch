@@ -337,8 +337,10 @@
     this.campDim(0.8);
     this.txt(`复习  ${r.i + 1} / ${r.list.length}`, C.SCREEN_W / 2, 64, 36, '#8fd0ff', 'center', { font: C.FONT_TITLE, sw: 8 });
     this.txt(`已答对 ${r.ok}　全对奖励一件稀有道具`, C.SCREEN_W / 2, 104, 16, '#e9d7a6', 'center', { sw: 4, weight: 700 });
-    this.txt(q.word, C.SCREEN_W / 2, 190, 56, '#ffffff', 'center', { font: '"Noto Serif","Georgia",serif', sw: 8, maxW: 700 });
-    if (q.pos) this.txt(q.pos, C.SCREEN_W / 2, 240, 18, '#bfb3d6', 'center', { sw: 4 });
+    if (q.kind === 'phrase') this.txt('短语', C.SCREEN_W / 2, 150, 16, '#ffd23c', 'center', {sw:3});
+    this.txt(q.displayWord || q.word, C.SCREEN_W / 2, 190, q.kind === 'phrase' ? 34 : 56, '#ffffff', 'center', { font: '"Noto Serif","Georgia",serif', sw: 8, maxW: 700 });
+    if (q.kind === 'phrase' && q.fmt === 'blank') this.txt(q.meaning, C.SCREEN_W / 2, 240, 18, '#bfb3d6', 'center', {sw:4});
+    if (q.kind !== 'phrase' && q.pos) this.txt(q.pos, C.SCREEN_W / 2, 240, 18, '#bfb3d6', 'center', { sw: 4 });
     const bw = 400, bh = 64, gx = 20, x0 = (C.SCREEN_W - bw * 2 - gx) / 2;
     for (let i = 0; i < 4; i++) {
       const x = x0 + (i % 2) * (bw + gx), y = 280 + Math.floor(i / 2) * (bh + 16);

@@ -17,7 +17,7 @@
   };
   const sum = o => Object.values(o || {}).reduce((a, b) => a + b, 0);
   const lvOf = (pid, id) => Prog.char(pid, id).lv;
-  const mastered = pid => { const p = WF.Profiles.get(pid); if (!p) return 0; let n = 0; for (const k in p.history) { const h = p.history[k]; if (h && !h.inBook && h.streak >= 3) n++; } return n; };
+  const mastered = pid => { const p = WF.Profiles.get(pid); if (!p) return 0; let n = 0; for (const k in p.history) { const h = p.history[k]; if (h && h.kind !== 'phrase' && !h.inBook && h.streak >= 3) n++; } return n; };
   const wrongNow = pid => WF.Profiles.wrongList(pid).length;
   const banksPlayed = L => Object.values(L.bankAns).filter(n => n >= 10).length;
   const has = (g, id) => !!(g && g.ach[id]);
@@ -50,6 +50,7 @@
   add('clear', 'hp_low', '惊险过关', '全部通关时只剩 10% 以下血量', flag('hpLow'));
   // 答题
   for (const [n, nm] of [[100, '小试牛刀'], [500, '渐入佳境'], [2000, '单词达人'], [10000, '词海无涯']]) add('quiz', 'correct' + n, nm, `累计答对 ${n} 题（任何模式）`, cnt(L => L.correct, n));
+  add('quiz', 'phrase100', '搭配达人', '累计答对 100 道短语题', cnt((L, g, pid) => { const p = WF.Profiles.get(pid); return p && p.stats && p.stats.phraseCorrect || 0; }, 100));
   add('quiz', 'fast50', '快人一步', '累计速答 50 次', cnt(L => L.fast, 50));
   add('quiz', 'fast500', '手比脑子快', '累计速答 500 次', cnt(L => L.fast, 500));
   add('quiz', 'acc95', '神准', '全部通关且正确率 ≥ 95%', runAch);

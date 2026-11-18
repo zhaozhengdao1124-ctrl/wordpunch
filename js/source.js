@@ -11,12 +11,30 @@
   }
 
   W.WordSource = class {
-    constructor(bank, rnd) {
+    constructor(bank, rnd, phrases) {
       this.id = 'word'; this.name = bank ? bank.name : '单词';
       this.bank = bank; this.quiz = new WF.Quiz(bank, rnd); this.rnd = rnd || Math.random;
+      this.phraseQuiz = phrases !== false && WF.PhraseQuiz ? new WF.PhraseQuiz(bank, this.rnd) : null;
+      this.recentPhrases = []; this.questionNumber = 0;
+      this.phraseSlots = []; this.formatSlots = [];
     }
     get size() { return this.bank && this.bank.words ? this.bank.words.length : 0; }
     next() {
+      this.questionNumber++;
+      this.recentPhrases = this.recentPhrases.filter(e => this.questionNumber - e.at <= 10);
+      // Shuffled quotas preserve 25% / 30% without Bernoulli streak drift.
+      // Adjacent phrase questions remain possible; ineligible banks draw no RNG.
+      let phraseDue = false;
+      if (this.phraseQuiz && this.phraseQuiz.entries.length) {
+        if (!this.phraseSlots.length) this.phraseSlots = shuffle(this.rnd, Array(5).fill(true).concat(Array(15).fill(false)));
+        phraseDue = this.phraseSlots.pop();
+      }
+      if (phraseDue) {
+        if (!this.formatSlots.length) this.formatSlots = shuffle(this.rnd, Array(3).fill('blank').concat(Array(7).fill('mc')));
+        const fmt = this.formatSlots.pop();
+        const p = this.phraseQuiz.next(fmt, this.recentPhrases.map(e => e.id));
+        if (p) { this.recentPhrases.push({ id: p.phraseId, at: this.questionNumber }); return p; }
+      }
       const q = this.quiz.next();
       q.kind = 'word'; q.bank = this.bank.id;
       return q;
@@ -105,7 +123,7 @@
       this.fallback = fallback;
       this.banks = banks || [];
       this.rnd = rnd || Math.random;
-      this.useFallback = this.entries.length < 4;
+      this.useFallback = !this.entries.length || (this.entries.length < 4 && !this.entries.some(e => e.kind === 'phrase'));
       this.quizByBank = {};
     }
     get size() { return this.useFallback ? (this.fallback ? this.fallback.size : 0) : this.entries.length; }
@@ -139,6 +157,20 @@
       };
     }
     wordFrom(e) {
+      if (e.kind === 'phrase' && WF.PhraseQuiz) {
+        const pq = new WF.PhraseQuiz(e.bank, this.rnd);
+        const p = pq.build(e.phraseId || e.word, e.fmt || 'mc') || pq.build(e.phraseId || e.word, 'mc') || pq.build(e.phraseId || e.word, 'blank');
+        if (p) return Object.assign(p, { fromWrongBook: true });
+        // Keep retired phrase history intact, but never revive a disabled or
+        // deleted phrase through a stale wrong-book entry. Use a real word.
+        const wordBank=this.banks.find(b=>b.id===e.bank && b.words && b.words.length)
+          || this.banks.find(b=>b.words && b.words.length);
+        if(wordBank) {
+          if(!this.quizByBank[wordBank.id]) this.quizByBank[wordBank.id]=new WF.Quiz(wordBank,this.rnd);
+          return Object.assign(this.quizByBank[wordBank.id].next(),{kind:'word',bank:wordBank.id,fromWrongBook:false});
+        }
+        return this.fallback.next();
+      }
       const bank = this.banks.find(b => b.id === e.bank) || this.banks[0];
       if (!bank) return this.fallback.next();
       if (!this.quizByBank[bank.id]) this.quizByBank[bank.id] = new WF.Quiz(bank, this.rnd);
@@ -154,7 +186,7 @@
     const rnd = opts.rnd || Math.random;
     const bank = opts.bank;
     const mode = opts.mode || 'word';
-    const wordSrc = bank ? new WF.WordSource(bank, rnd) : null;
+    const wordSrc = bank ? new WF.WordSource(bank, rnd, opts.phrases) : null;
     const mathSrc = new WF.MathSource(rnd);
     let base;
     if (mode === 'math') base = mathSrc;

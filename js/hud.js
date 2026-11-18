@@ -7,7 +7,8 @@
     const c = this.ctx;
     c.font = `${o.weight || 900} ${size}px ${o.font || WF.CFG.FONT}`;
     c.textAlign = align; c.textBaseline = o.base || 'middle';
-    const fl = this._tfloor || 0;   // v1.9 触屏：新界面的字不小于 fl（逻辑像素），见 v19_touch.js
+    const phraseTouch = WF.touch && this.q && this.q.kind === 'phrase' && (this.state === 'question' || this.state === 'clash');
+    const fl = Math.max(this._tfloor || 0, phraseTouch ? 16 : 0);   // v1.9 触屏：新界面的字不小于 fl（逻辑像素），见 v19_touch.js
     if (fl && size < fl) { size = fl; c.font = `${o.weight || 900} ${size}px ${o.font || WF.CFG.FONT}`; }
     if (o.maxW) { let w = c.measureText(s).width; if (w > o.maxW) { size = Math.max(fl, Math.floor(size * o.maxW / w)); c.font = `${o.weight || 900} ${size}px ${o.font || WF.CFG.FONT}`; } }
     if (this._txtLog) { const m = c.measureText(s), tf = c.getTransform(); this._txtLog.push({ s: String(s), x: x + tf.e, y: y + tf.f, xf: tf.a !== 1 || tf.d !== 1 || !!tf.b || !!tf.c, size, align, w: m.width, maxW: o.maxW || 0, base: o.base || 'middle', l: m.actualBoundingBoxLeft, r: m.actualBoundingBoxRight, a: m.actualBoundingBoxAscent, d: m.actualBoundingBoxDescent }); }
@@ -197,17 +198,17 @@
     }
     const cx = C.SCREEN_W / 2, cy = 42;
     const q = this.q; let sec = 0, zone = 0;
-    const FS = this.fastS(0), QT = this.camp ? this.campTimeout() : C.Q_TIMEOUT_S;
-    if (q && this.state === 'question') { sec = q.t / C.FPS; zone = sec <= FS ? 0 : sec <= C.SLOW_S ? 1 : 2; }
+    const FS = this.fastS(0), SS = this.slowS ? this.slowS() : C.SLOW_S, QT = this.timeoutS ? this.timeoutS() : (this.camp ? this.campTimeout() : C.Q_TIMEOUT_S);
+    if (q && this.state === 'question') { sec = q.t / C.FPS; zone = sec <= FS ? 0 : sec <= SS ? 1 : 2; }
     c.beginPath(); c.arc(cx, cy, 32, 0, Math.PI * 2); c.fillStyle = '#120c1c'; c.fill();
     c.lineWidth = 3; c.strokeStyle = '#e9d7a6'; c.stroke();
     if (q && this.state === 'question') {
       const col = ['#ffd23c', '#ffffff', '#8a90a8'][zone];
-      const lim = [FS, C.SLOW_S, QT][zone], base = [0, FS, C.SLOW_S][zone];
+      const lim = [FS, SS, QT][zone], base = [0, FS, SS][zone];
       const r = 1 - (sec - base) / (lim - base);
       c.beginPath(); c.arc(cx, cy, 27, -Math.PI / 2, -Math.PI / 2 + Math.PI * 2 * Math.max(0, r)); c.lineWidth = 6; c.strokeStyle = col; c.stroke();
       this.txt(`${Math.floor(sec)}`, cx, cy + 2, 30, col, 'center', { font: C.FONT_TITLE });
-      this.txt(['速攻 连击', '普通一击', '会被防御'][zone], cx, 88, 15, col, 'center', { sw: 4 });
+      this.txt(['速攻 连击', '普通一击', '会被防御'][zone], cx, 88, q.kind === 'phrase' ? 16 : 15, col, 'center', { sw: 4 });
     } else {
       this.txt(this.clash ? '角力' : '—', cx, cy + 2, this.clash ? 22 : 26, '#e9d7a6', 'center');
     }
@@ -215,35 +216,58 @@
     const left = this.matchLeft && this.matchLeft();
     const clock = left == null ? '' : (' · 剩余 ' + Math.ceil(left) + ' 秒');
     if (this.camp) { if (this.drawCampHudLine) this.drawCampHudLine(); else this.txt(this.campHudLine(), cx, 104, 13, '#e9d7a6', 'center', { sw: 3, weight: 700 }); return; }
-    this.txt(`第 ${this.qn} 题 · ${tag}${this.bank && this.needsBank && this.needsBank() ? ' · ' + this.bank.name : ''}${clock}`, cx, 104, 13, '#bfb3d6', 'center', { sw: 3, weight: 700 });
+    this.txt(`第 ${this.qn} 题 · ${tag}${this.bank && this.needsBank && this.needsBank() ? ' · ' + this.bank.name : ''}${clock}`, cx, 104, q && q.kind === 'phrase' ? 16 : 13, '#bfb3d6', 'center', { sw: 3, weight: 700 });
   };
 
   G.drawPanel = function () {
-    const C = WF.CFG, c = this.ctx, q = this.q, top = 402;
+    const C = WF.CFG, c = this.ctx, q = this.q, phrase = q.kind === 'phrase', top = phrase ? 370 : 402;
     const g = c.createLinearGradient(0, top, 0, C.SCREEN_H); g.addColorStop(0, 'rgba(12,8,26,0.86)'); g.addColorStop(1, 'rgba(12,8,26,0.96)');
     c.fillStyle = g; c.fillRect(0, top, C.SCREEN_W, C.SCREEN_H - top);
     c.fillStyle = '#e9d7a6'; c.fillRect(0, top, C.SCREEN_W, 2);
+    const hasEx = !!(q.ex && q.ex.en);
+    if (phrase) {
+      const cx = C.SCREEN_W / 2;
+      this.txt('短语', q.hint && !q.revealed ? cx - 60 : cx, top + 14, 16, '#ffd23c', 'center', { sw: 3, weight: 900 });
+      const text = q.displayWord || q.word, font = '"Noto Serif","Georgia",serif';
+      let size = 34, lines = [text];
+      const measure = t => { c.font = `700 ${size}px ${font}`; return c.measureText(t).width; };
+      while (measure(text) > 760 && size > 24) size--;
+      if (measure(text) > 760) {
+        const words = text.split(/\s+/); let best = Infinity;
+        for (let i = 1; i < words.length; i++) {
+          const a = words.slice(0,i).join(' '), b = words.slice(i).join(' '), w = Math.max(measure(a), measure(b));
+          if (w < best) { best = w; lines = [a,b]; }
+        }
+        while (Math.max(...lines.map(measure)) > 760 && size > 16) size--;
+      }
+      lines.forEach((line,i) => this.txt(line, cx, top + (lines.length === 1 ? 44 : 33 + i * 25), size, '#fff', 'center', {font,weight:700,sw:3}));
+      const subtitle = q.fmt === 'blank' ? q.meaning : (hasEx ? (q.revealed && q.ex.zh ? q.ex.zh : q.ex.en) : '');
+      if (subtitle) this.drawPhraseSubtitle(subtitle, cx, top + 86);
+      if (q.hint && !q.revealed) this.txt('提示：' + q.hint + '…', cx - 20, top + 14, 16, '#8fd0ff', 'left', {sw:3});
+      this.phraseLayout = { lines: lines.length, size, width: Math.max(...lines.map(measure)), bottom: top + 90 };
+    } else {
     const qFont = q.kind === 'math' ? C.FONT_TITLE : '"Noto Serif","Georgia",serif';
-    const hasEx = !!(q.ex && q.ex.en), wy = hasEx ? top + 22 : top + 30;
+    const wy = hasEx ? top + 22 : top + 30;
     this.txt(q.word, C.SCREEN_W / 2, wy, q.kind === 'math' ? 36 : (hasEx ? 30 : 38), '#ffffff', 'center', { font: qFont, weight: 700, sw: 6, maxW: 420 });
     const ww = Math.min(210, c.measureText(q.word).width / 2);
     // v1.3：有例句时词性默认不显示（例句已经点明是哪个意思）；没例句或戴了学霸眼镜就显示
     if (q.pos && (!hasEx || q.posHint)) this.txt(q.pos, C.SCREEN_W / 2 + ww + 14, wy + 4, 16, q.posHint ? '#8fd0ff' : '#bfb3d6', 'left', { sw: 3, weight: 700 });
     if (q.hint && !q.revealed) this.txt('提示：' + q.hint + '…', C.SCREEN_W / 2 - ww - 20, wy + 4, 15, '#8fd0ff', 'right', { sw: 3, weight: 700 });
     if (hasEx) this.drawExample(q.revealed && q.ex.zh ? q.ex.zh : q.ex.en, q.revealed && q.ex.zh ? null : q.word, C.SCREEN_W / 2, top + 50, 17);
+    }
     for (const s of [0, 1]) {
       const f = this.p[s], a = q.ans[s], L = s === 0, x = L ? 22 : C.SCREEN_W - 22, al = L ? 'left' : 'right';
       const keys = L ? '按 1 2 3 4' : (this.camp ? f.mv.name : (this.menu.cpu ? '电脑' : '按 7 8 9 0'));
       let st = `${L ? 'P1' : (this.camp ? '' : 'P2')} ${keys}`.trim(), col = f.mv.color;
-      if (!L && this.camp && f.mv.minion) { if (!q.revealed) { this.txt(st, x, top + 30, 19, col, al, { sw: 5 }); } continue; }
+      if (!L && this.camp && f.mv.minion) { if (!q.revealed) { this.txt(st, x, top + (phrase ? 14 : 30), phrase ? 16 : 19, col, al, { sw: 5 }); } continue; }
       if (a) {
         if (!a.ok) { st = `${L ? 'P1' : 'P2'} ✗ 答错`; col = '#ff6a6a'; }
         else if (q.revealed) { st = `${L ? 'P1' : 'P2'} ✓ ${(a.t / C.FPS).toFixed(1)} 秒`; col = '#7dff9a'; }
         else { st = `${L ? 'P1' : 'P2'} 已锁定`; col = '#ffffff'; }
       } else if (q.revealed) { st = `${L ? 'P1' : 'P2'} —`; col = '#8a90a8'; }
-      this.txt(st, x, top + 30, 19, col, al, { sw: 5 });
+      this.txt(st, x, top + (phrase ? 14 : 30), phrase ? 16 : 19, col, al, { sw: 5 });
     }
-    const bw = 222, gap = 12, x0 = (C.SCREEN_W - (bw * 4 + gap * 3)) / 2, y = hasEx ? top + 68 : top + 60, bh = hasEx ? 60 : 66;
+    const bw = 222, gap = 12, x0 = (C.SCREEN_W - (bw * 4 + gap * 3)) / 2, y = phrase ? 468 : (hasEx ? top + 68 : top + 60), bh = phrase ? 66 : (hasEx ? 60 : 66);
     this.ansRects = [];   // v1.8 触屏 / 鼠标点选项
     for (let i = 0; i < 4; i++) this.ansRects.push({ x: x0 + i * (bw + gap), y, w: bw, h: bh, i });
     const k1 = ['1', '2', '3', '4'], k2 = ['7', '8', '9', '0'];
@@ -263,20 +287,29 @@
         this.box(x, y, bw, bh, 'rgba(30,24,44,0.55)', 'rgba(120,110,150,0.5)', 2);
         this.ctx.globalAlpha = 0.4; this.txt(q.options[i], x + bw / 2, y + bh / 2 + 4, 21, '#8a90a8', 'center', { sw: 3, maxW: bw - 30, weight: 700 }); this.ctx.globalAlpha = 1;
         this.ctx.fillStyle = '#f4a8c0'; this.ctx.fillRect(x + 18, y + bh / 2 + 3, bw - 36, 3);
-        this.txt('橡皮擦', x + bw - 10, y + 12, 12, '#f4a8c0', 'right', { sw: 3 });
+        this.txt('橡皮擦', x + bw - 10, y + 12, phrase ? 16 : 12, '#f4a8c0', 'right', { sw: 3 });
         continue;
       }
       this.box(x, y, bw, bh, fill, stroke, 3);
-      this.txt(k1[i], x + 14, y + 14, 15, this.p[0].mv.color, 'center', { sw: 4 });
-      if (!this.menu.cpu) this.txt(k2[i], x + bw - 14, y + 14, 15, this.p[1].mv.color, 'center', { sw: 4 });
+      this.txt(k1[i], x + 14, y + 14, phrase ? 16 : 15, this.p[0].mv.color, 'center', { sw: 4 });
+      if (!this.menu.cpu) this.txt(k2[i], x + bw - 14, y + 14, phrase ? 16 : 15, this.p[1].mv.color, 'center', { sw: 4 });
       this.txt(q.options[i], x + bw / 2, y + bh / 2 + 4, q.kind === 'math' ? 28 : 21, '#ffffff', 'center', { sw: 4, maxW: bw - 30, weight: 700, font: q.kind === 'math' ? C.FONT_TITLE : C.FONT });
       for (const s of (this.camp ? [0] : [0, 1])) {
         const a = q.ans[s]; if (!a || a.idx !== i || (a.ok && !q.revealed)) continue;
         const bx = s === 0 ? x + 4 : x + bw - 40;
         this.box(bx, y + bh - 20, 36, 17, this.p[s].mv.color, null);
-        this.txt(s === 0 ? 'P1' : 'P2', bx + 18, y + bh - 11, 12, '#120c1c', 'center', { stroke: false });
+        this.txt(s === 0 ? 'P1' : 'P2', bx + 18, y + bh - 11, phrase ? 16 : 12, '#120c1c', 'center', { stroke: false });
       }
     }
+  };
+
+  // Short phrase subtitles retain a readable minimum on 667px phones.
+  G.drawPhraseSubtitle = function(text, cx, y) {
+    const c = this.ctx; let size = 17, shown = String(text);
+    const width = () => { c.font = `700 ${size}px ${WF.CFG.FONT}`; return c.measureText(shown).width; };
+    while (width() > 900 && size > 16) size--;
+    while (width() > 900 && shown.length > 1) shown = shown.slice(0,-2) + '…';
+    this.txt(shown, cx, y, size, '#d8d0ea', 'center', {sw:2,weight:700});
   };
 
   // 例句一行：把题目词（含变形）高亮成金色；太长就缩字号
@@ -479,7 +512,7 @@
     const C = WF.CFG, bob = Math.sin(this.t / 18) * 3;
     this.txt('单词格斗', C.SCREEN_W / 2 + 5, 78 + bob + 6, 72, '#7a1414', 'center', { font: C.FONT_TITLE, sw: 0, stroke: false });
     this.txt('单词格斗', C.SCREEN_W / 2, 78 + bob, 72, '#ffd23c', 'center', { font: C.FONT_TITLE, sw: 12, stroke: '#2a0a0a' });
-    this.txt('WORD FIGHT  ·  试玩版 v1.10.2', C.SCREEN_W / 2, 130, 16, '#e9d7a6', 'center', { sw: 4, weight: 700 });
+    this.txt('WORD FIGHT  ·  试玩版 v1.11', C.SCREEN_W / 2, 130, 16, '#e9d7a6', 'center', { sw: 4, weight: 700 });
 
     this.menuRects = [];
     const pw = 230, ph = 48, px = C.SCREEN_W - pw - 16, py = 14;

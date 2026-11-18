@@ -251,7 +251,7 @@
       const sec = (q.first ? q.first.t : q.t) / WF.CFG.FPS, fast = this.fastS(1);
       if (block) anim = 'combo_a';
       else if (q.eliteAct || sec <= fast) { anim = 'heavy_punch'; leads = ['combo_a']; }
-      else if (sec <= WF.CFG.SLOW_S) anim = 'heavy_punch';
+      else if (sec <= this.slowS()) anim = 'heavy_punch';
       else anim = 'combo_a';
       if (leads && !leads.every(a => A.has(a))) leads = null;
     }
@@ -298,13 +298,16 @@
       const wrongs = [0, 1, 2, 3].filter(i => i !== q.correct);
       q.erased = wrongs[Math.floor(this.rand() * wrongs.length)];
     }
-    if (q.kind === 'word' && this.lvOf('glasses')) {
-      if (!q.pos) { const w = this.lookupBankWord(q.bank, q.word); if (w && w.pos) q.pos = w.pos; }
-      q.posHint = true;
-      if (cp.hintsLeft > 0) q.hintAt = 4 * WF.CFG.FPS;
+    if ((q.kind === 'word' || q.kind === 'phrase') && this.lvOf('glasses')) {
+      if (q.kind === 'phrase') { q.hint = q.word.match(/[a-z]/i)?.[0] || ''; }
+      else {
+        if (!q.pos) { const w = this.lookupBankWord(q.bank, q.word); if (w && w.pos) q.pos = w.pos; }
+        q.posHint = true;
+        if (cp.hintsLeft > 0) q.hintAt = 4 * WF.CFG.FPS;
+      }
     }
-    q.inBook = !!(prof && WF.Profiles.mastery(prof.id, q.bank, q.word) === 'wrong');
-    q.rootMatch = this.rootMatch(cp.lastWord, q.word);
+    q.inBook = !!(prof && (q.kind === 'phrase' && WF.Profiles.phraseMastery ? WF.Profiles.phraseMastery(prof.id, q.bank, q.word) : WF.Profiles.mastery(prof.id, q.bank, q.word)) === 'wrong');
+    q.rootMatch = q.kind !== 'phrase' && this.rootMatch(cp.lastWord, q.word);
   };
   // “同词根”用一个简单判断：前 4 个字母相同，或共享 4 字母以上的常见词缀（-tion、-ment…）
   G.rootMatch = function (a, b) {
@@ -341,10 +344,10 @@
     const cp = this.camp;
     if (!rec.ok) {
       q.playerWrong = true;
-      if (q.kind === 'word' && !cp.cityMissed.some(e => e.word === q.word && e.bank === q.bank)) cp.cityMissed.push({ word: q.word, bank: q.bank, meaning: q.meaning, pos: q.pos || '' });
-      if (q.kind === 'word' && was !== 'wrong') cp.newWrong.set(q.bank + '\t' + q.word, { word: q.word, meaning: q.meaning });
+      if ((q.kind === 'word' || q.kind === 'phrase') && !cp.cityMissed.some(e => e.word === q.word && e.bank === q.bank && (e.kind || 'word') === q.kind)) cp.cityMissed.push({ word: q.word, bank: q.bank, meaning: q.meaning, pos: q.pos || '', kind: q.kind, phraseId: q.phraseId, fmt: q.fmt });
+      if ((q.kind === 'word' || q.kind === 'phrase') && was !== 'wrong') cp.newWrong.set(q.bank + '\t' + (q.kind === 'phrase' ? 'ph:' : '') + q.word, { word: q.word, meaning: q.meaning });
     } else {
-      cp.correctCount++; cp.lastWord = q.word;
+      cp.correctCount++; cp.lastWord = q.kind === 'phrase' ? null : q.word;
       if (this.lvOf('flashcard') && cp.correctCount % 15 === 0) { this.campHeal(this.num('flashcard'), '抽认卡'); this.toast('抽认卡', `又答对 15 个词，回 ${this.num('flashcard')} 血`, 'flashcard'); }
     }
   };
@@ -685,7 +688,7 @@
   G.campReviewList = function () {
     const cp = this.camp, N = K().REVIEW_N, list = cp.cityMissed.slice(-N);
     if (list.length < N && this.campWrongSrc) {
-      for (const e of this.campWrongSrc.entries) { if (list.length >= N) break; if (!list.some(x => x.word === e.word && x.bank === e.bank)) list.push(e); }
+      for (const e of this.campWrongSrc.entries) { if (list.length >= N) break; if (!list.some(x => x.word === e.word && x.bank === e.bank && (x.kind || 'word') === (e.kind || 'word'))) list.push(e); }
     }
     return list;
   };
@@ -736,7 +739,7 @@
     const cp = this.camp, r = cp.review; if (!r || r.pick != null || r.q.erased === idx) return;
     r.pick = idx; r.fb = 1; const ok = idx === r.q.correct; if (ok) r.ok++;
     WF.Audio.play(ok ? 'correct' : 'wrong');
-    const prof = WF.Profiles.get(this.menu.p1); if (prof) { const was = WF.Profiles.mastery(prof.id, r.q.bank, r.q.word); WF.Profiles.markAnswer(prof.id, r.q, ok); this.campOnAnswer(r.q, { ok }, was); }
+    const prof = WF.Profiles.get(this.menu.p1); if (prof) { const was = r.q.kind === 'phrase' ? WF.Profiles.phraseMastery(prof.id, r.q.bank, r.q.word) : WF.Profiles.mastery(prof.id, r.q.bank, r.q.word); WF.Profiles.markAnswer(prof.id, r.q, ok); this.campOnAnswer(r.q, { ok }, was); }
     this.stats[0].answered++; if (ok) this.stats[0].correct++; else this.stats[0].wrong++;
   };
   G.campReviewTick = function () {

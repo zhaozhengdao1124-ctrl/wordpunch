@@ -38,7 +38,9 @@ WF.Game = class {
   }
   // ================= 工具 =================
   // 以下几项 2P 对战按原规则返回；闯关模式在 campaign.js 里读道具加成
-  fastS(s) { return this.camp ? this.campFastS(s) : WF.CFG.FAST_S; }
+  fastS(s) { return (this.camp ? this.campFastS(s) : WF.CFG.FAST_S) + (this.q && this.q.kind === 'phrase' ? 1 : 0); }
+  slowS() { return WF.CFG.SLOW_S + (this.q && this.q.kind === 'phrase' ? 1 : 0); }
+  timeoutS() { return (this.camp ? this.campTimeout() : WF.CFG.Q_TIMEOUT_S) + (this.q && this.q.kind === 'phrase' ? 2 : 0); }
   ultAt(s) { return this.camp ? this.campUltAt(s) : 5; }
   critChance(s) { return this.camp ? this.campCrit(s) : WF.CFG.CRIT_CHANCE; }
   ultDmg(A) { return this.camp ? this.campUltDmg(A) : WF.CFG.ULT_DMG; }
@@ -242,7 +244,7 @@ WF.Game = class {
     q.ans[s] = rec; const st = this.stats[s]; st.answered++;
     q.flash = { idx, t: 0, ok: rec.ok, side: s };
     const prof = this.profileOf(s);
-    const was = (this.camp && prof) ? WF.Profiles.mastery(prof.id, q.bank, q.word) : null;
+    const was = (this.camp && prof) ? (q.kind === 'phrase' ? WF.Profiles.phraseMastery(prof.id, q.bank, q.word) : WF.Profiles.mastery(prof.id, q.bank, q.word)) : null;
     if (prof) WF.Profiles.markAnswer(prof.id, q, rec.ok);
     if (this.camp && s === 0) this.campOnAnswer(q, rec, was);
     const o = 1 - s;
@@ -292,7 +294,7 @@ WF.Game = class {
       return;
     }
     if (q.first && !pa && q.t - q.first.t > C.CLASH_WINDOW_S * C.FPS) this.beginAttack(q.first.p, { speculative: false }), this.commitAttack();
-    else if (!q.first && q.t >= (this.camp ? this.campTimeout() : C.Q_TIMEOUT_S) * C.FPS) {
+    else if (!q.first && q.t >= this.timeoutS() * C.FPS) {
       this.say(`Q${q.n} 超时`);
       if (this.camp && this.campOnTimeout(q)) return;
       this.endQuestion();
@@ -351,7 +353,7 @@ WF.Game = class {
         anim = this.pickMove(A, A.mv.combo[n - 1]);
         kick = /kick/.test(anim);
       }
-    } else if (sec <= C.SLOW_S) {
+    } else if (sec <= this.slowS()) {
       this.slowStreak(s); kind = 'slow';
       crit = this.rand() < this.critChance(s);
       dmg = C.SLOW_DMG * (crit ? C.CRIT_MULT : 1);
@@ -807,7 +809,7 @@ WF.Game = class {
     const st = this.stats[s]; st.answered++;
     q.flash = { idx, t: 0, ok: rec.ok, side: s };
     const prof = this.profileOf(s);
-    const was = (this.camp && prof) ? WF.Profiles.mastery(prof.id, q.bank, q.word) : null;
+    const was = (this.camp && prof) ? (q.kind === 'phrase' ? WF.Profiles.phraseMastery(prof.id, q.bank, q.word) : WF.Profiles.mastery(prof.id, q.bank, q.word)) : null;
     if (prof) WF.Profiles.markAnswer(prof.id, q, rec.ok);
     if (this.camp && s === 0) this.campOnAnswer(q, rec, was);
     if (!rec.ok) {
@@ -961,7 +963,7 @@ WF.Game = class {
     return (b && b.words.find(w => w.word === word)) || null;
   }
   enrichEntry(h) {
-    if (!h || h.kind === 'math' || h.bank === 'math') return h;
+    if (!h || h.kind === 'phrase' || h.kind === 'math' || h.bank === 'math') return h;
     const w = this.lookupBankWord(h.bank, h.word);
     return w ? Object.assign({}, w, h) : h;
   }

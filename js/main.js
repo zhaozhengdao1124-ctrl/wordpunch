@@ -245,7 +245,7 @@
   function wrongKey(g, code) {
     if (bookCommon(g, code, false)) return;
     if (code === 'Escape') { if (WF.Speech) WF.Speech.stop(); g.goTitle(); return; }
-    const filters = ['all'].concat(g.banks.map(b => b.id));
+    const filters = ['all', 'phrases'].concat(g.banks.map(b => b.id));
     if (code === 'Tab') {
       const i = filters.indexOf(g.ui.bankFilter || 'all');
       g.ui.bankFilter = filters[(i + 1) % filters.length]; g.ui.sel = 0;
