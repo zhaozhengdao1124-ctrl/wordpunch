@@ -98,13 +98,14 @@
   G.render = function () {
     baseRender.apply(this, arguments);
     const dt = this.dailyToast; if (!dt) return;
+    if (this.rocket && this.rocket.ln) { dt.t0 = this.t; return; }   // v1.10：马西克发射（瞄准 + 飞行 / 失败动画）期间先不弹，演完再弹
     const age = this.t - dt.t0, L = 3 * FPS; if (age > L || age < 0) { this.dailyToast = null; return; }
     const c = this.ctx; c.save(); c.setTransform(1, 0, 0, 1, 0, 0);
-    const k = Math.min(1, age / 5, (L - age) / 8), w = 380, h = 44, x = (C.SCREEN_W - w) / 2, y = 136 - (1 - Math.min(1, age / 6)) * 20;
+    const T = !!WF.touch, k = Math.min(1, age / 5, (L - age) / 8), w = T ? 520 : 380, h = T ? 60 : 44, x = (C.SCREEN_W - w) / 2, y = 136 - (1 - Math.min(1, age / 6)) * 20;
     c.globalAlpha = Math.max(0, k);
     this.box(x, y, w, h, 'rgba(12,8,26,0.92)', '#7dff9a', 2);
-    this.txt(`✔ 每日任务完成：${dt.def.name}`, C.SCREEN_W / 2, y + 15, 16, '#7dff9a', 'center', { sw: 4, weight: 700, maxW: w - 20 });
-    this.txt(`+${dt.def.reward} 闯关积分 · 回菜单「每日任务」领取`, C.SCREEN_W / 2, y + 33, 12, '#e9d7a6', 'center', { sw: 3, weight: 700 });
+    this.txt(`✔ 每日任务完成：${dt.def.name}`, C.SCREEN_W / 2, y + (T ? 19 : 15), T ? 20 : 16, '#7dff9a', 'center', { sw: 4, weight: 700, maxW: w - 20 });
+    this.txt(`+${dt.def.reward} 闯关积分 · 回菜单「每日任务」领取`, C.SCREEN_W / 2, y + (T ? 43 : 33), T ? 16 : 12, '#e9d7a6', 'center', { sw: 3, weight: 700 });
     c.restore();
   };
 

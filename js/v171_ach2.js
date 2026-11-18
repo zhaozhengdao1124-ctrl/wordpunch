@@ -277,8 +277,9 @@
     const q = this.achQ; if (!q || !q.length) return;
     const it = q[0];
     if (WF.touch && this.camp && this.campModal && this.campModal() && this.camp.toasts.length >= 2) { if (it.t0 != null) it.t0++; return; }   // v1.9 触屏：右上角被第 2 条提示占着 → 成就先等一等（不计时）
+    if (this.rocket && this.rocket.ln) { if (it.t0 != null) it.t0 = this.t - (it.age || 0); return; }   // v1.10：马西克发射（瞄准 + 飞行 / 失败动画）期间成就提示先等一等（不计时），不挡条、按钮和动画
     if (it.t0 == null) it.t0 = this.t;
-    const age = this.t - it.t0, L = 75; if (age > L) { q.shift(); return; }
+    const age = it.age = this.t - it.t0, L = 75; if (age > L) { q.shift(); return; }
     const c = this.ctx; c.save(); c.setTransform(1, 0, 0, 1, 0, 0);
     const T = WF.touch, k = Math.min(1, age / 5, (L - age) / 8), w = T ? 460 : 340, h = T ? 72 : 42, x = T ? C.SCREEN_W - w - 10 : C.SCREEN_W - w - 16, y = T ? 2 : 186;   // v1.9 触屏：右上角（标题那一带没有按钮），说明折两行，字 ≥ 16
     const fl = this._tfloor; if (T) this._tfloor = WF.TOUCH_FONT || 16;

@@ -122,7 +122,7 @@
   const baseRender = G.render;
   G.render = function () {
     baseRender.apply(this, arguments);
-    if (this.camp || !this.menu.cpu || this.state === 'title' || this.state === 'result') return;
+    if (this.camp || !this.menu.cpu || this.state === 'title' || this.state === 'result' || this._lnShown) return;   // v1.10 发射时机条盖在这一行上，不画
     const d = D[this.diffCpu()]; this.ctx.save(); this.ctx.setTransform(1, 0, 0, 1, 0, 0);
     this.txt(`陪练 · ${d.name}`, C.SCREEN_W / 2, 122, 13, d.color, 'center', { sw: 3, weight: 700 }); this.ctx.restore();
   };

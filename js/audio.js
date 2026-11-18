@@ -133,6 +133,25 @@ WF.Audio = (function () {
     pickup(c, out, t, p) { const r = p.rare ? 1.25 : 1; osc(c, out, t, 'square', 660 * r, 660 * r, 0.06, 0.1); osc(c, out, t + 0.06, 'square', 990 * r, 990 * r, 0.09, 0.1); if (p.rare) osc(c, out, t + 0.14, 'square', 1320 * r, 1320 * r, 0.12, 0.09); },
     heal(c, out, t) { osc(c, out, t, 'triangle', 440, 880, 0.25, 0.12); osc(c, out, t + 0.05, 'sine', 660, 1320, 0.25, 0.08); },
     point(c, out, t, p) { osc(c, out, t, 'square', 700 + (p.n || 0) * 140, 900 + (p.n || 0) * 140, 0.09, 0.14); },
+    // v1.10 马西克发射按钮：按下咔哒 / 普通发射（低沉推力）/ 完美（金色和弦 + 闪光声）/ 超级（再高八度 + 双重轰鸣）/ 失败（噗噗熄火 + 一声闷爆）/ 咳嗽
+    launchClick(c, out, t) { osc(c, out, t, 'square', 1500, 1100, 0.03, 0.12); nz(c, out, t, 'highpass', 3000, 0.8, 0.02, 0.25); },
+    launchGo(c, out, t) { osc(c, out, t, 'sawtooth', 90, 220, 0.5, 0.12, 0.02); nz(c, out, t, 'bandpass', 500, 0.8, 0.7, 0.45, 0.03, 1500); },
+    launchPerfect(c, out, t) {
+      [784, 988, 1175, 1568].forEach((f, i) => osc(c, out, t + i * 0.045, 'triangle', f, f, 0.22, 0.16));
+      osc(c, out, t + 0.18, 'square', 2093, 2093, 0.16, 0.05); nz(c, out, t + 0.02, 'highpass', 6000, 0.7, 0.35, 0.22, 0.01);
+      osc(c, out, t, 'sawtooth', 110, 300, 0.55, 0.12, 0.02); nz(c, out, t, 'bandpass', 600, 0.8, 0.8, 0.5, 0.02, 2200);
+    },
+    launchSuper(c, out, t) {
+      SFX.launchPerfect(c, out, t);
+      [1568, 1976, 2349, 3136].forEach((f, i) => osc(c, out, t + 0.22 + i * 0.04, 'triangle', f, f, 0.2, 0.1));
+      osc(c, out, t + 0.05, 'sine', 70, 28, 0.9, 0.9); nz(c, out, t + 0.05, 'lowpass', 900, 0.7, 0.9, 0.6, 0.004, 100);
+    },
+    launchFizzle(c, out, t) {
+      for (let i = 0; i < 4; i++) nz(c, out, t + i * 0.09, 'lowpass', 900 - i * 160, 1.2, 0.06, 0.32 - i * 0.05);
+      osc(c, out, t, 'sawtooth', 260, 70, 0.4, 0.06);
+      nz(c, out, t + 0.42, 'lowpass', 500, 0.7, 0.35, 0.55, 0.005, 120); osc(c, out, t + 0.42, 'sine', 90, 45, 0.25, 0.45);
+    },
+    cough(c, out, t) { nz(c, out, t, 'bandpass', 750, 2.2, 0.09, 0.32); nz(c, out, t + 0.12, 'bandpass', 620, 2.2, 0.07, 0.22); },
   };
 
   function ensure() {
