@@ -249,7 +249,7 @@ WF.Game = class {
     if (!rec.ok) {
       st.wrong++; this.streak[s] = 0; if (this.ansCombo) this.ansCombo[s] = 0;
       WF.Audio.play('lock', { p2: s === 1 });
-      WF.Audio.play('wrong');
+      WF.Audio.play('wrong'); if (this.humanSide(s)) WF.Haptics.wrong();
       this.say(`Q${q.n} P${s + 1} 答错 ${(q.t / C.FPS).toFixed(2)}s`);
       // 电脑已经不能再改变“会不会角力”，立即按预设计划作答，避免空等
       if (this.menu.cpu && s === 0 && !q.ans[1] && q.cpu) { this.answer(1, q.cpu.idx); this.render(); return; }
@@ -263,7 +263,7 @@ WF.Game = class {
     this.ansCombo[s] = (this.ansCombo[s] || 0) + 1;
     st.maxCombo = Math.max(st.maxCombo || 0, this.ansCombo[s]);
     WF.Audio.play('lock', { p2: s === 1 });
-    WF.Audio.play('correct');
+    WF.Audio.play('correct'); if (this.humanSide(s)) WF.Haptics.correct();
     if (!q.first) {
       q.first = { p: s, t: q.t };
       const canClash = !q.ans[o] && this.clashAllowed();
@@ -590,7 +590,7 @@ WF.Game = class {
     this.excite = Math.max(this.excite, crit || final || ko || lvl === 'heavy' ? 40 : 10);
     WF.Audio.play('hit', { power: { light: 0.9, mid: 1, heavy: 1.2, crit: 1.3, ult: 1, ultFinal: 1.4 }[lvl] || 1, pitch: 0.88 + this.rand() * 0.24, kick: !!o.kick || /kick/.test(A.anim), crit: crit || final });
     if ((final || ko) && !mko) WF.Audio.play('boom'); else if (mko) WF.Audio.play('thud');
-    if (lvl === 'ult') WF.Haptics.ultHit(); else if (final) WF.Haptics.ultFinal(); else if (crit) WF.Haptics.crit();
+    if (lvl === 'ult') WF.Haptics.ultHit(); else if (final) WF.Haptics.ultFinal(); else if (crit) WF.Haptics.crit(); else if (this.humanSide(A.side) || this.humanSide(D.side)) WF.Haptics.hit();
     // 连击数
     const cn = o.comboN || 1;
     this.combo[A.side] = { n: cn, t: 0, crit, ult: lvl === 'ult' || final, label: cn >= 2 ? (cn + ' 连击！') : (crit ? null : null) };
@@ -811,7 +811,7 @@ WF.Game = class {
     if (prof) WF.Profiles.markAnswer(prof.id, q, rec.ok);
     if (this.camp && s === 0) this.campOnAnswer(q, rec, was);
     if (!rec.ok) {
-      st.wrong++; WF.Audio.play('wrong');
+      st.wrong++; WF.Audio.play('wrong'); if (this.humanSide(s)) WF.Haptics.wrong();
       if (this.menu.cpu && s === 0 && !q.ans[1] && q.cpu) { this.answer(1, q.cpu.idx); this.render(); return; }
       if (q.ans[1 - s] && !q.ans[1 - s].ok) { this.reveal(); q.wait = 18; }
       this.render();
@@ -819,7 +819,7 @@ WF.Game = class {
     }
     st.correct++; st.sumT += q.t;
     cl.score[s]++; this.reveal(); q.winner = s; q.wait = 14;
-    WF.Audio.play('correct'); WF.Audio.play('point', { n: cl.score[s] });
+    WF.Audio.play('correct'); WF.Audio.play('point', { n: cl.score[s] }); if (this.humanSide(s)) WF.Haptics.correct();
     // 顶一下：两人一起往输的一方挪 2 像素
     const dir = s === 0 ? 1 : -1; cl.shift += 2 * dir;
     this.p.forEach(f => f.moveTo(f.x + dir * 2, 4, 'out', true));
@@ -948,6 +948,7 @@ WF.Game = class {
     if (this.bankBg) this.bankBg(this.wrongBanks(WF.Profiles.wrongList(this.menu.p1, 'all')));   // v1.8 错题涉及的按需词库后台下载（补全例句）
     if (WF.BookUI) WF.BookUI.open(this, 'wrong');
   }
+  humanSide(s) { return s === 0 || (!this.menu.cpu && !this.camp); }   // v1.8.1 震动只给真人：电脑陪练的 P2 答题不震
   ipaText(w) {
     if (!w) return '';
     if (w.ipa && w.ipaUk) return '/' + w.ipa + '/    英 /' + w.ipaUk + '/';

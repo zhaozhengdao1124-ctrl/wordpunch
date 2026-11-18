@@ -24,12 +24,6 @@ body{height:100vh;height:100dvh;touch-action:none;}
 @keyframes wfp{50%{opacity:.35}}
 #wf-rot i{display:block;width:12vmin;height:20vmin;border:1vmin solid #ffd23c;border-radius:2vmin;margin-bottom:4vmin;animation:wfr 2s infinite ease-in-out;}
 @keyframes wfr{0%,20%{transform:rotate(0)}60%,100%{transform:rotate(-90deg)}}
-body.wf-touch #wf-dict .wf-back,body.wf-touch #wf-dict .wf-fight,body.wf-touch #wf-dict .wf-tab{min-height:44px;min-width:44px;padding:8px 16px;font-size:16px;}
-body.wf-touch #wf-dict .wf-speak{width:48px;height:48px;line-height:48px;font-size:20px;}
-body.wf-touch #wf-dict .wf-bar{padding:8px 14px 8px;gap:6px 10px;}
-body.wf-touch #wf-dict .wf-list{padding:10px 14px 6px;-webkit-overflow-scrolling:touch;touch-action:pan-y;}
-body.wf-touch #wf-dict{touch-action:pan-y;}
-@media (max-height:500px){body.wf-touch #wf-dict .wf-tabs{flex-wrap:nowrap;overflow-x:auto;-webkit-overflow-scrolling:touch;touch-action:pan-x;padding-bottom:2px;}body.wf-touch #wf-dict .wf-tab{flex:0 0 auto;min-height:40px;padding:4px 14px;}body.wf-touch #wf-dict h1{font-size:18px;}body.wf-touch #wf-dict .wf-card{padding:10px 14px;}body.wf-touch #wf-dict .wf-word{font-size:24px;}}
 `;
   document.head.appendChild(st);
   const mk = (id, html) => { const d = document.createElement('div'); d.id = id; d.innerHTML = html; document.body.appendChild(d); return d; };

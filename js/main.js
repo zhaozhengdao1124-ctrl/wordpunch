@@ -185,13 +185,29 @@
     const words = g.bookWords(), per = g.bookPageSize(), page = g.ui.page || 0;
     return words.slice(page * per, page * per + per);
   }
-  function bookList(g) { return g.bookWords() || []; }
+  function bookList(g) { return (WF.BookUI && WF.BookUI.visible()) ? WF.BookUI.list() : (g.bookWords() || []); }
+  // v1.8.1 单词书列表通用按键：详细页 / 灰条 / 全部显示。返回 true = 已处理
+  function bookCommon(g, code, enterOpens) {
+    const B = WF.BookUI; if (!B || !B.visible()) return false;
+    if (B.detailOpen()) {
+      if (code === 'Escape' || code === 'Enter' || code === 'NumpadEnter' || code === 'Backspace' || code === 'KeyD') { if (WF.Speech) WF.Speech.stop(); B.closeDetail(); }
+      else if (code === 'KeyP' || code === 'Digit1') B.say(g);
+      return true;
+    }
+    if (!B.list().length) return false;
+    if (code === 'Space') { B.toggleMask(g); return true; }
+    if (code === 'KeyA') { B.setShowAll(!B.showAll); return true; }
+    if (code === 'KeyD' || (enterOpens && (code === 'Enter' || code === 'NumpadEnter'))) { if (WF.Speech) WF.Speech.stop(); B.openDetail(g); return true; }
+    return false;
+  }
   function bookKey(g, code) {
     const search = document.querySelector('#wf-dict .wf-search');
     if (search && document.activeElement === search) {
       if (code === 'Escape') { search.blur(); if (WF.Speech) WF.Speech.stop(); g.goTitle(); }
+      if (code === 'Enter' || code === 'NumpadEnter' || code === 'ArrowDown') search.blur();
       return;
     }
+    if (bookCommon(g, code, true)) return;
     if (code === 'Escape') { if (WF.Speech) WF.Speech.stop(); g.goTitle(); return; }
     if (code === 'Slash') { if (search) { search.focus(); search.select && search.select(); } return; }
     if (code === 'Tab') { g.ui.bank = (g.ui.bank + 1) % g.banks.length; if (g.bankRetry) g.bankRetry(g.ui.bank); g.ui.sel = 0; if (WF.Speech) WF.Speech.stop(); if (WF.BookUI) WF.BookUI.refresh(g, true); return; }
@@ -206,8 +222,14 @@
       g.ui.sel = Math.min(sl.length - 1, (g.ui.sel || 0) + 1);
       if (WF.BookUI) WF.BookUI.refresh(g, true);
     }
+    if (code === 'PageDown' || code === 'PageUp') {
+      if (!sl.length) return;
+      g.ui.sel = Math.max(0, Math.min(sl.length - 1, (g.ui.sel || 0) + (code === 'PageDown' ? 10 : -10)));
+      if (WF.BookUI) WF.BookUI.refresh(g, true);
+    }
     if (code === 'Home') { g.ui.sel = 0; if (WF.BookUI) WF.BookUI.refresh(g, true); }
-    if (code === 'KeyP' || code === 'Digit1') { const e = sl[g.ui.sel || 0]; g.speakEntry(e, 'word'); }
+    if (code === 'End' && sl.length) { g.ui.sel = sl.length - 1; if (WF.BookUI) WF.BookUI.refresh(g, true); }
+    if (code === 'KeyP' || code === 'Digit1') { if (WF.BookUI && WF.BookUI.visible()) WF.BookUI.say(g); else { const e = sl[g.ui.sel || 0]; g.speakEntry(e, 'word'); } }
   }
   function wrongSlice(g) {
     const p = WF.Profiles.get(g.menu.p1); if (!p) return [];
@@ -216,10 +238,12 @@
     return list.slice(page * per, page * per + per);
   }
   function wrongListAll(g) {
+    if (WF.BookUI && WF.BookUI.visible()) return WF.BookUI.list();
     const p = WF.Profiles.get(g.menu.p1); if (!p) return [];
     return WF.Profiles.wrongList(p.id, g.ui.bankFilter || 'all').map(h => g.enrichEntry(h));
   }
   function wrongKey(g, code) {
+    if (bookCommon(g, code, false)) return;
     if (code === 'Escape') { if (WF.Speech) WF.Speech.stop(); g.goTitle(); return; }
     const filters = ['all'].concat(g.banks.map(b => b.id));
     if (code === 'Tab') {
@@ -239,14 +263,20 @@
       g.ui.sel = Math.min(sl.length - 1, (g.ui.sel || 0) + 1);
       if (WF.BookUI) WF.BookUI.refresh(g, true);
     }
-    if (code === 'KeyP' || code === 'Digit1') { const e = sl[g.ui.sel || 0]; g.speakEntry(e, 'word'); }
+    if (code === 'KeyP' || code === 'Digit1') { if (WF.BookUI && WF.BookUI.visible()) WF.BookUI.say(g); else { const e = sl[g.ui.sel || 0]; g.speakEntry(e, 'word'); } }
     if (code === 'Enter' || code === 'NumpadEnter') g.requestStart(true);
   }
 
   function onKey(e) {
     WF.Audio.unlock();
     const code = e.code;
-    if (e.repeat) { e.preventDefault(); return; }
+    // v1.8.1 单词书搜索框里打字：交给输入框本身，只拦 Esc / Enter / ↓（不然 preventDefault 会吃掉字）
+    if (e.target && e.target.classList && e.target.classList.contains('wf-search')) {
+      if (code === 'Escape' || code === 'Enter' || code === 'NumpadEnter' || code === 'ArrowDown') { bookKey(game, code); e.preventDefault(); game.render(); }
+      return;
+    }
+    if (e.repeat && !/^(ArrowUp|ArrowDown|PageUp|PageDown)$/.test(code) ) { e.preventDefault(); return; }
+    if (e.repeat && !(game && game.state === 'title' && /^(book|wrongbook)$/.test(game.ui.screen))) { e.preventDefault(); return; }
     if (code === 'KeyF') { const el = document.documentElement; if (!document.fullscreenElement) el.requestFullscreen && el.requestFullscreen(); else document.exitFullscreen(); return; }
     const g = game;
     if (g.bankLoad) { g.bankLoadInput(); e.preventDefault(); g.render(); return; }   // v1.8 词库下载中：Esc/任意键取消

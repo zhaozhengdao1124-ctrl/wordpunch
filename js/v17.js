@@ -394,10 +394,10 @@
     if (this.camp && s === 0) this.campOnAnswer(q, { ok }, null);
     if (ok) {
       rk.correct++; rk.tier = rk.correct >= R.QUESTIONS ? 3 : rk.correct >= R.TIERS[1] ? 2 : rk.correct >= 1 ? 1 : 0;
-      WF.Audio.play('correct'); WF.Audio.play('point', { n: rk.correct });
+      WF.Audio.play('correct'); WF.Audio.play('point', { n: rk.correct }); if (!this.humanSide || this.humanSide(s)) WF.Haptics.correct();
       const F = rk.mode === 'boss' ? rk.D : rk.A;
       this.popWorld(rk.mode === 'boss' ? `挡住 ${rk.correct * 20}%` : `火力 +1`, F.worldX(), WF.CFG.GROUND_Y - 44, rk.mode === 'boss' ? '#8fd0ff' : '#7dff9a', 20);
-    } else WF.Audio.play('wrong');
+    } else { WF.Audio.play('wrong'); if (!this.humanSide || this.humanSide(s)) WF.Haptics.wrong(); }
     this.render && 0;
   };
   // ---------- HUD：倒计时（红色警报 / 绿色发射）+ AFUERA! + 韧性减半标签 ----------

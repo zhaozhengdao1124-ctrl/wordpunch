@@ -408,7 +408,7 @@
       { key: 'sfx', label: '音效', value: WF.Audio.sfxOn ? '开' : '关' },
       { key: 'music', label: '音乐', value: WF.Audio.musicOn ? '开' : '关' },
       { key: 'bgm', label: '背景曲目', value: WF.Audio.track.name + '（' + WF.Audio.track.credit + '）' },
-      { key: 'hap', label: '手机震动', value: H.supported ? (H.enabled ? '开' : '关') : (H.enabled ? '开（本设备不支持，无效果）' : '关') },
+      { key: 'hap', label: '震动', value: H.supported ? (H.enabled ? '开' : '关') : (H.enabled ? '开（本设备不支持，无效果）' : '关') },
     ];
   };
   G.menuItems = G.settingsItems;
