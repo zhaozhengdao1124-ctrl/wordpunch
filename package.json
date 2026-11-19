@@ -1,0 +1,15 @@
+{
+  "name": "wordpunch",
+  "private": true,
+  "description": "单词格斗。在线对战需要本地启动 server/index.js，GitHub Pages 只托管页面。",
+  "scripts": {
+    "net": "node server/index.js",
+    "test:net": "node test/net.test.js"
+  },
+  "dependencies": {
+    "ws": "^8.18.3"
+  },
+  "devDependencies": {
+    "puppeteer-core": "^24.15.0"
+  }
+}
