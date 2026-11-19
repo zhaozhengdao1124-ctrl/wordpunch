@@ -46,6 +46,8 @@ WF.Game = class {
   ultDmg(A) { return this.camp ? this.campUltDmg(A) : WF.CFG.ULT_DMG; }
   clashDmg(W) { return this.camp ? this.campClashDmg(W) : WF.CFG.CLASH_DMG; }
   clashAllowed() { return this.camp ? this.campClashAllowed() : true; }
+  // 全模式角力窗口（双人 / 人机 / 闯关）统一读 CLASH_WINDOW_S。
+  clashWindowS() { return WF.CFG.CLASH_WINDOW_S; }
   gap() { return this.camp ? this.campGap() : WF.CFG.GAP; }
   slowStreak(s) { if (this.camp && this.campSlowKeeps(s)) return; this.streak[s] = 0; }
   // v1.5：全体上场角色（含一波里尚未作为 p[1] 的小怪），供步进 / 绘制 / 顿帧使用
@@ -237,7 +239,7 @@ WF.Game = class {
     if (this.state === 'rocket' && this.answerRocket) return this.answerRocket(side, idx);
   }
   answerNormal(s, idx) {
-    const q = this.q, C = WF.CFG, W = C.CLASH_WINDOW_S * C.FPS;
+    const q = this.q, C = WF.CFG, W = this.clashWindowS() * C.FPS;
     if (!q || q.revealed || q.ans[s]) return;
     if (q.erased === idx) return; // 橡皮擦擦掉的选项按了没反应
     const rec = { idx, t: q.t, ok: idx === q.correct };
@@ -290,10 +292,10 @@ WF.Game = class {
     if (q.cpu && q.t === q.cpu.t && !q.ans[1]) this.answer(1, q.cpu.idx);
     if (this.state !== 'question') return;
     if (pa && pa.speculative && !pa.committed) {
-      if (q.t - q.first.t > C.CLASH_WINDOW_S * C.FPS) this.commitAttack();
+      if (q.t - q.first.t > this.clashWindowS() * C.FPS) this.commitAttack();
       return;
     }
-    if (q.first && !pa && q.t - q.first.t > C.CLASH_WINDOW_S * C.FPS) this.beginAttack(q.first.p, { speculative: false }), this.commitAttack();
+    if (q.first && !pa && q.t - q.first.t > this.clashWindowS() * C.FPS) this.beginAttack(q.first.p, { speculative: false }), this.commitAttack();
     else if (!q.first && q.t >= this.timeoutS() * C.FPS) {
       this.say(`Q${q.n} 超时`);
       if (this.camp && this.campOnTimeout(q)) return;
@@ -771,7 +773,7 @@ WF.Game = class {
   // ================= 角力 =================
   startClash() {
     const q = this.q; this.reveal(); this.state = 'clashIntro'; this.streak = [0, 0];
-    this.say(`Q${q.n} 双方 ${WF.CFG.CLASH_WINDOW_S} 秒内都答对 → 角力`);
+    this.say(`Q${q.n} 双方 ${this.clashWindowS()} 秒内都答对 → 角力`);
     this.run(this.clashIntroSeq());
   }
   clashPoint() { const [a, b] = this.p; return { x: (a.x + b.x) / 2 + 0.5, y: WF.CFG.GROUND_Y - 12 }; }

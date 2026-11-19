@@ -38,7 +38,8 @@ WF.CFG = {
   // v1.2.1 答对后的出招分档（只换动作，伤害照旧）：速答=短连段，普通=重拳，慢答=轻拳被架
   // versus=false：双人 / 电脑陪练保持 v1.2 的出招（换动作会改变出招时长，进而让血量轨迹和 v1.2 不再逐帧一致）
   HIT_TIERS: { campaign: true, versus: false, chainLead: ['combo_a', 'combo_b', 'combo_c'], chainN: [1, 2, 2, 2], normal: 'heavy_punch', slow: 'combo_a', leadSpeed: 2.2 },
-  CLASH_WINDOW_S: 0.3, CLASH_WIN_COUNT: 3, CLASH_CAP_S: 15,
+  // 全模式角力窗口 200ms（本机双人 / 电脑陪练 / 闯关；与联机 FAIR.clashWindowS 一致）。
+  CLASH_WINDOW_S: 0.2, CLASH_WIN_COUNT: 3, CLASH_CAP_S: 15,
   NEXT_Q_DELAY: 12,              // 动作结束后多少 tick 出下一题（命中后）
   REVEAL_MIN: 30,                // 命中/揭晓后至少亮多少 tick
   REVEAL_WRONG: 28,              // 答错揭晓正确答案后到下一题（约 0.93 秒）

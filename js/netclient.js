@@ -20,6 +20,7 @@
 #wf-net button,.wf-net-btn{min-height:48px;padding:10px 14px;border-radius:12px;border:2px solid #ffd23c;background:#2a2148;color:#fff;font-size:18px;font-weight:700;}
 #wf-net button:disabled{opacity:.45;}
 #wf-net .grow{flex:1;}
+#wf-net-lan-note{font-size:14px;line-height:1.45;color:#e9d7a6;background:rgba(255,210,60,.08);border-radius:10px;padding:8px 10px;margin:8px 0;}
 #wf-net-fair{font-size:14px;line-height:1.45;color:#e9d7a6;background:rgba(255,210,60,.08);border-radius:10px;padding:8px 10px;margin:8px 0;}
 #wf-net-invite-note{font-size:14px;line-height:1.4;color:#ffb4b4;margin:6px 0;}
 #wf-net-codebig{font-size:40px;letter-spacing:.18em;text-align:center;color:#ffd23c;font-weight:800;margin:4px 0;}
@@ -61,15 +62,11 @@
 
   const panel = el(`<div id="wf-net">
     <div class="card">
-      <h2>在线对战</h2>
+      <h2>同 WiFi 对战</h2>
       <p id="wf-net-status">未连接</p>
       <p id="wf-net-hint"></p>
       <div id="wf-net-setup">
-        <label for="wf-net-srv">对战服务地址</label>
-        <input id="wf-net-srv" autocomplete="off" placeholder="ws://127.0.0.1:8787">
-        <div class="row">
-          <button type="button" id="wf-net-connect" class="grow">连接</button>
-        </div>
+        <p id="wf-net-lan-note">同一 WiFi：双方都要先用电脑启动时打印的游戏地址打开（例如 http://192.168.x.x:8787/），再创建房间或输入房间号。不用填服务器。</p>
         <div class="row">
           <button type="button" id="wf-net-create" class="grow">创建房间</button>
         </div>
@@ -123,7 +120,7 @@
 
   const $ = (id) => document.getElementById(id);
   const nodes = {
-    status: $('wf-net-status'), hint: $('wf-net-hint'), srv: $('wf-net-srv'),
+    status: $('wf-net-status'), hint: $('wf-net-hint'),
     setup: $('wf-net-setup'), room: $('wf-net-room'), codebig: $('wf-net-codebig'),
     codeout: $('wf-net-codeout'), note: $('wf-net-invite-note'), fair: $('wf-net-fair'),
     players: $('wf-net-players'), bank: $('wf-net-bank'), mode: $('wf-net-mode'),
@@ -137,9 +134,9 @@
   }
 
   G.netDefaultUrl = function () {
-    let saved = '';
-    try { saved = localStorage.getItem('wf_net_srv') || ''; } catch (e) {}
-    return Rules.defaultServer(location, saved);
+    // 只认当前页面同源。同一 WiFi 场景要求双方都打开电脑启动时打印的局域网游戏地址，不再让玩家填服务器。
+    try { localStorage.removeItem('wf_net_srv'); } catch (e) {}
+    return Rules.defaultServer(location, '');
   };
   G.netName = function () {
     const p = W.Profiles && this.menu && W.Profiles.get(this.menu.p1);
@@ -264,11 +261,10 @@
     if (me && me.char && me.char !== this.netChar) { this.netChar = me.char; this.netPaintChars(); }
   };
   G.netConnect = function () {
-    const url = (nodes.srv.value || '').trim() || this.netDefaultUrl();
-    nodes.srv.value = url;
+    const url = this.netDefaultUrl();
     if (!url) {
       this.netLink = 'closed';
-      this.netHint = '还没有对战服务地址。GitHub Pages 只有网页，没有对战服务器。本机试玩请先在电脑上运行 node server/index.js，然后打开 http://127.0.0.1:8787/ 。';
+      this.netHint = '当前页面没有对战服务，也不能自动发现同一 WiFi 里的电脑。请先在电脑运行 node server/index.js，用它打印的局域网地址（例如 http://192.168.x.x:8787/）打开游戏，再创建或输入房间号。GitHub Pages 链接不能只靠房间号配对。';
       this.netPaint();
       return;
     }
@@ -282,7 +278,7 @@
     try { ws = new WebSocket(url); }
     catch (e) {
       this.netLink = 'failed';
-      this.netHint = '这个地址连不上。';
+      this.netHint = '连不上本机对战服务。请确认电脑上的 node server/index.js 还在运行，并且你打开的是它打印的游戏地址。';
       this.netPaint();
       return;
     }
@@ -292,7 +288,6 @@
       if (self.netWs !== ws) return;
       self.netLink = 'open';
       self.netReconnectUntil = 0;
-      try { if (!self.netWantResume) localStorage.setItem('wf_net_srv', url); } catch (e) {}
       self.netSend({ t: 'hello', name: self.netName(), token: self.netWantResume ? self.netToken : undefined });
       self.netPaint();
     };
@@ -598,7 +593,6 @@
     this.netFillChars();
     if (!this.netChar) this.netChar = 'suling';
     this.netPaintChars();
-    if (!nodes.srv.value) nodes.srv.value = this.netDefaultUrl();
     if (opts.join) this.netAutoJoin = String(opts.join).toUpperCase().replace(/[^A-Z2-9]/g, '').replace(/[01OI]/g, '').slice(0, 4);
     let token = '', code = '';
     try { token = sessionStorage.getItem('wf_net_token') || ''; code = sessionStorage.getItem('wf_net_code') || ''; } catch (e) {}
@@ -608,17 +602,27 @@
     if (this.render) this.render();
   };
 
-  $('wf-net-connect').addEventListener('click', () => { const g = W.game; if (!g) return; g.netWantResume = false; g.netConnect(); });
+  function ensureConnected(g) {
+    if (!g) return false;
+    if (g.netLink === 'open') return true;
+    g.netWantResume = false;
+    g.netConnect();
+    if (g.netLink === 'open') return true;
+    if (!g.netHint) g.netHint = '还没连上对战服务。同一 WiFi 请先用电脑打印的游戏地址打开，再创建或加入房间。';
+    g.netPaint();
+    return false;
+  }
   $('wf-net-create').addEventListener('click', () => {
-    const g = W.game; if (!g || g.netLink !== 'open') { if (g) { g.netHint = '还没连上对战服务'; g.netPaint(); } return; }
+    const g = W.game; if (!ensureConnected(g)) return;
     g.netSend({
       t: 'create', name: g.netName(), char: g.netChar || 'suling',
       bankId: nodes.bank.value, mode: nodes.mode.value, roundTime: +nodes.round.value,
     });
   });
   $('wf-net-join').addEventListener('click', () => {
-    const g = W.game; if (!g || g.netLink !== 'open') return;
+    const g = W.game; if (!ensureConnected(g)) return;
     const code = $('wf-net-code').value.toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 4);
+    if (!code) { g.netHint = '请输入 4 位房间码'; g.netPaint(); return; }
     g.netSend({ t: 'join', code, name: g.netName(), char: g.netChar || 'mrj' });
   });
   function sendRules() {
@@ -663,7 +667,7 @@
   G.homeButtons = function () {
     const b = baseHome.call(this).slice();
     const i = b.findIndex(x => x.key === 'start');
-    b.splice(i + 1, 0, { key: 'net', label: '在线对战' });
+    b.splice(i + 1, 0, { key: 'net', label: '同 WiFi 对战' });
     return b;
   };
   const baseAct = G.menuAct;
@@ -818,13 +822,12 @@
 
   function maybeJoin() {
     if (!W.game || !W.ready) { setTimeout(maybeJoin, 40); return; }
-    let srv = '', code = '';
+    let code = '';
     try {
       const q = new URLSearchParams(location.search);
-      srv = q.get('srv') || '';
       code = q.get('net') || '';
     } catch (e) {}
-    if (srv) { try { localStorage.setItem('wf_net_srv', srv); } catch (e) {} nodes.srv.value = srv; }
+    // 忽略 ?srv=。同一 WiFi 只走当前页面同源，避免把旧公网地址或任意服务器塞进本地对战。
     if (code) W.game.openNet({ join: code });
   }
   window.addEventListener('load', () => setTimeout(maybeJoin, 0));

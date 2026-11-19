@@ -1,7 +1,7 @@
 // 单词格斗自托管对战服务。
 // 本机：node server/index.js
 // 然后打开 http://127.0.0.1:8787/
-// GitHub Pages 只托管页面，不会自带这个进程。公网对战需要你自己把这个服务放到一台双方都能连上的机器，并在游戏里填写 wss:// 地址。
+// GitHub Pages 只托管页面，不会自带这个进程。同一 WiFi：双方打开本服务打印的局域网游戏地址，再在游戏里用房间号配对（不填服务器）。
 const http = require('http');
 const fs = require('fs');
 const os = require('os');

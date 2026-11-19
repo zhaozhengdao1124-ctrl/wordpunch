@@ -108,6 +108,23 @@ test('fair constants match the versus config', async () => {
   assert.strictEqual(cfg.ULT_DMG, 250);
 });
 
+test('player UI source has no server address field', async () => {
+  const fs = require('fs');
+  const path = require('path');
+  const src = fs.readFileSync(path.join(__dirname, '../js/netclient.js'), 'utf8');
+  assert.ok(!/id="wf-net-srv"/.test(src));
+  assert.ok(!/id="wf-net-connect"/.test(src));
+  assert.ok(/id="wf-net-create"/.test(src));
+  assert.ok(/id="wf-net-code"/.test(src));
+  assert.ok(/id="wf-net-lan-note"/.test(src));
+  assert.ok(/GitHub Pages 链接不能只靠房间号配对/.test(src));
+  assert.strictEqual(Rules.defaultServer({ protocol: 'https:', hostname: 'zhaozhengdao1124-ctrl.github.io', host: 'zhaozhengdao1124-ctrl.github.io' }, 'ws://evil.example/ws'), 'ws://evil.example/ws');
+  // 客户端不再把 localStorage 旧地址传进 defaultServer；同源局域网仍自动选。
+  assert.strictEqual(Rules.defaultServer({ protocol: 'http:', hostname: '192.168.1.8', host: '192.168.1.8:8787' }, ''), 'ws://192.168.1.8:8787');
+  assert.strictEqual(Rules.defaultServer({ protocol: 'https:', hostname: 'zhaozhengdao1124-ctrl.github.io', host: 'zhaozhengdao1124-ctrl.github.io' }, ''), '');
+  assert.strictEqual(Rules.defaultServer({ protocol: 'https:', hostname: 'abc123.trycloudflare.com', host: 'abc123.trycloudflare.com' }, ''), 'wss://abc123.trycloudflare.com');
+});
+
 test('localhost invite is not a public link', async () => {
   const local = Rules.inviteInfo('http://127.0.0.1:8787/', 'ws://127.0.0.1:8787', 'AB23');
   assert.strictEqual(local.public, false);
@@ -335,6 +352,12 @@ async function browserSuite() {
   let puppeteer;
   try { puppeteer = require('puppeteer-core'); }
   catch (e) { console.log('skip browser: puppeteer-core missing'); return; }
+  const fs = require('fs');
+  const path = require('path');
+  const artCandidates = ['/opt/cursor/artifacts', path.join(__dirname, '../_artifacts'), '/workspace/artifacts'];
+  let ART = artCandidates.find(d => { try { fs.mkdirSync(d, { recursive: true }); fs.accessSync(d, fs.constants.W_OK); return true; } catch (e) { return false; } });
+  if (!ART) ART = path.join(__dirname, '../_artifacts');
+  fs.mkdirSync(ART, { recursive: true });
   const browser = await puppeteer.launch({
     executablePath: process.env.CHROME || '/usr/bin/google-chrome',
     headless: 'new',
@@ -419,9 +442,50 @@ async function browserSuite() {
     const before = await snap(A);
     const beforeB = await snap(B);
     pageErrors.length = 0;
+    const pagesLike = await A.evaluate(() => {
+      const g = WF.game;
+      const real = g.netDefaultUrl.bind(g);
+      g.netDefaultUrl = () => '';
+      g.openNet();
+      const hint = (document.getElementById('wf-net-hint') || {}).textContent || '';
+      const status = (document.getElementById('wf-net-status') || {}).textContent || '';
+      document.getElementById('wf-net-create').click();
+      const afterHint = (document.getElementById('wf-net-hint') || {}).textContent || '';
+      const out = {
+        hint, status, afterHint,
+        room: !!(g.netRoom && g.netRoom.code),
+        link: g.netLink,
+        srv: !!document.getElementById('wf-net-srv'),
+      };
+      g.netDefaultUrl = real;
+      g.goTitle();
+      return out;
+    });
+    assert.strictEqual(pagesLike.srv, false);
+    assert.ok(!pagesLike.room);
+    assert.ok(pagesLike.status.indexOf('已连接') < 0, pagesLike.status);
+    assert.ok(/GitHub Pages|房间号|局域网|WiFi/.test(pagesLike.hint + pagesLike.afterHint), JSON.stringify(pagesLike));
     await A.evaluate(() => WF.game.openNet());
     await B.evaluate(() => WF.game.openNet());
     await A.waitForSelector('#wf-net-create');
+    const ui = await A.evaluate(() => ({
+      srv: !!document.getElementById('wf-net-srv'),
+      connect: !!document.getElementById('wf-net-connect'),
+      create: !!document.getElementById('wf-net-create'),
+      code: !!document.getElementById('wf-net-code'),
+      join: !!document.getElementById('wf-net-join'),
+      lan: (document.getElementById('wf-net-lan-note') || {}).textContent || '',
+      auto: WF.game.netDefaultUrl(),
+      title: (document.querySelector('#wf-net h2') || {}).textContent || '',
+    }));
+    assert.strictEqual(ui.srv, false, 'server address input must be removed');
+    assert.strictEqual(ui.connect, false, 'manual connect button must be removed');
+    assert.strictEqual(ui.create, true);
+    assert.strictEqual(ui.code, true);
+    assert.strictEqual(ui.join, true);
+    assert.ok(/同一 WiFi|房间/.test(ui.lan));
+    assert.ok(ui.auto.indexOf('ws://127.0.0.1:') === 0, ui.auto);
+    assert.ok(/WiFi|对战/.test(ui.title));
     await A.waitForFunction(() => (document.getElementById('wf-net-status').textContent || '').indexOf('已连接') >= 0);
     await B.waitForFunction(() => (document.getElementById('wf-net-status').textContent || '').indexOf('已连接') >= 0);
     await A.click('#wf-net-create');
@@ -438,7 +502,7 @@ async function browserSuite() {
     assert.strictEqual(hp, 800);
     await A.select('#wf-net-mode', 'math');
     await A.waitForFunction(() => WF.game.netRoom && WF.game.netRoom.rules && WF.game.netRoom.rules.mode === 'math');
-    await A.screenshot({ path: '/opt/cursor/artifacts/net-lobby.png' });
+    await A.screenshot({ path: ART + '/net-lobby.png' });
     await B.evaluate((c) => { document.getElementById('wf-net-code').value = c; }, code);
     await B.click('#wf-net-join');
     await B.waitForFunction(() => WF.game.netRoom && (WF.game.netRoom.players || []).length === 2);
@@ -446,7 +510,7 @@ async function browserSuite() {
     await B.click('#wf-net-ready');
     await A.waitForFunction(() => WF.game.netLive && WF.game.q && WF.game.state === 'question');
     await B.waitForFunction(() => WF.game.netLive && WF.game.q);
-    await A.screenshot({ path: '/opt/cursor/artifacts/net-fight.png' });
+    await A.screenshot({ path: ART + '/net-fight.png' });
     const answerLoop = async () => {
       const sleep = (ms) => new Promise(r => setTimeout(r, ms));
       const solveQ = (q) => {
@@ -495,7 +559,7 @@ async function browserSuite() {
     assert.strictEqual(result.blocked, 0);
     assert.strictEqual(resultB.blocked, 0);
     assert.strictEqual(result.forfeit, false);
-    await A.screenshot({ path: '/opt/cursor/artifacts/net-result.png' });
+    await A.screenshot({ path: ART + '/net-result.png' });
     const mid = await snap(A);
     const midB = await snap(B);
     keys.forEach(k => assert.strictEqual(mid[k], before[k], 'online changed ' + k));
@@ -539,6 +603,77 @@ async function browserSuite() {
     await browser.close();
   }
 }
+
+
+test('all modes clash window 200ms; online boundary still ~200ms', async () => {
+  assert.strictEqual(Rules.FAIR.clashWindowS, 0.2, 'online FAIR window');
+  const { load } = require('../server/engine');
+  const cfg = load().cfg;
+  assert.strictEqual(cfg.CLASH_WINDOW_S, 0.2, 'local config for pvp/cpu/campaign');
+  assert.strictEqual(cfg.CLASH_WINDOW_CPU_S, undefined, 'no separate CPU window');
+  const fs = require('fs');
+  const path = require('path');
+  const gameSrc = fs.readFileSync(path.join(__dirname, '../js/game.js'), 'utf8');
+  const cfgSrc = fs.readFileSync(path.join(__dirname, '../js/config.js'), 'utf8');
+  assert.ok(/clashWindowS\(\) \{ return WF\.CFG\.CLASH_WINDOW_S; \}/.test(gameSrc), 'game.clashWindowS always uses CLASH_WINDOW_S');
+  assert.ok(!/CLASH_WINDOW_CPU_S/.test(gameSrc), 'game.js must not branch CPU window');
+  assert.ok(!/CLASH_WINDOW_CPU_S/.test(cfgSrc), 'config must not define CPU-only window');
+  assert.ok(/CLASH_WINDOW_S: 0\.2/.test(cfgSrc));
+
+  const local = await start({ host: '127.0.0.1', port: 0, presentMs: 40, tickMs: 20, reconnectMs: 500 });
+  const url = 'ws://127.0.0.1:' + local.port;
+  function solve(q) {
+    const text = String((q && (q.rawWord || q.word)) || '');
+    const m = text.match(/(\d+)\s*([+\-−–])\s*(\d+)/);
+    if (!m) return -1;
+    const c = m[2] === '+' ? (+m[1] + +m[3]) : (+m[1] - +m[3]);
+    return (q.options || []).findIndex(o => Number(o) === c);
+  }
+  async function setup() {
+    const a = new Peer(url), b = new Peer(url);
+    await a.ready(); await b.ready();
+    a.send({ t: 'hello', name: '窗甲' }); b.send({ t: 'hello', name: '窗乙' });
+    await a.until(m => m.t === 'hello');
+    a.send({ t: 'create', name: '窗甲', char: 'suling', bankId: 'junior', mode: 'math', roundTime: 0 });
+    await a.until(m => m.t === 'joined');
+    const room = await a.until(m => m.t === 'room' && m.code);
+    b.send({ t: 'join', code: room.code, name: '窗乙', char: 'mrj' });
+    await b.until(m => m.t === 'joined');
+    await a.until(m => m.t === 'room' && (m.players || []).length === 2);
+    a.send({ t: 'ready', on: true, char: 'suling' });
+    b.send({ t: 'ready', on: true, char: 'mrj' });
+    await a.until(m => m.t === 'start');
+    return { a, b };
+  }
+  try {
+    const { a, b } = await setup();
+    const q = await a.until(m => m.t === 'question');
+    const right = solve(q.q);
+    assert.ok(right >= 0);
+    const t0 = Date.now();
+    a.send({ t: 'answer', matchId: q.matchId, qn: q.qn, qid: q.qid, phase: q.phase, idx: right, msgId: 'win-a' });
+    const res = await a.until(m => m.t === 'resolve' && m.qid === q.qid, 3000);
+    const waited = Date.now() - t0;
+    assert.ok(waited >= 150 && waited <= 320, 'only-A resolve should wait ~200ms clash window, got ' + waited);
+    assert.strictEqual(res.outcome.band, 'fast');
+    a.close(); b.close();
+
+    const { a: a2, b: b2 } = await setup();
+    const q2 = await a2.until(m => m.t === 'question' && m.phase !== 'clash');
+    const right2 = solve(q2.q);
+    const t1 = Date.now();
+    a2.send({ t: 'answer', matchId: q2.matchId, qn: q2.qn, qid: q2.qid, phase: q2.phase, idx: right2, msgId: 'win-a2' });
+    b2.send({ t: 'answer', matchId: q2.matchId, qn: q2.qn, qid: q2.qid, phase: q2.phase, idx: right2, msgId: 'win-b2' });
+    const res2 = await a2.until(m => m.t === 'resolve' && m.qid === q2.qid, 3000);
+    const bothWait = Date.now() - t1;
+    assert.ok(bothWait < 150, 'both-correct should resolve promptly, got ' + bothWait);
+    assert.strictEqual(res2.outcome.kind, 'clash');
+    assert.deepStrictEqual(res2.snap.streak, [0, 0]);
+    a2.close(); b2.close();
+  } finally {
+    await local.close();
+  }
+});
 
 test('browser: solo regression, two clients, rematch, saves, no speech', browserSuite);
 

@@ -28,7 +28,8 @@
     phraseFastExtra: 1,
     phraseSlowExtra: 1,
     phraseTimeoutExtra: 2,
-    clashWindowS: 0.3,
+    // 联机角力窗口 200ms，与本机 config.js CLASH_WINDOW_S 全模式一致。
+    clashWindowS: 0.2,
     clashWin: 3,
     clashCapS: 15,
     clashQuestionS: 6,
@@ -179,6 +180,11 @@
     if (!h || h === '0.0.0.0' || h.endsWith('.local') || h.endsWith('.localhost')) return false;
     return !isLanHost(h);
   }
+  // GitHub Pages 等静态站没有对战进程；临时公网隧道页面与服务同源，应自动连上。
+  function isStaticPublicHost(hostname) {
+    const h = hostName(hostname);
+    return h === 'github.io' || h.endsWith('.github.io') || h.endsWith('.pages.dev');
+  }
   // 邀请链接必须同时是公网页面和公网对战服务。本机地址只给房间码，不伪装成能发给外网朋友的链接。
   function inviteInfo(pageHref, serverUrl, code) {
     const out = { public: false, url: '', reason: '' };
@@ -202,7 +208,12 @@
   function defaultServer(loc, saved) {
     if (saved) return String(saved);
     if (!loc) return '';
-    if ((loc.protocol === 'http:' || loc.protocol === 'https:') && isLanHost(loc.hostname)) {
+    if (loc.protocol !== 'http:' && loc.protocol !== 'https:') return '';
+    if (isLanHost(loc.hostname)) {
+      return (loc.protocol === 'https:' ? 'wss://' : 'ws://') + loc.host;
+    }
+    if (isStaticPublicHost(loc.hostname)) return '';
+    if (isPublicHost(loc.hostname)) {
       return (loc.protocol === 'https:' ? 'wss://' : 'ws://') + loc.host;
     }
     return '';
