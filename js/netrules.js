@@ -165,11 +165,19 @@
     }
     return pub;
   }
+  function hostName(hostname) {
+    return String(hostname || '').toLowerCase().replace(/^\[|\]$/g, '');
+  }
+  function isLanHost(hostname) {
+    const h = hostName(hostname);
+    if (!h || h === 'localhost' || h === '127.0.0.1' || h === '::1') return true;
+    if (/^10\./.test(h) || /^192\.168\./.test(h) || /^172\.(1[6-9]|2\d|3[0-1])\./.test(h) || /^169\.254\./.test(h)) return true;
+    return false;
+  }
   function isPublicHost(hostname) {
-    const h = String(hostname || '').toLowerCase().replace(/^\[|\]$/g, '');
-    if (!h || h === 'localhost' || h === '127.0.0.1' || h === '0.0.0.0' || h === '::1' || h.endsWith('.local') || h.endsWith('.localhost')) return false;
-    if (/^10\./.test(h) || /^192\.168\./.test(h) || /^172\.(1[6-9]|2\d|3[0-1])\./.test(h) || /^169\.254\./.test(h)) return false;
-    return true;
+    const h = hostName(hostname);
+    if (!h || h === '0.0.0.0' || h.endsWith('.local') || h.endsWith('.localhost')) return false;
+    return !isLanHost(h);
   }
   // 邀请链接必须同时是公网页面和公网对战服务。本机地址只给房间码，不伪装成能发给外网朋友的链接。
   function inviteInfo(pageHref, serverUrl, code) {
@@ -181,7 +189,7 @@
     const pageOk = !!(page && (page.protocol === 'http:' || page.protocol === 'https:') && isPublicHost(page.hostname));
     const srvOk = !!(srv && (srv.protocol === 'ws:' || srv.protocol === 'wss:') && isPublicHost(srv.hostname));
     if (!pageOk || !srvOk) {
-      out.reason = '当前页面或对战服务是本机 / 局域网地址，不能当成公网邀请。把房间码告诉连着同一台对战服务的朋友；要给外网朋友发链接，需要页面和对战服务都放在公网地址上。';
+      out.reason = '这是同一 WiFi 或本机使用的地址，不能发给外网朋友。同一 WiFi 的人请打开电脑启动时印出的地址，再输入房间码。外网要玩，需要页面和对战服务都放在公网地址上。';
       return out;
     }
     const u = new URL(page.href);
@@ -194,8 +202,7 @@
   function defaultServer(loc, saved) {
     if (saved) return String(saved);
     if (!loc) return '';
-    const host = loc.hostname;
-    if ((host === 'localhost' || host === '127.0.0.1') && (loc.protocol === 'http:' || loc.protocol === 'https:')) {
+    if ((loc.protocol === 'http:' || loc.protocol === 'https:') && isLanHost(loc.hostname)) {
       return (loc.protocol === 'https:' ? 'wss://' : 'ws://') + loc.host;
     }
     return '';
@@ -212,6 +219,6 @@
   return {
     FAIR, mulberry32, sanitizeChar, sanitizeMode, sanitizeRound, sanitizeName,
     emptyStats, freshState, windows, comboMult, applyDamage, noteWrong, wipePace, hit, clashHit,
-    publishQuestion, isPublicHost, inviteInfo, defaultServer, snap,
+    publishQuestion, isPublicHost, isLanHost, inviteInfo, defaultServer, snap,
   };
 });

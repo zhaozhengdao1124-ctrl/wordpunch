@@ -121,6 +121,38 @@ test('localhost invite is not a public link', async () => {
   assert.ok(ok.url.includes('srv='));
   assert.strictEqual(Rules.defaultServer({ protocol: 'https:', hostname: 'zhaozhengdao1124-ctrl.github.io', host: 'zhaozhengdao1124-ctrl.github.io' }, ''), '');
   assert.strictEqual(Rules.defaultServer({ protocol: 'http:', hostname: '127.0.0.1', host: '127.0.0.1:8787' }, ''), 'ws://127.0.0.1:8787');
+  assert.strictEqual(Rules.defaultServer({ protocol: 'http:', hostname: '192.168.1.20', host: '192.168.1.20:8787' }, ''), 'ws://192.168.1.20:8787');
+  const lanInvite = Rules.inviteInfo('http://192.168.1.20:8787/', 'ws://192.168.1.20:8787', 'AB23');
+  assert.strictEqual(lanInvite.public, false);
+  assert.ok(!lanInvite.url);
+});
+
+test('LAN listen accepts a client on a non-loopback address when one exists', async () => {
+  const os = require('os');
+  const lan = [];
+  const nics = os.networkInterfaces();
+  for (const name of Object.keys(nics)) {
+    for (const info of nics[name] || []) {
+      const v4 = info.family === 'IPv4' || info.family === 4;
+      if (v4 && !info.internal) lan.push(info.address);
+    }
+  }
+  const bound = await start({ host: '0.0.0.0', port: 0, presentMs: 40, reconnectMs: 400, tickMs: 30 });
+  try {
+    const addr = bound.server.address();
+    assert.ok(addr && (addr.address === '0.0.0.0' || addr.address === '::'));
+    const target = lan[0] || '127.0.0.1';
+    const peer = new Peer('ws://' + target + ':' + addr.port);
+    await peer.ready();
+    peer.send({ t: 'hello', name: '局域网' });
+    const hello = await peer.until(m => m.t === 'hello');
+    assert.ok(hello.banks && hello.banks.length);
+    peer.close();
+    if (!lan.length) console.log('note  this machine has no non-loopback IPv4; bind is 0.0.0.0 and the client used 127.0.0.1');
+    else console.log('note  LAN client connected via ' + target);
+  } finally {
+    await bound.close();
+  }
 });
 
 test('publishQuestion hides the answer', async () => {

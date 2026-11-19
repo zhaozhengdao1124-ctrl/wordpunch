@@ -4,6 +4,7 @@
 // GitHub Pages 只托管页面，不会自带这个进程。公网对战需要你自己把这个服务放到一台双方都能连上的机器，并在游戏里填写 wss:// 地址。
 const http = require('http');
 const fs = require('fs');
+const os = require('os');
 const path = require('path');
 const { WebSocketServer } = require('ws');
 const { load, ROOT } = require('./engine');
@@ -75,12 +76,36 @@ function start(opts) {
   });
 }
 
+function lanPages(port) {
+  const out = [];
+  const nics = os.networkInterfaces();
+  for (const name of Object.keys(nics)) {
+    for (const info of nics[name] || []) {
+      const v4 = info.family === 'IPv4' || info.family === 4;
+      if (v4 && !info.internal) out.push('http://' + info.address + ':' + port + '/');
+    }
+  }
+  return out;
+}
+
 if (require.main === module) {
-  start({}).then(({ port }) => {
-    console.log('单词格斗对战服务已在本机启动');
-    console.log('打开 http://127.0.0.1:' + port + '/');
-    console.log('这是本机服务。局域网或公网朋友连不上 127.0.0.1。');
-    console.log('GitHub Pages 不会自动带上这个进程。');
+  const host = process.env.HOST || '0.0.0.0';
+  const port = process.env.PORT ? +process.env.PORT : 8787;
+  start({ host, port }).then(() => {
+    console.log('单词格斗对战服务已启动，监听 ' + host + ':' + port);
+    console.log('这台电脑自己玩：打开 http://127.0.0.1:' + port + '/');
+    const lan = lanPages(port);
+    if (host === '127.0.0.1' || host === 'localhost') {
+      console.log('当前只监听本机。同一 WiFi 的手机连不上。若要一起玩，请不要设置 HOST=127.0.0.1。');
+    } else if (lan.length) {
+      console.log('同一 WiFi 的手机或另一台电脑，请打开：');
+      lan.forEach(u => console.log('  ' + u));
+      console.log('手机上不要打开 127.0.0.1，那个地址只代表手机自己。');
+    } else {
+      console.log('没有发现局域网网卡地址。手机要连，请确认这台电脑已经连上 WiFi。');
+    }
+    console.log('这不是公网。不在同一个 WiFi 的朋友打不开上面的地址。');
+    console.log('GitHub Pages 网站不会自动带上这个进程。');
   }).catch((err) => {
     console.error(err);
     process.exit(1);
