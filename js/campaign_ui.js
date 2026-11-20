@@ -10,7 +10,7 @@
     return im.complete && im.naturalWidth ? im : null;
   };
   // v1.7.2：开机先预载地图底图和图钉，第一站地图不再黑几帧
-  setTimeout(() => { const M = (window.WF_CAMPAIGN_DATA || {}).map; if (!M) return; WF.campImg('map/world.png'); WF.campImg('map/trail.png'); for (const k in M.sprites) WF.campImg('map/' + M.sprites[k].file); }, 0);
+  WF.afterReady(() => { const M = (window.WF_CAMPAIGN_DATA || {}).map; if (!M) return; WF.campImg('map/world.png'); WF.campImg('map/trail.png'); for (const k in M.sprites) WF.campImg('map/' + M.sprites[k].file); });   // 2026-11-21：进菜单 2 秒后再预载
   const ease = k => 1 - Math.pow(1 - Math.max(0, Math.min(1, k)), 3);
 
   // ---------- 世界地图 ----------
