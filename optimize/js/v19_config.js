@@ -22,14 +22,17 @@
     ACTIVATION_WORDS: 5,
     SPIN_LIMIT: 10,
     CHALLENGE_SPINS: 5,
-    REEL_TRIGGER_SCALE: 5,
+    // 2026-11-20 调整：三轴演出每次约 8%（含大奖）；本局前 11 次都没出三轴时，第 12 次必出；三轴普通奖 ×2。
+    REEL_TRIGGER_P: 0.08,
+    REEL_PITY_SPIN: 12,
+    REEL_MULTIPLIER: 2,
     // 基础奖额、抽取权重和对应的像素图案。
     GOLD_PAYTABLE: [
       [1, 14, 'plum'], [2, 15, 'lemon'], [3, 20, 'orange'], [4, 30, 'apple'],
       [5, 55, 'pear'], [6, 85, 'strawberry'], [7, 105, 'grapes'], [8, 112, 'cherries'],
       [9, 112, 'watermelon'], [10, 99, 'pineapple'], [11, 93, 'heart'], [12, 71, 'clover'],
       [13, 60, 'horseshoe'], [14, 48, 'star'], [15, 39, 'diamond'], [16, 23, 'bar'],
-      [17, 16, 'bell'], [20, 3, 'seven'],
+      [17, 16, 'bell'], [150, 3, 'seven'],
     ],
   };
   K.REST = { HEAL: 0.35, UPGRADE_PRICE: { common: 70, rare: 140, legend: 280, curse: 105 }, UPGRADE_FLOAT: false };

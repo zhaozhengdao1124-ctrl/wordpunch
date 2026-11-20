@@ -78,14 +78,21 @@
     }
     return board.length - 1;
   };
-  R.lootReelMode = function (rng, board, won) {
+  // run = { serial: 本局第几次摇奖, seen: 本局是否已出过三轴 }。
+  R.lootReelMode = function (rng, board, won, run = {}) {
+    const { REEL_TRIGGER_P, REEL_PITY_SPIN } = K().LOOT_MACHINE;
     const top = board.reduce((best, card) => card.gold > best.gold ? card : best);
     if (won === top) return 'jackpot';
-    const otherWeight = board.reduce((total, card) => total + card.weight, 0) - top.weight;
-    // 加开的三轴只补足演出触发率，奖格仍使用原来的抽取权重。
-    const addedWeight = top.weight * (K().LOOT_MACHINE.REEL_TRIGGER_SCALE - 1);
-    return rng() * otherWeight < addedWeight ? 'reels' : 'none';
+    const total = board.reduce((sum, card) => sum + card.weight, 0);
+    // 大奖本身也播三轴，其余奖格补足到总触发率；奖格仍按原权重抽取。
+    const topShare = top.weight / total;
+    const chance = (REEL_TRIGGER_P - topShare) / (1 - topShare);
+    const roll = rng() < chance;
+    if (roll || (run.serial === REEL_PITY_SPIN && !run.seen)) return 'reels';
+    return 'none';
   };
+  // 三轴普通奖按倍数返还，大奖和普通外圈按奖格金额。
+  R.lootPayout = (card, mode) => card.gold * (mode === 'reels' ? K().LOOT_MACHINE.REEL_MULTIPLIER : 1);
 
   // ---------- 金币（§2B） ----------
   // 金币收入统一入口：基础 × 难度 × 城市 × 道具（招财猫 ×(1+v)、破洞钱包 ×0.85 相乘），四舍五入，至少 1
