@@ -2,8 +2,10 @@
 // 预缓存清单 sw-precache.json 由 src/gen_pwa.py 生成（打包前跑一次）：只含「核心」文件，不含按需词库 data/bank_*.js 和 data/*.json。
 // 按需词库（考研/雅思/托福/SAT/新概念）：玩家第一次选到时才下载，下完存进单独的 BANKS 缓存（升级版本也不会丢），之后离线也能用。
 // 其他清单外的文件走「先缓存、再联网」。
-const CACHE = 'wordfight-v1.12-versus-menu1';
-const BANKS = 'wordfight-banks';          // 不随版本清理
+// GitHub Pages 的旧版和新版位于不同目录，各自维护离线资源。
+const PREFIX = 'wordfight@' + self.registration.scope + ':';
+const CACHE = PREFIX + 'core-v1.12-versus-menu1';
+const BANKS = PREFIX + 'banks';          // 不随版本清理
 const isBank = u => /\/data\/bank_[a-z0-9]+\.js$/.test(new URL(u).pathname);
 self.addEventListener('install', e => {
   e.waitUntil((async () => {
@@ -17,7 +19,7 @@ self.addEventListener('install', e => {
   })());
 });
 self.addEventListener('activate', e => {
-  e.waitUntil((async () => { for (const k of await caches.keys()) if (k !== CACHE && k !== BANKS) await caches.delete(k); await self.clients.claim(); })());
+  e.waitUntil((async () => { for (const k of await caches.keys()) if (k.startsWith(PREFIX + 'core-') && k !== CACHE) await caches.delete(k); await self.clients.claim(); })());
 });
 self.addEventListener('fetch', e => {
   const req = e.request; if (req.method !== 'GET' || !req.url.startsWith(self.location.origin)) return;
