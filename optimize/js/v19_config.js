@@ -20,6 +20,9 @@
   K.LOOT_MACHINE = {
     PRICE: 10,
     ACTIVATION_WORDS: 5,
+    SPIN_LIMIT: 10,
+    CHALLENGE_SPINS: 5,
+    REEL_TRIGGER_SCALE: 5,
     // 基础奖额、抽取权重和对应的像素图案。
     GOLD_PAYTABLE: [
       [1, 14, 'plum'], [2, 15, 'lemon'], [3, 20, 'orange'], [4, 30, 'apple'],

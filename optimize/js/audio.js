@@ -129,6 +129,17 @@ WF.Audio = (function () {
     },
     step(c, out, t) { nz(c, out, t, 'lowpass', 600, 0.8, 0.03, 0.12); },
     beep(c, out, t, p) { const f = p.f || 660; osc(c, out, t, 'square', f, f, p.d || 0.12, 0.13); },
+    reelSurge(c, out, t, { big }) {
+      const level = big ? 1.14 : 1;
+      // A cabinet thump and a rising motor cue, timed to the roll start at 420 ms.
+      osc(c, out, t, 'sine', 148, 46, 0.30, 0.53 * level);
+      osc(c, out, t + 0.006, 'triangle', 365, 172, 0.13, 0.24 * level);
+      nz(c, out, t + 0.014, 'bandpass', 1800, 1.5, 0.12, 0.36 * level);
+      nz(c, out, t + 0.08, 'bandpass', 260, 1.1, 0.31, 0.29, 0.045, 2200);
+      for (const [offset, pitch] of [[0.12, 523], [0.21, 784], [0.30, 1046]]) {
+        osc(c, out, t + offset, 'triangle', pitch, pitch * 1.05, 0.17, 0.105 * level);
+      }
+    },
     reelGear(c, out, t, { axis }) {
       const ring = [1260, 1050, 870][axis];
       nz(c, out, t, 'bandpass', ring * 1.7, 1.8, 0.023, 0.25, 0.001);

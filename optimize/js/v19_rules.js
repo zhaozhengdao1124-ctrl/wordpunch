@@ -78,6 +78,14 @@
     }
     return board.length - 1;
   };
+  R.lootReelMode = function (rng, board, won) {
+    const top = board.reduce((best, card) => card.gold > best.gold ? card : best);
+    if (won === top) return 'jackpot';
+    const otherWeight = board.reduce((total, card) => total + card.weight, 0) - top.weight;
+    // 加开的三轴只补足演出触发率，奖格仍使用原来的抽取权重。
+    const addedWeight = top.weight * (K().LOOT_MACHINE.REEL_TRIGGER_SCALE - 1);
+    return rng() * otherWeight < addedWeight ? 'reels' : 'none';
+  };
 
   // ---------- 金币（§2B） ----------
   // 金币收入统一入口：基础 × 难度 × 城市 × 道具（招财猫 ×(1+v)、破洞钱包 ×0.85 相乘），四舍五入，至少 1
