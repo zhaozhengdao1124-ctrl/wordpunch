@@ -6,7 +6,7 @@
   const W = window.WF = window.WF || {};
   const C = W.CFG, G = W.Game && W.Game.prototype, P = W.Profiles, Mem = W.Memory;
   if (!G || !Mem) return;
-  const K = C.KICK = { MAX: 20, MIN: 15, REWARD: 200, HP_PER: 90, HP_MAX: 2000 };
+  const K = C.KICK = { MAX: 20, MIN: 15, REWARD: 200, HP_PER: 90, HP_MAX: 2000, EXTRA: 5 };   // EXTRA：全场最多补考几次（≈ 词数 + 5 题内打完）
 
   const bankOk = (g, id) => (g.banks || []).some(b => b.id === id);
   const bankName = (g, id) => { const b = (g.banks || []).find(x => x.id === id); return b ? b.name : id; };
@@ -107,35 +107,50 @@
   G.kickHp = n => Math.max(C.HP, Math.min(K.HP_MAX, Math.round(n * K.HP_PER / 50) * 50));
 
   // ---------- 开打：电脑陪练的一局，换成踢馆词单 ----------
+  // 词单题源：每个词先考一遍（顺序打乱）；答错的过 3 题再考一次（全场最多补考 EXTRA 次）；
+  // 第二次还错就算「复习过但没记住」（记忆照常记错），不再拖住比赛。词单考完 = 守馆人倒下。
   class KickSource {
     constructor(g, words) {
       this.g = g; this.id = 'word'; this.name = '今日踢馆'; this.quiz = {};
-      const a = words.slice(); for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(g.rand() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; }
-      this.words = a; this.pending = a.slice(); this.cleared = new Set(); this.last = null;
+      const a = words.map(e => ({ bank: e.bank, word: e.word, src: e.src, miss: 0, done: null }));
+      for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(g.rand() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; }
+      this.words = a; this.pending = a.slice(); this.reasks = 0; this.served = 0; this.lastQ = null;
     }
     get size() { return this.words.length; }
+    get resolved() { return this.words.filter(e => e.done).length; }
+    get correct() { return this.words.filter(e => e.done === 'ok').length; }
+    get exhausted() { return this.words.every(e => e.done); }
     quizFor(id) { const b = this.g.banks.find(x => x.id === id); if (!b || !b.words || !b.words.length) return null; return this.quiz[id] || (this.quiz[id] = new WF.Quiz(b, this.g.rnd)); }
-    entry() {
-      if (this.pending.length) return this.pending.shift();
-      const rest = this.words.filter(e => e !== this.last);
-      return rest[Math.floor(this.g.rand() * rest.length)] || this.words[0];
+    // 一道词单题有了结果（任何出题方式：普通题、角力、浮空追打；没答 / 超时算错）
+    result(q, ok) {
+      const e = q && q.kick; if (!e || q._kickRes) return; q._kickRes = true;
+      if (e.done) return;   // 已经算过（补考时答对也不再掉守馆人的血）
+      if (ok) { e.done = 'ok'; return; }
+      e.miss++;
+      if (e.miss === 1 && this.reasks < K.EXTRA) { this.reasks++; this.pending.splice(Math.min(3, this.pending.length), 0, e); }
+      else e.done = 'fail';
     }
     next() {
-      for (let guard = 0; guard < this.words.length + 2; guard++) {
-        const e = this.entry(), qz = e && this.quizFor(e.bank), w = qz && qz.words.find(x => x.word === e.word);
-        if (!w) { if (e) this.cleared.add(e.bank + '\t' + e.word); continue; }
-        const q = qz.build(w); q.kind = 'word'; q.bank = e.bank; q.kick = e; this.last = e;
-        return q;
-      }
-      // 词库都不在了：随便出一个本局词库的题，保证不卡死
-      const qz = this.quizFor(this.g.bank && this.g.bank.id) || this.quizFor('cet4'); const q = qz.next(); q.kind = 'word'; q.bank = qz.bank.id; return q;
-    }
-    answered(q, ok) {
-      const e = q && q.kick; if (!e) return;
-      if (ok) this.cleared.add(e.bank + '\t' + e.word);
-      else if (!this.pending.includes(e)) this.pending.splice(Math.min(3, this.pending.length), 0, e);   // 答错：过 3 题再考
+      if (this.lastQ && !this.lastQ._kickRes) this.result(this.lastQ, false);   // 上一题没答
+      let e = null;
+      while (this.pending.length && !e) { const c = this.pending.shift(); if (!c.done) e = c; }
+      let bonus = false;
+      if (!e) { bonus = true; const rest = this.words.filter(x => x !== (this.lastQ && this.lastQ.kick)); e = rest[Math.floor(this.g.rand() * rest.length)] || this.words[0]; }
+      const qz = e && this.quizFor(e.bank), w = qz && qz.words.find(x => x.word === e.word);
+      let q;
+      if (w) { q = qz.build(w); q.kind = 'word'; q.bank = e.bank; }
+      else { if (e && !e.done) e.done = 'fail'; const z = this.quizFor(this.g.bank && this.g.bank.id) || this.quizFor('cet4'); q = z.next(); q.kind = 'word'; q.bank = z.bank.id; bonus = true; }
+      if (!bonus) { q.kick = e; this.served++; }
+      this.lastQ = q;
+      return q;
     }
   }
+  // 守馆人的血只看词单进度：maxHp × 还没结果的词 / 词数
+  G.kickTargetHp = function () {
+    const src = this.source, E = this.p && this.p[1];
+    if (!src || !src.words || !E) return null;
+    return Math.round(E.maxHp * (src.size - src.resolved) / src.size);
+  };
 
   G.kickStart = function () {
     const pid = this.menu.p1, k = pid && this.kickQueue(pid);
@@ -176,37 +191,49 @@
     }
     return r;
   };
-  const baseAns = G.answerNormal;
-  G.answerNormal = function (s, idx) {
-    const q = this.q, had = q && q.ans && q.ans[s];
-    const r = baseAns.apply(this, arguments);
-    if (this.dailyKick && s === 0 && q && !had && q.ans && q.ans[0] && this.source && this.source.answered) this.source.answered(q, !!q.ans[0].ok);
+  // 结果：所有作答都会经过 Profiles.markAnswer（普通题、角力、浮空追打）
+  const baseMark = P.markAnswer;
+  P.markAnswer = function (id, q, ok) {
+    const r = baseMark.apply(this, arguments), g = W.game;
+    if (g && g.dailyKick && q && q.kick && id === g.menu.p1 && g.source && g.source.result) g.source.result(q, !!ok);
     return r;
   };
+  // 超时没答：当场算错（不用等下一题）
   const baseEnd = G.endQuestion;
   G.endQuestion = function () {
     const q = this.q;
-    if (this.dailyKick && this.state === 'question' && q && q.ans && !q.ans[0] && !q._kickTO && this.source && this.source.answered) { q._kickTO = true; this.source.answered(q, false); }
+    if (this.dailyKick && this.state === 'question' && q && q.kick && q.ans && !q.ans[0] && this.source && this.source.result) this.source.result(q, false);
     return baseEnd.apply(this, arguments);
   };
   const baseQT = G.qtypeName;
   G.qtypeName = function () {
-    if (this.dailyKick && this.source && this.source.cleared) return `今日踢馆 · 已复习 ${Math.min(this.source.cleared.size, this.source.size)} / ${this.source.size}`;
+    const src = this.source;
+    if (this.dailyKick && src && src.words) return `今日踢馆 · 已复习 ${src.resolved} / ${src.size}`;
     return baseQT ? baseQT.apply(this, arguments) : (this.menu.wrongMatch ? '错题对战' : this.modeName());
   };
-  // 词单没打完之前守馆人不倒（留 1 血）：保证打赢时今天的词都交过手
+  // 伤害：打到守馆人时血量直接按词单进度算（连击 / 暴击照常演出，不另外掉血）；词单的最后一个词答对那一下 KO
   const baseDmg = G.damage;
   G.damage = function (A, D, amount) {
-    const r = baseDmg.apply(this, arguments), src = this.source;
-    if (r && this.dailyKick && this.p && D === this.p[1] && src && src.cleared) {
-      const left = src.size - Math.min(src.cleared.size, src.size);
-      if (left > 0) {
-        D.hp = 1; if (this.stats && this.stats[A.side]) this.stats[A.side].dmg -= 1;
-        if (!this.announce || this.announce.t > 30) this.announce = { text: '守馆人撑住了', sub: `词单还差 ${left} 个`, t: 0, life: 40 };
-        return false;
+    if (this.dailyKick && this.p && D === this.p[1] && A === this.p[0]) {
+      const hp = this.kickTargetHp();
+      if (hp != null) {
+        const was = D.hp; D.hp = Math.min(was, hp); D.trailHold = 13;
+        if (this.stats && this.stats[0]) this.stats[0].dmg += was - D.hp;
+        return D.hp <= 0;
       }
     }
-    return r;
+    return baseDmg.apply(this, arguments);
+  };
+  // 词单都有结果了守馆人却还站着（最后一个词答错、或在角力里答完）：下一题不出了，直接补一记收尾
+  const baseNQ = G.newQuestion;
+  G.newQuestion = function () {
+    const src = this.source, A = this.p && this.p[0], D = this.p && this.p[1];
+    if (this.dailyKick && !this.ko && src && src.words && src.exhausted && D && D.hp > 0 && A && A.hp > 0) {
+      this.state = 'resolve'; this.kickFinisher = true;
+      this.run(this.attackSeq(A, D, this.pickMove(A, A.mv.combo[0]), { dmg: D.hp, lvl: 'heavy' }));
+      return;
+    }
+    return baseNQ.apply(this, arguments);
   };
   const baseResult = G.showResult;
   G.showResult = function () {
