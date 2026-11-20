@@ -1,5 +1,5 @@
 // 四级 / 六级主释义修正（2026-11-20 Gray）：按 tools/cet_meaning_fix.json 改 data/banks.js 的 WF_DICT。
-// 重新生成 banks.js 后再跑一次：node tools/apply_meaning_fix.js（重复跑结果不变）
+// 重新生成 banks.js 后再跑一次：node tools/apply_meaning_fix.js（重复跑结果不变；最后会自动跑 tools/split_banks.js 重新拆分网页用的词库文件）
 const fs = require('fs'), P = require('path').join(__dirname, '../data/banks.js');
 const FIX = JSON.parse(fs.readFileSync(require('path').join(__dirname, 'cet_meaning_fix.json'), 'utf8'));
 const DROP = { download: ['卸载', '下栽'], universally: ['宇宙'], aspirational: ['志同的'] };
@@ -28,3 +28,5 @@ const c = id => rows.filter(r => r.banks.includes(id)).length;
 console.log('changed', rows.length, 'cet4', c('cet4'), 'cet6', c('cet6'), 'also in other banks', rows.filter(r => r.banks.some(b => !/^cet[46]$/.test(b))).length);
 for (const r of rows.slice(0, 8)) console.log(r.w, r.old, '→', r.nw, '|', r.oldZh, '→', r.newZh);
 console.log(rows.find(r => r.w === 'quick'), rows.find(r => r.w === 'download'));
+// 2026-11-21：网页改为按词库拆分加载（data/b/<id>.js），改完 banks.js 后自动重新拆分，保证修正带进拆分文件
+require('child_process').execFileSync(process.execPath, [require('path').join(__dirname, 'split_banks.js')], { stdio: 'inherit' });

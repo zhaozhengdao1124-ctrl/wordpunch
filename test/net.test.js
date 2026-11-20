@@ -447,6 +447,8 @@ async function browserSuite() {
     }
     if (!ready) throw new Error('game did not become ready\n' + pageErrors.join('\n'));
     await checkGuide(A);
+    // 2026-11-21 起词库按需下载：进菜单后选中的词库在后台下载，开局前要等它下完
+    await A.waitForFunction(() => WF.Banks.isLoaded(WF.game.banks[WF.game.menu.bank]), { timeout: 60000 });
     console.log('solo begin');
     const solo = await A.evaluate(async () => {
       const g = WF.game;

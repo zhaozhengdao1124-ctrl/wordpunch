@@ -314,6 +314,7 @@ WF.Audio = (function () {
     // v1.7 关卡专属曲（马西克）：不进设置里的曲目列表，只在那场 Boss 战覆盖当前选曲
     setOverride(id) { const tr = id ? (EXTRA[id] || null) : null; override = tr; },
     get override() { return override; },
+    extraFile(id) { return EXTRA[id] ? EXTRA[id].file : null; },   // 2026-11-21：进城前预取首领专属曲
     get playingId() { return bgm && !bgm.paused ? bgm.getAttribute('data-id') : (bgm ? bgm.getAttribute('data-id') + '(paused)' : null); },
     // v1.10.2：整局只用【一个】<audio> 元素，换曲 = 换 src。原来换曲（进马西克 Boss 战）会 new 一个新的 Audio，
     //   而 iOS / Safari 只允许「用户点过的那个元素」继续播放；新元素在游戏循环里 play() 会被静默拒绝 → 马西克一出场就没有音乐。
