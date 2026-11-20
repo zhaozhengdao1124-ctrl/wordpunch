@@ -20,6 +20,7 @@ body{height:100vh;height:100dvh;touch-action:none;}
 #wf-rot b{font-size:9vmin;letter-spacing:.1em;}
 #wf-rot small,#wf-tap small{color:#bfb3d6;font-size:3.4vmin;margin-top:2vmin;}
 #wf-tap b{font-size:9vmin;font-family:"Noto Serif SC","Noto Serif CJK SC","Songti SC",serif;text-shadow:0 0 .4em #7a1414;}
+#wf-tap button{font:inherit;font-size:4vmin;color:#fff;background:#3a2266;border:.4vmin solid #ffd23c;border-radius:1.5vmin;padding:1.2vmin 3vmin;}
 #wf-tap em{font-style:normal;margin-top:4vmin;padding:1.6vmin 6vmin;border:.6vmin solid #ffd23c;border-radius:2vmin;font-size:5vmin;color:#fff;animation:wfp 1.2s infinite;}
 @keyframes wfp{50%{opacity:.35}}
 #wf-rot i{display:block;width:12vmin;height:20vmin;border:1vmin solid #ffd23c;border-radius:2vmin;margin-bottom:4vmin;animation:wfr 2s infinite ease-in-out;}
@@ -28,12 +29,42 @@ body{height:100vh;height:100dvh;touch-action:none;}
   document.head.appendChild(st);
   const mk = (id, html) => { const d = document.createElement('div'); d.id = id; d.innerHTML = html; document.body.appendChild(d); return d; };
   const rot = mk('wf-rot', '<i></i><b>请横屏</b><small>把手机横过来玩 · Please rotate your device</small>');
-  const tap = mk('wf-tap', '<b>单词格斗</b><em>点击屏幕开始</em><small>先点一下，声音才会出来</small><small class="wf-load"></small>');
-  // 游戏还没加载完时，在点击开始页显示进度，点了也先留在这页，加载完自动进入。
-  const loadNote = tap.querySelector('.wf-load');
+  const tap = mk('wf-tap', '<b>单词格斗</b><em>点击屏幕开始</em><small>先点一下，声音才会出来</small><small class="wf-load"></small><span class="wf-fix" style="display:none;margin-top:3vmin;gap:4vmin"><button data-act="reload">重新加载</button><button data-act="reset">清除缓存后重进</button></span>');
+  // 游戏还没加载完时，在点击开始页显示进度；点了先留在这页，加载完自动进入。
+  // 超过 10 秒还没好：显示报错原因和「重新加载 / 清除缓存后重进」按钮（主屏幕快捷方式里没有刷新键）。
+  const loadNote = tap.querySelector('.wf-load'), fixBar = tap.querySelector('.wf-fix');
+  const t0 = Date.now(), bootErrors = [];
+  window.addEventListener('error', e => { bootErrors.push(((e.message || '') + ' ' + ((e.filename || '').split('/').pop()) + ':' + (e.lineno || '')).trim()); });
+  const isReady = () => !!(W.ready || W.game);
   let tapPending = false;
   loadNote.textContent = '正在加载…';
-  const readyWatch = setInterval(() => { if (W.ready) { clearInterval(readyWatch); if (!tapPending) loadNote.textContent = ''; } }, 400);
+  async function resetAll() {
+    // 只清本目录（试玩页）的 service worker 和缓存，不动旧版主页。
+    try { for (const r of await navigator.serviceWorker.getRegistrations()) if (r.scope === new URL('./', location.href).href) await r.unregister(); } catch (x) {}
+    try { for (const k of await caches.keys()) if (k.startsWith('wordfight@' + new URL('./', location.href).href)) await caches.delete(k); } catch (x) {}
+    // 先装好新的 service worker 再重进：它会绕过浏览器的 10 分钟缓存去取最新代码。
+    try {
+      await navigator.serviceWorker.register('sw.js', { updateViaCache: 'none' });
+      await Promise.race([navigator.serviceWorker.ready, new Promise(r => setTimeout(r, 15000))]);
+    } catch (x) {}
+    location.replace(location.pathname);
+  }
+  if (/[?&]reset=1(&|$)/.test(location.search || '')) { resetAll(); }
+  fixBar.addEventListener('touchend', e => e.stopPropagation(), { passive: true });
+  fixBar.addEventListener('click', e => {
+    e.stopPropagation();
+    const act = e.target && e.target.getAttribute && e.target.getAttribute('data-act');
+    if (act === 'reload') location.reload();
+    if (act === 'reset') resetAll();
+  });
+  const readyWatch = setInterval(() => {
+    if (isReady()) { clearInterval(readyWatch); fixBar.style.display = 'none'; if (!tapPending) loadNote.textContent = ''; return; }
+    const sec = Math.round((Date.now() - t0) / 1000);
+    if (sec >= 10) {
+      fixBar.style.display = 'flex';
+      loadNote.textContent = `已等待 ${sec} 秒` + (bootErrors.length ? ` · 出错：${bootErrors[0].slice(0, 80)}` : ' · 网络慢或缓存异常时可点下面按钮');
+    }
+  }, 500);
   if (W.touch) document.body.classList.add('wf-touch');
 
   // ---------- 缩放：整数倍优先（损失 ≤3% 屏幕才取整数，否则铺满用最近邻分数倍），否则最近邻分数倍；黑边居中 ----------
@@ -58,11 +89,11 @@ body{height:100vh;height:100dvh;touch-action:none;}
     if (tap.style.display !== 'flex') return;
     if (e && e.cancelable) e.preventDefault();
     try { W.Audio.unlock(); } catch (x) {}
-    if (!W.ready) {
+    if (!isReady()) {
       if (tapPending) return;
       tapPending = true;
-      loadNote.textContent = '正在加载，网络慢时请稍等…';
-      const wait = setInterval(() => { if (W.ready) { clearInterval(wait); tapPending = false; startTap(); } }, 300);
+      if (Date.now() - t0 < 10000) loadNote.textContent = '正在加载，网络慢时请稍等…';
+      const wait = setInterval(() => { if (isReady()) { clearInterval(wait); tapPending = false; startTap(); } }, 300);
       return;
     }
     tap.style.display = 'none';
