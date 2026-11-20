@@ -40,6 +40,8 @@
 
 ## 发布记录
 
+- 2026-11-20 《答对就出招》45 秒预告片已发布到独立播放页。Pages 构建为 `957c633`。线上 MP4 与成片逐字节一致，390px 模拟手机浏览器已验证播放和拖动进度。[观看预告片](https://zhaozhengdao1124-ctrl.github.io/wordpunch/optimize/trailer/)
+
 - 2026-11-20 国内慢网加载修复已上线。源码版本为 `f7323d6`，Pages 构建为 `260afae`。线上 `sw.js`、`js/v18_mobile.js`、`js/render.js` 与源码逐字节一致，旧版首页与 `6bfc4f0` 逐字节一致；线上模拟 Pixel 5：竖屏提示横屏、横屏点击开始进入首页，刷新 1.4 秒就绪，缓存名 `core-nf-v1.12-net-timeout1`，无页面报错。[新版试玩](https://zhaozhengdao1124-ctrl.github.io/wordpunch/optimize/) · [旧版试玩](https://zhaozhengdao1124-ctrl.github.io/wordpunch/)
 - 2026-11-20 开始页自救与缓存修复已上线。源码版本为 `c441e2d`，Pages 构建为 `18ecbcb`。线上 `sw.js`、`js/v18_mobile.js` 与源码逐字节一致，旧版首页 `index.html`、`sw.js`、`manifest.webmanifest` 与 `6bfc4f0` 逐字节一致；线上模拟 Pixel 5 从 `index.html` 打开：点击开始即进入，缓存名 `core-nf-v1.12-net-timeout2`；打开 `?reset=1` 清除后自动回到试玩页并就绪，无页面报错。[新版试玩](https://zhaozhengdao1124-ctrl.github.io/wordpunch/optimize/) · [旧版试玩](https://zhaozhengdao1124-ctrl.github.io/wordpunch/)
 - 2026-11-20 四级 / 六级按难度出词已上线。源码版本为 `61dfe09`，Pages 构建为 `0317ca1`。线上 `data/word_levels.js`、`js/v20_wordlevel.js`、`index.html`、`sw-precache.json`、`sw.js` 与源码逐字节一致，旧版首页与 `6bfc4f0` 逐字节一致；线上用四级开闯关各抽 600 题（1–5 级 %）：简单开局 41/33/16/8/3，修罗最后一城 Boss 2/7/17/37/38，无页面报错。[新版试玩](https://zhaozhengdao1124-ctrl.github.io/wordpunch/optimize/) · [旧版试玩](https://zhaozhengdao1124-ctrl.github.io/wordpunch/)
