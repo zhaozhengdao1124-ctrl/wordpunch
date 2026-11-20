@@ -459,6 +459,8 @@ async function browserSuite() {
       if (g.rollCpuChar) g.rollCpuChar('suling');
       const before = localStorage.getItem('wf_profiles_v1');
       g.startMatch();
+      // 2026-11-21 起角色图按需下载：对手的图没下完会先显示加载进度，下完自动开局
+      for (let i = 0; i < 400 && g.bankLoad; i++) await new Promise(r => setTimeout(r, 50));
       console.log('[solo] started', g.state);
       let guard = 0;
       while (g.state === 'intro' || g.state === 'title') { g.update(); if (++guard > 400) break; }
