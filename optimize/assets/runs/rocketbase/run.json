@@ -1,0 +1,332 @@
+{
+  "id": "rocketbase",
+  "name": "火箭基地",
+  "scene_name": "发射场海岸跑道",
+  "time_of_day": "夜晚",
+  "viewport": [
+    192,
+    108
+  ],
+  "ground_y": 76,
+  "layers": [
+    {
+      "id": "sky",
+      "file": "run_sky.png",
+      "width": 192,
+      "height": 108,
+      "parallax": 0.1,
+      "repeat_x": true
+    },
+    {
+      "id": "far",
+      "file": "run_far.png",
+      "width": 256,
+      "height": 108,
+      "parallax": 0.3,
+      "repeat_x": true
+    },
+    {
+      "id": "mid",
+      "file": "run_mid.png",
+      "width": 384,
+      "height": 108,
+      "parallax": 0.6,
+      "repeat_x": true
+    },
+    {
+      "id": "near",
+      "file": "run_near.png",
+      "width": 384,
+      "height": 108,
+      "parallax": 0.85,
+      "repeat_x": true
+    },
+    {
+      "id": "floor",
+      "file": "run_floor.png",
+      "width": 192,
+      "height": 108,
+      "parallax": 1.0,
+      "repeat_x": true
+    }
+  ],
+  "props": [
+    {
+      "id": "gate",
+      "file": "prop_gate.png",
+      "name": "维修龙门架",
+      "layer": "mid",
+      "width": 72,
+      "height": 45,
+      "anchor_px": [
+        36,
+        44
+      ],
+      "anchor_y": 66,
+      "placement": {
+        "mode": "spaced_landmark",
+        "first_world_x": 260,
+        "suggested_interval_px": 900,
+        "end_clearance_px": 185
+      }
+    },
+    {
+      "id": "stall",
+      "file": "prop_stall.png",
+      "name": "储罐组",
+      "layer": "near",
+      "width": 52,
+      "height": 36,
+      "anchor_px": [
+        26,
+        35
+      ],
+      "anchor_y": 69,
+      "placement": {
+        "mode": "spaced_landmark",
+        "first_world_x": 415,
+        "suggested_interval_px": 840,
+        "end_clearance_px": 185
+      }
+    },
+    {
+      "id": "tree",
+      "file": "prop_tree.png",
+      "name": "雷达天线",
+      "layer": "near",
+      "width": 46,
+      "height": 45,
+      "anchor_px": [
+        23,
+        44
+      ],
+      "anchor_y": 69,
+      "placement": {
+        "mode": "spaced_landmark",
+        "first_world_x": 640,
+        "suggested_interval_px": 1250,
+        "end_clearance_px": 185
+      }
+    },
+    {
+      "id": "extra",
+      "file": "prop_extra.png",
+      "name": "无标运输车",
+      "layer": "near",
+      "width": 57,
+      "height": 28,
+      "anchor_px": [
+        28,
+        27
+      ],
+      "anchor_y": 69,
+      "placement": {
+        "mode": "spaced_landmark",
+        "first_world_x": 830,
+        "suggested_interval_px": 1040,
+        "end_clearance_px": 185
+      }
+    },
+    {
+      "id": "end",
+      "file": "prop_end.png",
+      "name": "发射台入口",
+      "layer": "mid",
+      "width": 132,
+      "height": 58,
+      "anchor_px": [
+        66,
+        57
+      ],
+      "anchor_y": 66,
+      "placement": {
+        "mode": "at_level_end",
+        "max_count": 1,
+        "offset_px": 0
+      }
+    }
+  ],
+  "dynamic_elements": [
+    {
+      "id": "beacon",
+      "name": "跑道警示灯",
+      "file": "fx_beacon.png",
+      "frame_w": 6,
+      "frame_h": 7,
+      "cell_size": [
+        6,
+        7
+      ],
+      "frames": 4,
+      "frame_count": 4,
+      "ticks_per_frame": 3,
+      "frame_duration_ms": 100,
+      "frame_order": [
+        0,
+        1,
+        2,
+        3
+      ],
+      "sheet_layout": "horizontal",
+      "space": "repeat_with_layer",
+      "coordinate_layer": "near",
+      "repeat_world_layer_px": 384,
+      "anchor_left_px": 82,
+      "anchor_top_px": 46,
+      "layer": "near",
+      "anchor_y": 53,
+      "loop": true,
+      "optional": true
+    }
+  ],
+  "palette_count": 29,
+  "palette": [
+    [
+      12,
+      18,
+      35
+    ],
+    [
+      17,
+      25,
+      45
+    ],
+    [
+      21,
+      33,
+      46
+    ],
+    [
+      24,
+      29,
+      41
+    ],
+    [
+      25,
+      35,
+      59
+    ],
+    [
+      33,
+      50,
+      62
+    ],
+    [
+      34,
+      47,
+      73
+    ],
+    [
+      36,
+      42,
+      56
+    ],
+    [
+      45,
+      66,
+      75
+    ],
+    [
+      48,
+      61,
+      86
+    ],
+    [
+      49,
+      57,
+      72
+    ],
+    [
+      65,
+      73,
+      87
+    ],
+    [
+      65,
+      76,
+      101
+    ],
+    [
+      70,
+      96,
+      106
+    ],
+    [
+      74,
+      56,
+      53
+    ],
+    [
+      84,
+      94,
+      107
+    ],
+    [
+      97,
+      106,
+      128
+    ],
+    [
+      101,
+      129,
+      138
+    ],
+    [
+      113,
+      125,
+      137
+    ],
+    [
+      121,
+      83,
+      58
+    ],
+    [
+      134,
+      62,
+      54
+    ],
+    [
+      136,
+      147,
+      167
+    ],
+    [
+      144,
+      156,
+      165
+    ],
+    [
+      162,
+      122,
+      70
+    ],
+    [
+      184,
+      195,
+      204
+    ],
+    [
+      195,
+      154,
+      89
+    ],
+    [
+      197,
+      106,
+      69
+    ],
+    [
+      226,
+      189,
+      119
+    ],
+    [
+      245,
+      187,
+      130
+    ]
+  ],
+  "placement_notes": "标线每 24px 一段，最后一道门对准发射台。",
+  "credits": "《我的拳》原创像素场景"
+}
