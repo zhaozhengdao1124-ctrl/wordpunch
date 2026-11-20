@@ -19,6 +19,8 @@
 
 ## 发布记录
 
+- 2026-11-20 新版已发布到 GitHub Pages 的 `optimize/` 子目录，游戏代码版本为 `660bc7c`。GitHub 部署成功，新旧地址均已返回 HTTP 200。[新版试玩](https://zhaozhengdao1124-ctrl.github.io/wordpunch/optimize/) · [旧版试玩](https://zhaozhengdao1124-ctrl.github.io/wordpunch/)
+
 - 2026-11-20 独立私享试玩版已发布，包含上表六项。部署服务返回成功，浏览器访问该地址可见 ChatGPT 登录页。首页入口和进对战的实测在本地浏览器完成。[打开游戏](https://wordpunch-playtest.brightnacre8.chatgpt.site)
 - 同 WiFi 房间使用项目自带的局域网服务。私享网页托管游戏资源；跨两台实体设备的联机仍待验证。
 
