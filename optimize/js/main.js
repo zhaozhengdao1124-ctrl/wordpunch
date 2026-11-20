@@ -148,6 +148,7 @@
     }
     if (code === 'KeyN') { beginCreate(g); return; }
     if (code === 'KeyR') { beginRename(g); return; }
+    if (code === 'KeyB' && WF.Save) { WF.Save.show(); return; }   // v2.1 存档备份
     if (code === 'Delete' || code === 'Backspace') { beginDelete(g); return; }
     if (code === 'ArrowUp' || code === 'KeyW' || code === 'ArrowDown' || code === 'KeyS' || code === 'ArrowLeft' || code === 'KeyA' || code === 'ArrowRight' || code === 'KeyD') {
       if (!list.length) return;
@@ -282,6 +283,7 @@
     if (e.repeat && !(game && game.state === 'title' && /^(book|wrongbook)$/.test(game.ui.screen))) { e.preventDefault(); return; }
     if (code === 'KeyF') { const el = document.documentElement; if (!document.fullscreenElement) el.requestFullscreen && el.requestFullscreen(); else document.exitFullscreen(); return; }
     const g = game;
+    if (WF.Save && WF.Save.open) { if (code === 'Escape') WF.Save.close(); return; }   // v2.1 存档备份对话框打开时，键盘交给对话框
     if (g.bankLoad) { g.bankLoadInput(); e.preventDefault(); g.render(); return; }   // v1.8 词库下载中：Esc/任意键取消
     if (g.unlockShow && g.unlockShow.length) { if (g.unlockShow[0].t > 20) g.unlockShow.shift(); e.preventDefault(); g.render(); return; } // v1.4 解锁卡片：任意键继续
     if (g.ui && g.ui.typing && g.state === 'title') { /* input element handles it */ e.preventDefault(); return; }
@@ -306,6 +308,7 @@
   function onClick(e) {
     WF.Audio.unlock();
     const g = game;
+    if (WF.Save && WF.Save.open) { if (code === 'Escape') WF.Save.close(); return; }   // v2.1 存档备份对话框打开时，键盘交给对话框
     if (g.bankLoad) { g.bankLoadInput(); g.render(); return; }
     if (g.unlockShow && g.unlockShow.length) { if (g.unlockShow[0].t > 20) g.unlockShow.shift(); g.render(); return; }
     const p0 = e._x != null ? { x: e._x, y: e._y } : clickRect(g, e);
@@ -361,7 +364,8 @@
           else if (g.ui.then === 'wrong') g.goWrong();
           else g.ui.screen = 'title';
         }
-      } else if (hit.key === 'create') beginCreate(g);
+      } else if (hit.key === 'saveBox') { if (WF.Save) WF.Save.show(); }   // v2.1 存档备份（js/v21_save.js）
+      else if (hit.key === 'create') beginCreate(g);
       else if (hit.key === 'rename') beginRename(g);
       else if (hit.key === 'delete') beginDelete(g);
       else if (hit.key === 'back') { g.ui.screen = 'title'; }
@@ -395,10 +399,12 @@
 
   function boot() {
     const cv = document.getElementById('game');
-    if (!window.WF_ASSETS || !window.WF_BANKS) { document.body.innerHTML += '<p style="color:#fff">资源没加载到：请确认 assets/assets.js 和 data/banks.js 存在。</p>'; return; }
+    if (!window.WF_ASSETS || !window.WF_BANKS) { document.body.innerHTML += '<p style="color:#fff">资源没加载到：请确认 assets/assets.js 和 data/banks_index.js 存在。</p>'; return; }
     WF.Stage.build();
-    if (WF.Run && WF.Run.preloadAll) WF.Run.preloadAll();
+    // 2026-11-21 首屏提速：跑街素材（闯关才用）改到进菜单后再预载；角色图只等菜单要用的几张（见 render.js Sprites.load）
+    const boot = window.WF_BOOT;
     WF.Sprites.load(() => {
+      if (WF.Run && WF.Run.preloadAll) setTimeout(() => WF.Run.preloadAll(), 1500);
       game = new WF.Game(cv); WF.game = game;
       WF.Audio.startMusic({ keep: true });
       window.addEventListener('keydown', onKey);
@@ -412,7 +418,8 @@
       game.render();
       requestAnimationFrame(frame);
       WF.ready = true;
-    });
+      if (boot && boot.done) boot.done();
+    }, (n, total) => { if (boot && boot.sprites) boot.sprites(n, total); });
   }
   // ---- 测试 / 录屏钩子 ----
   WF.setManual = (v) => { manual = !!v; acc = 0; last = 0; };

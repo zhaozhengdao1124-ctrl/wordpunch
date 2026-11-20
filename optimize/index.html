@@ -16,15 +16,34 @@
   html, body { margin: 0; height: 100%; background: #05030c; overflow: hidden; }
   body { display: flex; align-items: center; justify-content: center; }
   #game { width: min(100vw, calc(100vh * 16 / 9)); height: auto; aspect-ratio: 16 / 9; image-rendering: pixelated; image-rendering: crisp-edges; display: block; }
+  /* 2026-11-21 启动进度条（像素风）：代替原来的黑屏，进菜单后自动消失 */
+  #wf-boot { position: fixed; left: 50%; bottom: 11vh; transform: translateX(-50%); width: min(62vw, 480px); z-index: 95; pointer-events: none; text-align: center; font: 700 14px/1.4 "Courier New", monospace; color: #ffd23c; transition: opacity .3s; }
+  #wf-boot b { display: block; letter-spacing: .35em; font-size: 18px; margin-bottom: 8px; text-shadow: 2px 2px 0 #7a1414; }
+  #wf-boot .bar { height: 16px; padding: 3px; background: #1b1230; border: 4px solid #ffd23c; box-shadow: 0 0 0 4px #05030c, 0 0 0 8px #7a5a10; image-rendering: pixelated; }
+  #wf-boot .bar i { display: block; height: 100%; width: 0; background: repeating-linear-gradient(90deg, #ffd23c 0 10px, #e09a00 10px 12px, transparent 12px 14px); }
+  #wf-boot small { display: block; margin-top: 10px; color: #bfb3d6; font-size: 12px; }
 </style>
 </head>
 <body>
 <canvas id="game" width="960" height="540"></canvas>
+<div id="wf-boot" data-n="65"><b>LOADING</b><div class="bar"><i></i></div><small>载入程序…</small></div>
+<script>
+// 启动进度：前 60% 按已载入的脚本数，后 40% 按菜单要用的角色图（js/main.js 调 WF_BOOT.sprites / done）。data-n = 页面里 <script src> 的个数（test/memory.test.js 会核对）
+(function () {
+  var el = document.getElementById('wf-boot'), bar = el.querySelector('i'), tx = el.querySelector('small'), N = +el.getAttribute('data-n') || 60, p = 0, sp = 0;
+  function show(v, msg) { p = Math.max(p, Math.min(1, v)); bar.style.width = Math.round(p * 20) * 5 + '%'; if (msg) tx.textContent = msg; }
+  var timer = setInterval(function () { if (sp) return; var k = Math.min(1, document.querySelectorAll('script[src]').length / N); show(0.6 * k, '载入程序 ' + Math.round(k * 100) + '%'); }, 120);
+  window.WF_BOOT = {
+    sprites: function (a, b) { sp = 1; show(0.6 + 0.4 * (b ? a / b : 1), '载入角色 ' + a + ' / ' + b); },
+    done: function () { clearInterval(timer); show(1, '完成'); el.style.opacity = '0'; setTimeout(function () { el.style.display = 'none'; }, 350); }
+  };
+})();
+</script>
 <script src="assets/assets.js"></script>
 <script src="assets/campaign.js"></script>
 <script src="assets/runs.js"></script>
 <script src="assets/skins.js"></script>
-<script src="data/banks.js"></script>
+<script src="data/banks_index.js"></script>
 <script src="js/config.js"></script>
 <script src="js/v19_config.js"></script>
 <script src="js/v19_rules.js"></script>
@@ -81,6 +100,9 @@
 <script src="js/v110_launch.js"></script>
 <script src="js/netrules.js"></script>
 <script src="js/netclient.js"></script>
+<script src="js/v21_load.js"></script>
+<script src="js/v21_memory.js"></script>
+<script src="js/v21_save.js"></script>
 <script src="js/main.js"></script>
 </body>
 </html>

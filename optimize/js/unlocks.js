@@ -35,6 +35,11 @@
       const key = pid + '|' + bankId + '|' + p.stats.answered + '|' + need;
       if (cache[bankId + pid] && cache[bankId + pid].key === key) return cache[bankId + pid].v;
       const seen = new Set(); let done = 0;
+      if (bank.lazy && !bank.loaded) {   // 2026-11-21 词库按需下载：还没下载时按存档记录数（总数用清单里的词数）
+        const pre = bankId + '\t';
+        for (const k in p.history || {}) { if (!k.startsWith(pre)) continue; const h = p.history[k]; if (h.kind !== 'phrase' && Math.max(h.best || 0, h.streak || 0) >= need) done++; }
+        return { done: Math.min(done, bank.count || 0), total: bank.count || 0, pct: bank.count ? Math.min(1, done / bank.count) : 0 };
+      }
       for (const w of bank.words) {
         if (!w || seen.has(w.word)) continue; seen.add(w.word);
         const h = p.history[bankId + '\t' + w.word];

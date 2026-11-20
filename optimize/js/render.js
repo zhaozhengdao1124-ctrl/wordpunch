@@ -3,20 +3,51 @@ WF.rng = function (seed) { let s = seed >>> 0 || 1; return () => ((s = (s * 1664
 
 WF.Sprites = {
   img: {},
-  load(done) {
-    const ids = Object.keys(window.WF_ASSETS); let left = ids.length * 3, called = false;
+  // 2026-11-21 首屏提速：启动只等「菜单要用的」可选角色正常图（7 张）；其余（受击白 / 红图、闯关小怪和城市首领）进菜单后后台慢慢下，
+  // 开局前没下完由 bankGate 显示进度（见 js/v18_banks.js）。没下完的图画的时候直接跳过，不会报错。
+  VARS: ['', '_white', '_red'],
+  st: {}, q: [], active: 0, PAR: 3, subs: [],
+  init() {
+    if (this._init) return; this._init = true;
+    for (const id of Object.keys(window.WF_ASSETS)) { this.img[id] = {}; for (const v of this.VARS) this.img[id][v.replace('_', '') || 'normal'] = new Image(); }
+  },
+  ok(im) { return !!(im && im.complete && im.naturalWidth); },
+  start(id, v) {
+    const k = id + v; if (this.st[k] || !this.img[id]) return;
+    this.st[k] = 'loading'; this.active++;
+    const im = this.img[id][v.replace('_', '') || 'normal'];
+    const fin = (r) => { if (this.st[k] !== 'loading') return; this.st[k] = r; this.active--; this.pump(); for (const f of this.subs.slice()) f(); };
+    im.onload = () => fin('done'); im.onerror = () => fin('error');
+    im.src = 'assets/' + id + v + '.png';
+  },
+  pump() { while (this.bg && this.active < this.PAR && this.q.length) { const [id, v] = this.q.shift(); if (!this.st[id + v]) this.start(id, v); } },
+  settled(id, v) { const s = this.st[id + v]; return s === 'done' || s === 'error'; },
+  // 还没下完的图（[id, 变体]），ids 缺省 = 全部角色，vars 缺省 = 正常 / 白 / 红三种
+  missing(ids, vars) { const out = []; for (const id of ids || Object.keys(this.img)) if (this.img[id]) for (const v of vars || this.VARS) if (!this.settled(id, v)) out.push([id, v]); return out; },
+  // 立刻开始下这些图（不排队），全部结束（成功或失败）后 resolve
+  need(list) {
+    for (const [id, v] of list) this.start(id, v);
+    return new Promise(res => { const chk = () => { if (list.every(([id, v]) => this.settled(id, v))) { this.subs.splice(this.subs.indexOf(chk) >>> 0, 1); res(); return true; } }; if (!chk()) this.subs.push(chk); });
+  },
+  core() { return (WF.CFG.ROSTER || []).filter(id => this.img[id]); },
+  load(done, prog) {
+    this.init();
+    const core = this.core().map(id => [id, '']); let called = false;
     // 网络很慢或个别图片卡住时，最多等 20 秒就先进游戏，没到的图之后到了照常显示。
-    const finish = () => { if (called) return; called = true; done(); };
+    const finish = () => { if (called) return; called = true; done(); setTimeout(() => this.background(), 1500); };   // 先让选中的词库下载 1.5 秒
     setTimeout(finish, 20000);
-    for (const id of ids) {
-      WF.Sprites.img[id] = {};
-      for (const v of ['', '_white', '_red']) {
-        const im = new Image();
-        im.onload = im.onerror = () => { if (--left === 0) finish(); };
-        im.src = 'assets/' + id + v + '.png';
-        WF.Sprites.img[id][v.replace('_', '') || 'normal'] = im;
-      }
-    }
+    const tick = () => { const n = core.filter(([id, v]) => this.settled(id, v)).length; if (prog) prog(n, core.length); return n === core.length; };
+    this.subs.push(() => { if (!called && tick()) finish(); });
+    for (const [id, v] of core) this.start(id, v);
+    if (tick()) finish();
+  },
+  // 进菜单后：后台按顺序下其余的图（先可选角色的受击图，再闯关角色），每次最多 PAR 张
+  background() {
+    if (this.bg) return; this.bg = true;
+    const core = this.core(), rest = Object.keys(this.img).filter(id => core.indexOf(id) < 0);
+    for (const id of core) for (const v of this.VARS) this.q.push([id, v]);
+    for (const id of rest) for (const v of this.VARS) this.q.push([id, v]);
+    this.pump();
   },
   // 纯黑剪影（进场镜头用）：运行时由正常图集合成，不需要额外文件
   blackOf(id) {
@@ -29,7 +60,10 @@ WF.Sprites = {
   },
   // X：脚底原点世界坐标（整数）；G：地面 y；dir 1 朝右 / -1 朝左（以脚底原点镜像）；fo：本帧脚底原点（缺省用角色的）
   draw(ctx, id, cell, X, G, dir, variant = 'normal', fo) {
-    const d = window.WF_ASSETS[id], im = variant === 'black' ? WF.Sprites.blackOf(id) : WF.Sprites.img[id][variant];
+    const d = window.WF_ASSETS[id], set = WF.Sprites.img[id]; if (!set) return;
+    let im = variant === 'black' ? WF.Sprites.blackOf(id) : set[variant];
+    if (!WF.Sprites.ok(im)) im = set.normal;          // 受击图还没下完：先用正常图
+    if (!WF.Sprites.ok(im) && !(im instanceof HTMLCanvasElement)) return;   // 还没下完：这一帧不画
     const foot = fo || d.foot;
     const sx = (cell % d.cols) * d.cell, sy = Math.floor(cell / d.cols) * d.cell, top = G - foot[1];
     if (dir > 0) ctx.drawImage(im, sx, sy, d.cell, d.cell, X - foot[0], top, d.cell, d.cell);

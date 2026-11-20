@@ -112,7 +112,7 @@
 
   G.drawPortrait = function (f, x, y, size) {
     const c = this.ctx, d = f.data, cell = d.anims.idle.frames[0].c;
-    const im = WF.Sprites.img[f.id].normal, sx = (cell % d.cols) * d.cell, sy = Math.floor(cell / d.cols) * d.cell;
+    const im = WF.Sprites.img[f.id].normal; if (!WF.Sprites.ok(im)) { this.box(x, y, size, size, '#1b1430', f.mv.color, 3); return; } const sx = (cell % d.cols) * d.cell, sy = Math.floor(cell / d.cols) * d.cell;
     const pr = d.portrait || [14, 9, 20];
     this.box(x, y, size, size, '#1b1430', f.mv.color, 3);
     c.save(); c.beginPath(); c.rect(x + 3, y + 3, size - 6, size - 6); c.clip();
@@ -137,6 +137,7 @@
     const pr = d.portrait || [14, 9, 20];   // v1.4：闯关角色用自己的头像框
     const sx = (cell % d.cols) * d.cell, sy = Math.floor(cell / d.cols) * d.cell, c = this.ctx;
     this.box(x, y, size, size, o.sil ? '#2a2440' : '#1b1430', o.border || mv.color, 3);
+    if (!(im instanceof HTMLCanvasElement) && !WF.Sprites.ok(im)) return;   // 图还没下完：先只画框
     c.save(); c.beginPath(); c.rect(x + 3, y + 3, size - 6, size - 6); c.clip();
     if (faceRight) c.drawImage(im, sx + pr[0], sy + pr[1], pr[2], pr[2], x, y + 2, size, size);
     else { c.translate(x + size, y + 2); c.scale(-1, 1); c.drawImage(im, sx + pr[0], sy + pr[1], pr[2], pr[2], 0, 0, size, size); }

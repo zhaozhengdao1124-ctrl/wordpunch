@@ -1,5 +1,7 @@
 // v1.8 按需词库：原来的词库（junior…pep6）在默认包 data/banks.js 里；新导入的词库（考研/雅思/托福/SAT/新概念1~4）
 // 各自一个 data/bank_<id>.js，选到才用 <script> 标签加载（file:// 和 http/PWA 都能用，不依赖 fetch）。
+// 2026-11-21 首屏提速：所有词库（包括原默认词库）都改成按需加载。启动只读 data/banks_index.js（几 KB 清单），
+//   选中的词库在进菜单后后台下载，开局前没下完就显示「正在下载词库」。拆分文件由 tools/split_banks.js 生成（data/b/<id>.js）。
 // 约定：window.WF_BANKS 里 lazy 词库先是「空壳」（words:[]，count=词数，file=文件，bytes=大小）；加载后把词填进同一个 words 数组并置 loaded=true。
 (function () {
   const W = window.WF = window.WF || {};
@@ -62,7 +64,9 @@
   G.safeBank = function () {
     const ok = i => this.banks[i] && Banks.isLoaded(this.banks[i]);
     if (this.lastGoodBank != null && ok(this.lastGoodBank)) return this.lastGoodBank;
-    const i = this.banks.findIndex(b => !b.lazy); return i < 0 ? 0 : i;
+    let i = this.banks.findIndex(b => Banks.isLoaded(b)); if (i >= 0) return i;   // 已下载好的词库优先
+    i = this.banks.findIndex(b => b.id === 'cet4'); if (i >= 0) return i;          // 都没下载：默认四级
+    i = this.banks.findIndex(b => !b.lazy || b.core); return i < 0 ? 0 : i;
   };
   // 开局用的词库：选的词库没下载好（比如错题对战不需要它）就用安全词库兜底，保证 bank.words 不是空的
   G.bankForPlay = function () {
@@ -76,12 +80,17 @@
   };
   // 需要的词库里有没下载的 → 显示「下载中」，成功后继续 then()；失败 → 提示 + 回退到上一个词库。返回 true 表示已接管（调用方 return）。
   G.bankGate = function (list, then) {
+    // 词库全是按需下载：开局兜底用的词库（bankForPlay）也必须是下载好的，所以总把当前选中的词库一起带上
+    list = (list || []).concat([this.banks[this.menu.bank]]);
     const need = [...new Set((list || []).filter(Boolean))].filter(b => b.lazy && !b.loaded);
-    if (!need.length) return false;
+    // 2026-11-21：角色图也是按需下载的。闯关开局前等全部角色（小怪 / 首领）的正常图；其它模式只用可选角色，启动时已下好。
+    //   受击白 / 红图没下完时先用正常图顶替（render.js Sprites.draw），不用等。
+    const S = W.Sprites, sp = S && S.missing ? S.missing(this._campGate ? null : S.core(), ['']) : [];
+    if (!need.length && !sp.length) return false;
     if (this.bankLoad) return true;
-    const tok = this.bankLoad = { names: need.map(b => b.name), bytes: need.reduce((s, b) => s + (b.bytes || 0), 0), t0: performance.now(), err: null, cancelled: false, banks: need };
-    this.say('词库按需下载', need.map(b => b.id).join(','));
-    Promise.all(need.map(b => Banks.ensure(b))).then(() => {
+    const tok = this.bankLoad = { names: need.map(b => b.name), bytes: need.reduce((s, b) => s + (b.bytes || 0), 0), t0: performance.now(), err: null, cancelled: false, banks: need, sp };
+    this.say(need.length ? '词库按需下载' : '角色素材加载', need.map(b => b.id).join(','), sp.length ? '图 ' + sp.length : '');
+    Promise.all(need.map(b => Banks.ensure(b)).concat(sp.length ? [S.need(sp)] : [])).then(() => {
       if (tok.cancelled || this.bankLoad !== tok) return;
       this.bankLoad = null;
       if (this.banks[this.menu.bank] && Banks.isLoaded(this.banks[this.menu.bank])) this.lastGoodBank = this.menu.bank;
@@ -114,7 +123,8 @@
   G.bankRetry = function (i) { const b = this.banks[i]; if (b && b.lazy && Banks.state(b) === 'error') Banks.reset(b); };
   G.bankBoot = function () {
     const i = this.banks.findIndex(b => b.id === (function () { try { return localStorage.getItem('wf_bank'); } catch (e) { return null; } })());
-    if (i >= 0 && this.banks[i].lazy) { this.lastGoodBank = this.safeBank(); this.bankBg([this.banks[i]]); }
+    const b = this.banks[i >= 0 ? i : this.menu.bank];
+    if (b && b.lazy && !b.loaded) { this.lastGoodBank = this.safeBank(); this.bankBg([b]); }
     else this.lastGoodBank = this.menu.bank;
   };
   // 设置里切词库：选中已下载的就记为「上一个词库」
@@ -142,6 +152,15 @@
       this.txt(`「${nm}」下载失败`, cx, y + 44, 28, '#ff8a8a', 'center', { sw: 5, weight: 700 });
       this.txt(t.err + (t.fallback ? '，已换回「' + t.fallback + '」' : ''), cx, y + 88, 20, '#fff4d6', 'center', { sw: 4, weight: 700 });
       this.txt('联网后再选一次就行', cx, y + 124, 16, '#bfb3d6', 'center', { sw: 3 });
+    } else if (!t.names.length) {
+      // 只差角色图：像素进度条
+      const left = W.Sprites.missing ? t.sp.filter(([id, v]) => !W.Sprites.settled(id, v)).length : 0, done = t.sp.length - left, k = t.sp.length ? done / t.sp.length : 1;
+      this.txt('正在加载角色素材' + '.'.repeat(1 + Math.floor(performance.now() / 350) % 3), cx, y + 44, 28, '#ffd23c', 'center', { sw: 5, weight: 700 });
+      const bw = 400, bx = cx - bw / 2, by = y + 78, seg = Math.round(k * 20);
+      ctx.save(); ctx.fillStyle = '#05030c'; ctx.fillRect(bx - 4, by - 4, bw + 8, 26); ctx.fillStyle = '#ffd23c';
+      for (let i = 0; i < seg; i++) ctx.fillRect(bx + i * 20, by, 17, 18);
+      ctx.restore();
+      this.txt(`${done} / ${t.sp.length}`, cx, y + 124, 16, '#bfb3d6', 'center', { sw: 3 });
     } else {
       const n = 1 + Math.floor(performance.now() / 350) % 3;
       this.txt(`正在下载词库「${nm}」${'.'.repeat(n)}`, cx, y + 44, 28, '#ffd23c', 'center', { sw: 5, weight: 700 });

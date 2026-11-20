@@ -6,22 +6,30 @@
 // 2026-11-20 起：页面和代码（html / js / json）改为「先联网、断网才用缓存」，刷新一次就能拿到新版；图片和音频仍先用缓存。
 // 缓存名带 core-nf- 表示这一代规则。从旧的「先缓存」版本升级时，新版激活后会把已打开的页面自动重新载入一次。
 const PREFIX = 'wordfight@' + self.registration.scope + ':';
-const CACHE = PREFIX + 'core-nf-v1.12-meaning1';
+const CACHE = PREFIX + 'core-nf-v1.13-fastload1';
 const NET_TIMEOUT = 3000;   // 联网超过 3 秒就先用缓存（网络慢或被墙时不卡死），联网结果回来后悄悄更新缓存
 const PRECACHE_PARALLEL = 4; // 预缓存每次只并发 4 个，不和页面本身抢带宽
 const isCode = u => { const p = new URL(u).pathname; return p.endsWith('/') || /\.(html|js|json|webmanifest)$/.test(p); };
-const BANKS = PREFIX + 'banks';          // 不随版本清理
-const isBank = u => /\/data\/bank_[a-z0-9]+\.js$/.test(new URL(u).pathname);
+// 2026-11-21：词库拆成 data/b/<id>.js（每个文件自带全部词条），换一个词库缓存名；旧的 data/bank_<id>.js 缓存在激活时删掉
+const BANKS = PREFIX + 'banks2';         // 不随版本清理
+const isBank = u => /\/data\/(b\/|bank_)[a-z0-9]+\.js$/.test(new URL(u).pathname);
+// 2026-11-21 首屏提速：sw-precache.json = { core, rest }。安装时只缓存 core（页面、脚本、菜单要用的图）；
+//   rest 等页面进了菜单、发来 {type:'warm'} 再用 2 路并发慢慢缓存，不和首屏抢带宽（旧格式的数组 = 全部当 core）。
+async function readList() {
+  try {
+    const ctl = new AbortController(), t = setTimeout(() => ctl.abort(), 8000);
+    const j = await (await fetch('sw-precache.json', { cache: 'no-store', signal: ctl.signal })).json();
+    clearTimeout(t);
+    return Array.isArray(j) ? { core: j, rest: [] } : { core: j.core || [], rest: j.rest || [] };
+  } catch (x) { return { core: [], rest: [] }; }
+}
 self.addEventListener('install', e => {
   e.waitUntil((async () => {
     const c = await caches.open(CACHE);
-    let list = [];
     self.skipWaiting();
-    try {
-      const ctl = new AbortController(), t = setTimeout(() => ctl.abort(), 8000);
-      list = await (await fetch('sw-precache.json', { cache: 'no-store', signal: ctl.signal })).json();
-      clearTimeout(t);
-    } catch (x) {}
+    const all = await readList();
+    // 旧缓存里已有的 rest 素材也顺手复制过来（只复制不下载）
+    const list = all.core.concat(all.rest.map(u => ({ u, copyOnly: true })));
     // 旧缓存里已有的文件直接复制，不重新下载（以前每次升级都要重下约 18MB）。代码文件的新鲜度由「先联网」保证。
     // 缺的文件限并发下载，缺一个不影响整体。
     const old = [];
@@ -29,13 +37,13 @@ self.addEventListener('install', e => {
     let next = 0;
     async function worker() {
       while (next < list.length) {
-        const u = list[next++];
+        const it = list[next++], u = typeof it === 'string' ? it : it.u, copyOnly = typeof it !== 'string';
         try {
           let hit = null;
           // 只复制图片、音频等素材；代码一律重新下载，避免新旧版本的代码混在一起。
           if (!isCode(new URL(u, self.location.href).href)) for (const o of old) { hit = await o.match(u, { ignoreSearch: true }); if (hit) break; }
           if (hit) await c.put(u, hit);
-          else {
+          else if (!copyOnly) {
             // 单个文件最多等 10 秒，卡住的跳过（之后玩到时再按需缓存）。
             const ctl = new AbortController(), t = setTimeout(() => ctl.abort(), 10000);
             try { const r = await fetch(new Request(u, { cache: 'reload', signal: ctl.signal })); if (r.ok) await c.put(u, r); } finally { clearTimeout(t); }
@@ -55,6 +63,7 @@ self.addEventListener('activate', e => {
       if (!k.startsWith(PREFIX + 'core-nf-') || k === PREFIX + 'core-nf-v1.12-loot-pity2') legacy = true;
       await caches.delete(k);
     }
+    await caches.delete(PREFIX + 'banks');   // 旧格式的按需词库缓存（新版不再用）
     await self.clients.claim();
     // 旧版页面是从旧缓存载入的，代码已过时：重新载入一次，玩家不用再手动刷新。
     if (legacy) for (const client of await self.clients.matchAll({ type: 'window' })) client.navigate(client.url).catch(() => {});
@@ -104,3 +113,24 @@ async function bankFetch(req) {
   if (hit) { net().catch(() => {}); return hit; }
   try { return await net(); } catch (x) { return Response.error(); }
 }
+// 页面进菜单后发来 warm：后台补齐 rest（已缓存的跳过），2 路并发，单个文件最多等 20 秒
+let warming = null;
+self.addEventListener('message', e => {
+  if (!e.data || e.data.type !== 'warm' || warming) return;
+  warming = (async () => {
+    const { rest } = await readList(), c = await caches.open(CACHE);
+    let next = 0;
+    async function worker() {
+      while (next < rest.length) {
+        const u = rest[next++];
+        try {
+          if (await c.match(u, { ignoreSearch: true })) continue;
+          const ctl = new AbortController(), t = setTimeout(() => ctl.abort(), 20000);
+          try { const r = await fetch(new Request(u, { signal: ctl.signal })); if (r.ok) await c.put(u, r); } finally { clearTimeout(t); }
+        } catch (x) {}
+      }
+    }
+    await Promise.all([worker(), worker()]);
+  })();
+  if (e.waitUntil) e.waitUntil(warming);
+});
