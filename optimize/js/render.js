@@ -1,9 +1,12 @@
 // 精灵绘制 + 程序化像素擂台背景 + 打击特效
 WF.rng = function (seed) { let s = seed >>> 0 || 1; return () => ((s = (s * 1664525 + 1013904223) >>> 0) / 4294967296); };
 
+// 2026-11-21 首屏提速：进菜单（WF.ready）后再过 delay 毫秒才执行，用于后台预载闯关素材，不和首屏抢带宽
+WF.afterReady = function (fn, delay = 2000) { const iv = setInterval(() => { if (WF.ready) { clearInterval(iv); setTimeout(fn, delay); } }, 300); };
+
 WF.Sprites = {
   img: {},
-  // 2026-11-21 首屏提速：启动只等「菜单要用的」可选角色正常图（7 张）；其余（受击白 / 红图、闯关小怪和城市首领）进菜单后后台慢慢下，
+  // 2026-11-21 首屏提速：启动只等首页两个角色的正常图；其余（其他可选角色、受击白 / 红图、闯关小怪和城市首领）进菜单后后台慢慢下，
   // 开局前没下完由 bankGate 显示进度（见 js/v18_banks.js）。没下完的图画的时候直接跳过，不会报错。
   VARS: ['', '_white', '_red'],
   st: {}, q: [], active: 0, PAR: 3, subs: [],
@@ -30,9 +33,15 @@ WF.Sprites = {
     return new Promise(res => { const chk = () => { if (list.every(([id, v]) => this.settled(id, v))) { this.subs.splice(this.subs.indexOf(chk) >>> 0, 1); res(); return true; } }; if (!chk()) this.subs.push(chk); });
   },
   core() { return (WF.CFG.ROSTER || []).filter(id => this.img[id]); },
+  // 启动时只等首页那两个角色（默认苏绫 / Mr.J，或存档里选过的角色）；其余可选角色排在后台队列最前面
+  bootIds() {
+    const ls = k => { try { return localStorage.getItem(k) || ''; } catch (e) { return ''; } };
+    const ids = ['suling', 'mrj', ls('wf_char')].concat(ls('wf_char_vs').split(','));
+    return [...new Set(ids)].filter(id => id && this.img[id]);
+  },
   load(done, prog) {
     this.init();
-    const core = this.core().map(id => [id, '']); let called = false;
+    const core = this.bootIds().map(id => [id, '']); let called = false;
     // 网络很慢或个别图片卡住时，最多等 20 秒就先进游戏，没到的图之后到了照常显示。
     const finish = () => { if (called) return; called = true; done(); setTimeout(() => this.background(), 1500); };   // 先让选中的词库下载 1.5 秒
     setTimeout(finish, 20000);
@@ -45,8 +54,9 @@ WF.Sprites = {
   background() {
     if (this.bg) return; this.bg = true;
     const core = this.core(), rest = Object.keys(this.img).filter(id => core.indexOf(id) < 0);
-    for (const id of core) for (const v of this.VARS) this.q.push([id, v]);
-    for (const id of rest) for (const v of this.VARS) this.q.push([id, v]);
+    for (const id of core) this.q.push([id, '']);                       // 先补齐选角页要用的可选角色
+    for (const id of core) for (const v of ['_white', '_red']) this.q.push([id, v]);
+    for (const id of rest) for (const v of this.VARS) this.q.push([id, v]);   // 再下闯关小怪、首领
     this.pump();
   },
   // 纯黑剪影（进场镜头用）：运行时由正常图集合成，不需要额外文件

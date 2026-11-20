@@ -83,9 +83,11 @@
     // 词库全是按需下载：开局兜底用的词库（bankForPlay）也必须是下载好的，所以总把当前选中的词库一起带上
     list = (list || []).concat([this.banks[this.menu.bank]]);
     const need = [...new Set((list || []).filter(Boolean))].filter(b => b.lazy && !b.loaded);
-    // 2026-11-21：角色图也是按需下载的。闯关开局前等全部角色（小怪 / 首领）的正常图；其它模式只用可选角色，启动时已下好。
+    // 2026-11-21：角色图也是按需下载的。闯关开局前等全部角色（小怪 / 首领）的正常图；其它模式等对战双方的正常图。
     //   受击白 / 红图没下完时先用正常图顶替（render.js Sprites.draw），不用等。
-    const S = W.Sprites, sp = S && S.missing ? S.missing(this._campGate ? null : S.core(), ['']) : [];
+    let ids = null;
+    if (!this._campGate) { if (this.applyChars) this.applyChars(); ids = (this.chars || []).slice(); }   // 对战双方
+    const S = W.Sprites, sp = S && S.missing ? S.missing(ids, ['']) : [];
     if (!need.length && !sp.length) return false;
     if (this.bankLoad) return true;
     const tok = this.bankLoad = { names: need.map(b => b.name), bytes: need.reduce((s, b) => s + (b.bytes || 0), 0), t0: performance.now(), err: null, cancelled: false, banks: need, sp };

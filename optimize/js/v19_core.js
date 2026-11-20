@@ -19,10 +19,10 @@
     return { x: dx, y: dy, w, h, k };
   };
   // 开机预载清单里的图（第一次出现不闪占位）
-  setTimeout(() => { const a = art(); for (const id in (a.items || {})) WF.campImg('items/' + id + '.png'); for (const id of ((window.WF_CAMPAIGN_DATA || {}).icons || [])) WF.campImg('items/' + id + '.png'); for (const id in (a.ui || {})) WF.campImg('ui/' + id + '.png');
+  WF.afterReady(() => { const a = art(); for (const id in (a.items || {})) WF.campImg('items/' + id + '.png'); for (const id of ((window.WF_CAMPAIGN_DATA || {}).icons || [])) WF.campImg('items/' + id + '.png'); for (const id in (a.ui || {})) WF.campImg('ui/' + id + '.png');
     for (const e in (a.portrait || {})) for (let i = 0; i < a.portrait[e].n; i++) WF.campImg(`shopkeeper/portrait/${e}/${String(i).padStart(3, '0')}.png`);
     for (const k in (a.counter || {})) a.counter[k].ticks.forEach((_, i) => WF.campImg(`shopkeeper/counter/${k}/${String(i).padStart(3, '0')}.png`));
-    if (a.shopBg) WF.campImg('shopkeeper/shop_bg.png'); }, 0);
+    if (a.shopBg) WF.campImg('shopkeeper/shop_bg.png'); });   // 2026-11-21：进菜单 2 秒后再预载
   // 横排帧条（I4 gold_coin_spin：4 帧 10×10，每帧 4 tick 循环）：第 tt tick 的那一帧画进 box×box，按允许倍数居中、整数坐标
   WF.drawStrip19 = function (c, id, tt, x, y, box) {
     const a = art(), S = a.strips && a.strips[id], im = S && WF.hasArt19('ui', id) ? WF.campImg('ui/' + id + '.png') : null;
