@@ -90,6 +90,7 @@
     if (sc === 'achievements') return g.achKey(code);   // v1.7.1 成就页
     if (sc === 'growth') return g.growKey(code);   // v1.7.1 角色成长
     if (sc === 'daily') return g.dailyKey(code);   // v1.7.1 每日任务
+    if (sc === 'kick') return g.kickKey(code);   // v2.1 今日踢馆
     if (sc === 'codex') return g.codexKey(code);   // v1.8 收藏 / 图鉴
     const items = g.titleChoices();
     if (sc === 'versus' && code === 'Escape') { g.menuAct('versusBack'); return; }
@@ -308,7 +309,7 @@
   function onClick(e) {
     WF.Audio.unlock();
     const g = game;
-    if (WF.Save && WF.Save.open) { if (code === 'Escape') WF.Save.close(); return; }   // v2.1 存档备份对话框打开时，键盘交给对话框
+    if (WF.Save && WF.Save.open) return;   // v2.1 存档备份对话框打开时不响应画布点击
     if (g.bankLoad) { g.bankLoadInput(); g.render(); return; }
     if (g.unlockShow && g.unlockShow.length) { if (g.unlockShow[0].t > 20) g.unlockShow.shift(); g.render(); return; }
     const p0 = e._x != null ? { x: e._x, y: e._y } : clickRect(g, e);
@@ -333,6 +334,8 @@
       g.growClick(hit);
     } else if (sc === 'daily') {
       g.dailyClick(hit);
+    } else if (sc === 'kick') {
+      g.kickClick(hit);
     } else if (sc === 'codex') {
       g.codexClick(hit);
     } else if (sc === 'settings') {

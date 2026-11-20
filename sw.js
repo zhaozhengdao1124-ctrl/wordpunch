@@ -6,7 +6,7 @@
 // 2026-11-20 起：页面和代码（html / js / json）改为「先联网、断网才用缓存」，刷新一次就能拿到新版；图片和音频仍先用缓存。
 // 缓存名带 core-nf- 表示这一代规则。从旧的「先缓存」版本升级时，新版激活后会把已打开的页面自动重新载入一次。
 const PREFIX = 'wordfight@' + self.registration.scope + ':';
-const CACHE = PREFIX + 'core-nf-v1.13-fastload2';
+const CACHE = PREFIX + 'core-nf-v1.13-batchb1';
 const NET_TIMEOUT = 3000;   // 联网超过 3 秒就先用缓存（网络慢或被墙时不卡死），联网结果回来后悄悄更新缓存
 const PRECACHE_PARALLEL = 4; // 预缓存每次只并发 4 个，不和页面本身抢带宽
 const isCode = u => { const p = new URL(u).pathname; return p.endsWith('/') || /\.(html|js|json|webmanifest)$/.test(p); };
@@ -117,7 +117,20 @@ async function bankFetch(req) {
 // 页面进菜单后发来 warm：后台补齐 core + rest（已缓存的跳过），2 路并发，单个文件最多等 20 秒
 let warming = null;
 self.addEventListener('message', e => {
-  if (!e.data || e.data.type !== 'warm' || warming) return;
+  if (!e.data || e.data.type !== 'warm') return;
+  // 页面已经下载过的词库：补进 BANKS 缓存（多半直接来自浏览器缓存，不重复走网络）
+  const bl = Array.isArray(e.data.banks) ? e.data.banks.filter(u => typeof u === 'string' && isBank(new URL(u, self.registration.scope).href)) : [];
+  if (bl.length) {
+    const p = (async () => {
+      const c = await caches.open(BANKS);
+      for (const u of bl) {
+        const href = new URL(u, self.registration.scope).href;
+        try { if (!(await c.match(href))) { const r = await fetch(href); if (r && r.ok && r.status === 200) await c.put(href, r); } } catch (x) {}
+      }
+    })();
+    if (e.waitUntil) e.waitUntil(p);
+  }
+  if (warming) return;
   warming = (async () => {
     const all = await readList(), rest = all.core.concat(all.rest), c = await caches.open(CACHE);   // 第一次打开时 core 也在这里补（多半直接来自浏览器缓存）
     let next = 0;

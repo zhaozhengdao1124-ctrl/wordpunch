@@ -81,6 +81,7 @@
       if (sc === 'achievements' && this.drawAchievements) return this.drawAchievements();   // v1.7.1 成就页
       if (sc === 'growth' && this.drawGrowth) return this.drawGrowth();   // v1.7.1 角色成长
       if (sc === 'daily' && this.drawDaily) return this.drawDaily();   // v1.7.1 每日任务
+      if (sc === 'kick' && this.drawKick) return this.drawKick();   // v2.1 今日踢馆
       return this.drawTitle();
     }
     this.drawPops(li);
