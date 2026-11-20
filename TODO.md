@@ -37,6 +37,8 @@
 
 ## 发布记录
 
+- 2026-11-20 国内慢网加载修复已上线。源码版本为 `f7323d6`，Pages 构建为 `260afae`。线上 `sw.js`、`js/v18_mobile.js`、`js/render.js` 与源码逐字节一致，旧版首页与 `6bfc4f0` 逐字节一致；线上模拟 Pixel 5：竖屏提示横屏、横屏点击开始进入首页，刷新 1.4 秒就绪，缓存名 `core-nf-v1.12-net-timeout1`，无页面报错。[新版试玩](https://zhaozhengdao1124-ctrl.github.io/wordpunch/optimize/) · [旧版试玩](https://zhaozhengdao1124-ctrl.github.io/wordpunch/)
+
 - 2026-11-20 试玩页离线缓存改为先联网已上线。源码版本为 `5269447`，Pages 构建为 `e1f1e07`。线上 `sw.js`、`js/v18_mobile.js` 与源码逐字节一致，旧版首页与 `6bfc4f0` 逐字节一致；线上缓存名为 `core-nf-v1.12-loot-pity2`，无页面报错。[新版试玩](https://zhaozhengdao1124-ctrl.github.io/wordpunch/optimize/) · [旧版试玩](https://zhaozhengdao1124-ctrl.github.io/wordpunch/)
 
 - 2026-11-20 摇奖机赔率调整已上线（三轴约 8%、第 12 次保底、大奖 150、三轴普通 ×2）。源码版本为 `efa5812`，Pages 构建为 `253daa2`。线上 `optimize/` 改动文件与源码逐字节一致，旧版首页与 `6bfc4f0` 逐字节一致。线上读到新参数（8% / 150），20 局第 12 次保底全部触发，无页面报错。新旧对照和模拟见 `改动说明.md`。[新版试玩](https://zhaozhengdao1124-ctrl.github.io/wordpunch/optimize/) · [旧版试玩](https://zhaozhengdao1124-ctrl.github.io/wordpunch/)
