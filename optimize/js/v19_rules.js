@@ -64,11 +64,11 @@
   // 翻牌「掉血」不致死：最低保留 10% 血量
   R.hurtTo = function (hp, maxHp, pct) { const floor = Math.ceil(maxHp * K().FLIP.HURT_FLOOR); if (hp <= floor) return hp; return Math.max(floor, hp - Math.round(maxHp * pct)); };
 
-  // 本局每次开摇后翻倍。机台金额单独按当前费用同比放大。
-  R.lootPrice = spinCount => K().LOOT_MACHINE.PRICE * 2 ** spinCount;
+  // 本次费用和奖额都按玩家选择的倍数放大。
+  R.lootPrice = (multiplier = 1) => K().LOOT_MACHINE.PRICE * multiplier;
   R.makeLootMachineBoard = function (rng, price) {
     const { PRICE, GOLD_PAYTABLE } = K().LOOT_MACHINE;
-    return R.shuffle(rng, GOLD_PAYTABLE.map(([amount, weight]) => ({ k: 'G', gold: amount * (price / PRICE), weight })));
+    return R.shuffle(rng, GOLD_PAYTABLE.map(([amount, weight, symbol]) => ({ k: 'G', gold: amount * (price / PRICE), weight, symbol })));
   };
   R.pickLootSlot = function (rng, board) {
     let roll = rng() * board.reduce((total, card) => total + card.weight, 0);
@@ -121,7 +121,7 @@
   R.upgradePrice = function (id) { return K().REST.UPGRADE_PRICE[ITEM(id).rarity] || K().REST.UPGRADE_PRICE.rare; };   // 休息点升级：标价、不浮动、不砍价
 
   // 商店与战利品共用的抽词顺序。一个拼写在同轮只出一次，保留入选记录的词库与义项。
-  R.reviewWords = function (rng, wrong, fillSeen, fillAny, count) {
+  R.reviewWords = function (rng, wrong, preferred, fallback, count) {
     const words = [], seen = new Set();
     function take(entries) {
       if (words.length === count) return;
@@ -134,8 +134,8 @@
     }
     take(wrong);
     const fromBook = words.length;
-    take(fillSeen);
-    take(fillAny);
+    take(preferred);
+    take(fallback);
     const ok = words.length === count;
     return { words: ok ? words : [], fromBook, filled: ok ? count - fromBook : 0, ok };
   };
