@@ -31,6 +31,7 @@ WF.LootReels = (() => {
     rollStart = outerEnd + 420;
   const stopsAt = [2050, 2750, 3650].map((ms) => rollStart + ms);
   const finishAt = stopsAt[2] + 1150;
+  const surgeDuration = 980;
   const spinUp = 0.14, braking = 0.32;
   const totalTravel = braking - spinUp / 2 + (1 - braking) / 2;
 
@@ -42,6 +43,15 @@ WF.LootReels = (() => {
 
   function reelDistance(axis, length, destination) {
     return length + ((destination - axis + length) % length);
+  }
+
+  function cueAt(t) {
+    if (t < outerEnd) return '外圈跑灯';
+    if (t < rollStart) return '轰——三轴启动！';
+    const locked = stopsAt.filter(at => t >= at).length;
+    if (locked === 0) return '咔咔咔 · 三轴转动';
+    if (locked === stopsAt.length) return '叮！三轴锁定';
+    return `咔哒！第 ${locked} 轴锁定`;
   }
 
   // Same travel curve as the animation. One contact per quarter of a symbol.
@@ -200,8 +210,11 @@ WF.LootReels = (() => {
       ctx.strokeStyle = '#b9d7a359';
       ctx.stroke();
     }
-    function shell(t, selected, legend) {
-      const gold = legend && t >= outerEnd;
+    function shell(t, selected, reelMode) {
+      const gold = reelMode === 'jackpot' && t >= outerEnd;
+      const age = t - outerEnd;
+      const chasing = reelMode !== 'none' && !still.matches && age >= 0 && age < surgeDuration;
+      const phase = Math.floor(age / 44);
       fill(0, 0, 960, 540, '#21191e');
       bevel(7, 6, 946, 526, 20, '#3b2527');
       bevel(12, 10, 936, 515, 18, '#a77d4c');
@@ -344,7 +357,7 @@ WF.LootReels = (() => {
         screw(sx, 181);
         screw(sx, 338);
       }
-      const spin = legend && t >= rollStart;
+      const spin = reelMode !== 'none' && t >= rollStart;
       for (let i = 0; i < 3; i++) {
         const x = 283 + 137 * i;
         bevel(x, 184, 120, 128, 9, '#756452');
@@ -400,28 +413,32 @@ WF.LootReels = (() => {
         ],
         '#da654c'
       );
-      for (const x of [34, 926]) {
-        for (let y = 84; y <= 452; y += 46) bulb(x, y, gold);
+      for (const [side, x] of [34, 926].entries()) {
+        for (let i = 0; i <= 8; i++) {
+          const lit = chasing ? (phase + (side ? i : 8 - i)) % 5 < 3 : gold;
+          bulb(x, 84 + i * 46, lit);
+        }
       }
     }
-    function celebration(t, slot, legend) {
+    function celebration(t, slot, reelMode) {
       const finale = t >= stopsAt[2];
-      const p = (t - (finale ? stopsAt[2] : outerEnd)) / (finale ? 1150 : 1000);
-      if (!legend || still.matches || p < 0 || p >= 1) return 0;
+      const p = (t - (finale ? stopsAt[2] : outerEnd)) / (finale ? 1150 : surgeDuration);
+      if (reelMode === 'none' || (finale && reelMode !== 'jackpot') || still.matches || p < 0 || p >= 1) return 0;
       const pulse = Math.sin((Math.PI * Math.min(1, p / 0.24)) / 2) * Math.pow(1 - p, 1.15);
       const [cx, cy] = finale ? [480, 248] : stops[slot];
       ctx.save();
       ctx.globalCompositeOperation = 'screen';
-      ctx.globalAlpha = pulse * (finale ? 0.53 : 0.43);
-      fill(0, 0, 960, 540, '#c77623');
+      ctx.globalAlpha = pulse * (finale ? 0.53 : 0.82);
+      fill(0, 0, 960, 540, finale ? '#c77623' : '#db3a20');
       const bloom = ctx.createRadialGradient(cx, cy, 8, cx, cy, 750);
       bloom.addColorStop(0, '#ffdb87');
       bloom.addColorStop(0.35, '#d18138');
       bloom.addColorStop(1, '#150b06');
       fill(0, 0, 960, 540, bloom);
-      ctx.globalAlpha = 0.35 * pulse;
-      for (let j = 0; j < 16; j++) {
-        const a = (j * Math.PI) / 8 + p * 0.12,
+      ctx.globalAlpha = (finale ? 0.35 : 0.53) * pulse;
+      const rayCount = finale ? 16 : 24;
+      for (let j = 0; j < rayCount; j++) {
+        const a = (j * Math.PI * 2) / rayCount + p * 0.16,
           half = 0.018 + (j % 3) * 0.012;
         polygon(
           [
@@ -441,6 +458,34 @@ WF.LootReels = (() => {
       wave.addColorStop(1, '#f5aa3b00');
       ctx.globalAlpha = pulse * 0.78;
       fill(0, 0, 960, 540, wave);
+      if (!finale) {
+        // A hot band of light runs across the cabinet while its lamps chase the perimeter.
+        const x = -260 + 1470 * p;
+        const sweep = ctx.createLinearGradient(x - 170, 0, x + 170, 220);
+        sweep.addColorStop(0, '#ffbd6500');
+        sweep.addColorStop(0.37, '#ff853f');
+        sweep.addColorStop(0.50, '#fff6c9');
+        sweep.addColorStop(0.65, '#ffc253');
+        sweep.addColorStop(1, '#ffbd6500');
+        ctx.globalAlpha = pulse * 0.90;
+        polygon([[x - 220, 0], [x + 130, 0], [x + 220, 540], [x - 130, 540]], sweep);
+        ctx.strokeStyle = '#ffc66f';
+        ctx.globalAlpha = pulse * 0.72;
+        ctx.lineWidth = 5;
+        ctx.strokeRect(10, 10, 940, 520);
+        for (let i = 0; i < 30; i++) {
+          const angle = i * 2.399 + 0.45;
+          const radius = 100 + (i * 107) % 680 + p * 230;
+          const x = cx + Math.cos(angle) * radius, y = cy + Math.sin(angle) * radius;
+          const length = 18 + (i * 13) % 55;
+          ctx.strokeStyle = i % 3 === 0 ? '#fff2ae' : '#ff7f49';
+          ctx.lineWidth = 2 + i % 3;
+          ctx.beginPath();
+          ctx.moveTo(x, y);
+          ctx.lineTo(x + Math.cos(angle) * length, y + Math.sin(angle) * length);
+          ctx.stroke();
+        }
+      }
       ctx.globalAlpha = Math.sin(Math.PI * p);
       for (let j = 0; j < 40; j++) {
         const a = j * 2.39996,
@@ -454,14 +499,26 @@ WF.LootReels = (() => {
       ctx.restore();
       return pulse * 0.88;
     }
-    return function draw(t, slot, legend) {
+    return function draw(t, slot, reelMode = 'none') {
       const selected = slot < 0 || (still.matches && t < outerEnd) ? -1 : outerIndex(t, slot);
       ctx.save();
-      shell(t, selected, legend);
-      const glow = celebration(t, slot, legend);
+      const age = t - outerEnd;
+      if (reelMode !== 'none' && !still.matches && age >= 0 && age < 760) {
+        const force = (1 - age / 760) ** 1.4;
+        const dx = Math.round(Math.sin(age * 0.066) * 25 * force);
+        const dy = Math.round(Math.cos(age * 0.087) * 15 * force);
+        const zoom = 1 + 0.053 * force;
+        fill(0, 0, 960, 540, '#21191e');
+        ctx.translate(480 + dx, 270 + dy);
+        ctx.rotate(Math.sin(age * 0.045) * 0.033 * force);
+        ctx.scale(zoom, zoom);
+        ctx.translate(-480, -270);
+      }
+      shell(t, selected, reelMode);
+      const glow = celebration(t, slot, reelMode);
       ctx.restore();
       return glow;
     };
   }
-  return { create, gearTicks, stepAt, outerEnd, rollStart, stopsAt, finishAt };
+  return { create, gearTicks, cueAt, stepAt, outerEnd, rollStart, stopsAt, finishAt };
 })();

@@ -78,3 +78,18 @@ test('weighted selection maps each draw to the configured slot', () => {
     }
   }
 });
+
+test('reel entry expands to five times the jackpot weight without changing the prize draw', () => {
+  const board = rules.makeLootMachineBoard(rules.rng(65), rules.lootPrice(2));
+  const top = board.reduce((best, card) => card.gold > best.gold ? card : best);
+  const regular = board.find(card => card !== top);
+  const otherWeight = board.reduce((sum, card) => sum + card.weight, 0) - top.weight;
+  let reelOnly = 0;
+  for (let ticket = 0; ticket < otherWeight; ticket++) {
+    const rng = () => (ticket + 0.5) / otherWeight;
+    if (rules.lootReelMode(rng, board, regular) === 'reels') reelOnly++;
+  }
+  assert.equal(top.weight + reelOnly, top.weight * 5);
+  assert.equal(rules.lootReelMode(() => 0.999, board, top), 'jackpot');
+  assert.equal(rules.lootReelMode(() => 0.999, board, regular), 'none');
+});
