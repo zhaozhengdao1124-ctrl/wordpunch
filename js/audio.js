@@ -129,6 +129,22 @@ WF.Audio = (function () {
     },
     step(c, out, t) { nz(c, out, t, 'lowpass', 600, 0.8, 0.03, 0.12); },
     beep(c, out, t, p) { const f = p.f || 660; osc(c, out, t, 'square', f, f, p.d || 0.12, 0.13); },
+    reelGear(c, out, t, { axis }) {
+      const ring = [1260, 1050, 870][axis];
+      nz(c, out, t, 'bandpass', ring * 1.7, 1.8, 0.023, 0.25, 0.001);
+      osc(c, out, t, 'triangle', ring, ring * 0.76, 0.017, 0.11, 0.001);
+      osc(c, out, t + 0.008, 'sine', ring * 0.54, ring * 0.49, 0.025, 0.07, 0.001);
+    },
+    reelLock(c, out, t, { axis }) {
+      const pitch = [325, 280, 245][axis];
+      nz(c, out, t, 'bandpass', pitch * 4.3, 1.1, 0.043, 0.40, 0.001);
+      osc(c, out, t, 'triangle', pitch, pitch * 0.58, 0.079, 0.25, 0.001);
+      osc(c, out, t, 'sine', pitch * 0.47, pitch * 0.32, 0.10, 0.16, 0.001);
+      if (axis === 2) {
+        osc(c, out, t + 0.060, 'sine', 1046, 1046, 0.41, 0.17);
+        osc(c, out, t + 0.060, 'sine', 2235, 2235, 0.24, 0.065);
+      }
+    },
     fight(c, out, t) { osc(c, out, t, 'sawtooth', 220, 440, 0.25, 0.15); osc(c, out, t + 0.02, 'square', 330, 660, 0.3, 0.1); nz(c, out, t, 'highpass', 3000, 0.7, 0.2, 0.2); },
     menu(c, out, t) { osc(c, out, t, 'square', 520, 520, 0.035, 0.08); },
     confirm(c, out, t) { osc(c, out, t, 'triangle', 554, 740, 0.07, 0.19); },

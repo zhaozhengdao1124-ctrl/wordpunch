@@ -17,6 +17,16 @@
     ERASER_P: { elite: 0.03, city: 0.05 },            // 每盘一次判定：命中则 1 张道具牌换成神奇橡皮擦（沿用原 精英 3% / 对手 5%）
   });
   WF.FLIP19 = K.FLIP;   // v17_fx.js 会把 CAMPAIGN.FLIP 换成它自己的动画参数，v19_core.js 加载时再合并回来
+  K.LOOT_MACHINE = {
+    PRICE: 10,
+    ACTIVATION_WORDS: 5,
+    // 首摇奖额与相对权重。权重总和 1000，理论返还率 92.5%。
+    GOLD_PAYTABLE: [
+      [1, 14], [2, 15], [3, 20], [4, 30], [5, 55], [6, 85],
+      [7, 105], [8, 112], [9, 112], [10, 99], [11, 93], [12, 71],
+      [13, 60], [14, 48], [15, 39], [16, 23], [17, 16], [20, 3],
+    ],
+  };
   K.REST = { HEAL: 0.35, UPGRADE_PRICE: { common: 70, rare: 140, legend: 280, curse: 105 }, UPGRADE_FLOAT: false };
   K.GOLD = {
     DROP: { minion: [1, 3], elite: [15, 25], opponent: [40, 70], final: [100, 140] },

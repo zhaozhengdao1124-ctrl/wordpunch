@@ -64,6 +64,7 @@
   };
   G.tick19 = function () {
     const m = this.camp && this.camp.modal; if (!m) return;
+    if (m.type === 'flip' && m.machine) { WF.LootReview.tick(this,m); return; }
     if (m.type === 'flip' && m.pick != null && !m.skip) {
       m.pt++;
       if (m.pt === FL().own + FL().pause) WF.Audio.play('whoosh');
@@ -72,6 +73,8 @@
   };
   G.flipKey = function (code) {
     const m = this.camp.modal;
+    if (m.inReview || m.machine) return WF.LootReview.key(this,m,code);
+    if ((m.pick == null || allDone(m)) && code === 'KeyR') return WF.LootReview.open(this,m);
     const num = /^(Digit|Numpad)([1-9])$/.exec(code);
     if (m.pick == null) {
       if (num) return this.flipPick(+num[2] - 1);
@@ -85,9 +88,11 @@
   };
   G.flipClick = function (hit) {
     const m = this.camp.modal;
+    if (m.inReview || m.machine) return WF.LootReview.click(this,m,hit);
+    if ((m.pick == null || allDone(m)) && hit?.key === 'machine') return WF.LootReview.open(this,m);
     if (m.pick == null) { if (hit && hit.key === 'card') this.flipPick(hit.i); return; }
     if (!allDone(m)) { m.skip = true; return; }
-    this.flipClose();
+    if (hit?.key === 'leave') this.flipClose();
   };
 
   // ---------- 画面 ----------
@@ -128,10 +133,11 @@
   };
   G.drawFlip = function () {
     const cp = this.camp, m = cp.modal, c = this.ctx, F = FL(), P = this.p[0];
+    if (m.inReview || m.machine) return WF.LootReview.draw(this,m);
     this.campDim(0.78);
     const title = m.tier === 'city' ? '战利品 · 翻牌' : '精英掉落 · 翻牌';
     this.txt(title, C.SCREEN_W / 2, 44, 36, '#ffd23c', 'center', { font: C.FONT_TITLE, sw: 8 });
-    const sub = m.pick == null ? (m.forced ? '运气回来了：这一盘全是好牌，随便翻！' : '9 张牌选 1 张：翻到什么拿什么') : !allDone(m) ? '……' : '其余 8 张也翻开给你看了';
+    const sub = m.pick == null ? (m.forced ? '运气回来了 · 免费选一份好牌' : '免费选 1 张牌，领取战斗奖励') : !allDone(m) ? '……' : '已领取战斗奖励';
     this.txt(sub, C.SCREEN_W / 2, 84, 17, m.forced ? '#7dff9a' : '#e9d7a6', 'center', { sw: 4, weight: 700 });
     // 左右两侧：血量 / 金币 / 保底提示
     this.txt(`血量 ${P.hp} / ${P.maxHp}`, 40, 140, 15, '#7dff9a', 'left', { sw: 3, weight: 700 });
@@ -160,9 +166,11 @@
       c.restore();
       if (own && face) { const t = this.flipOwnTagRect(r); this.box(t.x, t.y, t.w, t.h, '#ffd23c', null); this.txt('你翻的', t.x + t.w / 2, t.y + t.h / 2 + 1, 12, '#120c1c', 'center', { stroke: false, weight: 900 }); }
     }
-    const hint = WF.touch ? (m.pick == null ? '点一张牌' : !allDone(m) ? '点一下跳过动画' : '点一下继续') : m.pick == null ? '点一张牌，或按 1–9 / 方向键 + Enter' : !allDone(m) ? '任意键 / 点击 跳过动画' : 'Enter / 点击 继续';
-    if (m.pick == null || (this.t >> 4) % 2 === 0 || !allDone(m)) this.txt(hint, C.SCREEN_W / 2, 494, 16, '#bfb3d6', 'center', { sw: 4, weight: 700 });
-    if (m.pick == null) this.campRects.push({ x: 0, y: 0, w: 1, h: 1, key: 'noop' });
-    else this.campRects.push({ x: 0, y: 0, w: C.SCREEN_W, h: C.SCREEN_H, key: 'any' });
+    if (m.pick == null || allDone(m)) WF.LootReview.drawEntry(this, m);
+    else {
+      const hint = WF.touch ? '点一下跳过动画' : '任意键 / 点击 跳过动画';
+      this.txt(hint, C.SCREEN_W / 2, 494, 16, '#bfb3d6', 'center', { sw: 4, weight: 700 });
+      this.campRects.push({ x: 0, y: 0, w: C.SCREEN_W, h: C.SCREEN_H, key: 'any' });
+    }
   };
 })();

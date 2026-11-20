@@ -64,6 +64,21 @@
   // 翻牌「掉血」不致死：最低保留 10% 血量
   R.hurtTo = function (hp, maxHp, pct) { const floor = Math.ceil(maxHp * K().FLIP.HURT_FLOOR); if (hp <= floor) return hp; return Math.max(floor, hp - Math.round(maxHp * pct)); };
 
+  // 本局每次开摇后翻倍。机台金额单独按当前费用同比放大。
+  R.lootPrice = spinCount => K().LOOT_MACHINE.PRICE * 2 ** spinCount;
+  R.makeLootMachineBoard = function (rng, price) {
+    const { PRICE, GOLD_PAYTABLE } = K().LOOT_MACHINE;
+    return R.shuffle(rng, GOLD_PAYTABLE.map(([amount, weight]) => ({ k: 'G', gold: amount * (price / PRICE), weight })));
+  };
+  R.pickLootSlot = function (rng, board) {
+    let roll = rng() * board.reduce((total, card) => total + card.weight, 0);
+    for (const [index, card] of board.entries()) {
+      roll -= card.weight;
+      if (roll < 0) return index;
+    }
+    return board.length - 1;
+  };
+
   // ---------- 金币（§2B） ----------
   // 金币收入统一入口：基础 × 难度 × 城市 × 道具（招财猫 ×(1+v)、破洞钱包 ×0.85 相乘），四舍五入，至少 1
   R.goldAmount = function (base, diff, ci, mul) {
@@ -105,15 +120,26 @@
   R.refreshPrice = function (n) { const L = K().SHOP.REFRESH; return n < L.length ? L[n] : null; };   // 不浮动、不打折；最多 3 次
   R.upgradePrice = function (id) { return K().REST.UPGRADE_PRICE[ITEM(id).rarity] || K().REST.UPGRADE_PRICE.rare; };   // 休息点升级：标价、不浮动、不砍价
 
-  // ---------- 砍价（§2C.8） ----------
-  // wrong = 错题本条目 [{word, bank}]；fill = 当前词库的补词候选（已按「学过未掌握」优先排好），返回 3 个互不相同的词条
-  R.haggleWords = function (rng, wrong, fillSeen, fillAny) {
-    const N = K().SHOP.HAGGLE.N, key = e => (e.bank || '') + '\t' + e.word, out = [], seen = new Set();
-    const take = (list) => { for (const e of R.shuffle(rng, list || [])) { if (out.length >= N) return; if (!e || e.kind === 'phrase' || !e.word || seen.has(key(e)) || out.some(x => x.word === e.word)) continue; seen.add(key(e)); out.push(e); } };
-    take(wrong); const fromBook = out.length;
-    take(fillSeen); take(fillAny);
-    return { words: out.length >= N ? out : [], fromBook, filled: out.length >= N ? N - fromBook : 0, ok: out.length >= N };
+  // 商店与战利品共用的抽词顺序。一个拼写在同轮只出一次，保留入选记录的词库与义项。
+  R.reviewWords = function (rng, wrong, fillSeen, fillAny, count) {
+    const words = [], seen = new Set();
+    function take(entries) {
+      if (words.length === count) return;
+      for (const e of R.shuffle(rng, entries || [])) {
+        if (!e || e.kind === 'phrase' || !e.word || seen.has(e.word)) continue;
+        words.push(e);
+        seen.add(e.word);
+        if (words.length === count) break;
+      }
+    }
+    take(wrong);
+    const fromBook = words.length;
+    take(fillSeen);
+    take(fillAny);
+    const ok = words.length === count;
+    return { words: ok ? words : [], fromBook, filled: ok ? count - fromBook : 0, ok };
   };
+  R.haggleWords = (rng, wrong, seen, other) => R.reviewWords(rng, wrong, seen, other, K().SHOP.HAGGLE.N);
   R.haggleDisc = function (rng) { return R.pick(rng, K().SHOP.HAGGLE.DISC); };
 
   // ---------- 开局禁用（§5） ----------
