@@ -181,6 +181,34 @@ test('publishQuestion hides the answer', async () => {
   assert.strictEqual(shown.correct, 0);
 });
 
+test('word rounds mix both directions and reverse prompts never show examples', () => {
+  const engine = require('../server/engine').load();
+  const source = engine.createSource('cet4', 'word', 47);
+  let forwardWithExample = 0, reverse = 0;
+  for (let i = 0; i < 64; i++) {
+    const q = source.next();
+    if (q.fmt !== 'zh-en') {
+      assert.strictEqual(q.options[q.correct], q.meaning);
+      if (q.ex) forwardWithExample++;
+      continue;
+    }
+    reverse++;
+    assert.strictEqual(q.displayWord, q.meaning);
+    assert.strictEqual(q.options[q.correct], q.word);
+    assert.strictEqual(q.ex, null);
+    assert.strictEqual(new Set(q.options.map(word => word.toLowerCase())).size, 4);
+    assert.ok(q.options.every(word => /[a-z]/i.test(word)));
+    for (const reveal of [false, true]) {
+      const pub = Rules.publishQuestion(q, reveal);
+      assert.strictEqual(pub.word, q.meaning);
+      assert.ok(!('exEn' in pub) && !('exZh' in pub));
+      if (reveal) assert.strictEqual(pub.options[pub.correct], q.word);
+      else assert.ok(!('rawWord' in pub) && !('correct' in pub));
+    }
+  }
+  assert.ok(forwardWithExample > 0 && reverse > 0);
+});
+
 let srv;
 test('two clients finish one match with the same state', async () => {
   const { a, b, code } = await pair('ws://127.0.0.1:' + srv.port);
@@ -348,6 +376,33 @@ test('word questions stay in sync and do not include the answer', async () => {
   a.close(); b.close();
 });
 
+async function checkGuide(page) {
+  const history = () => page.evaluate(() => WF.Profiles.get(WF.game.menu.p1).history);
+  const before = await history();
+  const menu = await page.evaluate(() => WF.game.homeButtons().map(b => b.key));
+  for (const key of ['guide', 'start', 'campaign', 'versus', 'grow', 'daily']) assert.ok(menu.includes(key));
+  for (let i = 0; i < menu.indexOf('versus'); i++) await page.keyboard.press('ArrowRight');
+  await page.keyboard.press('Enter');
+  assert.equal(await page.evaluate(() => WF.game.ui.screen), 'versus');
+  assert.deepEqual(await page.evaluate(() => WF.game.titleChoices().map(b => b.key)), ['net', 'local', 'versusBack']);
+  await page.keyboard.press('Escape');
+  assert.equal(await page.evaluate(() => WF.game.ui.screen), 'title');
+  const guide = await page.evaluate(() => {
+    const g = WF.game, r = g.menuRects.find(b => b.key === 'guide'), box = g.cv.getBoundingClientRect();
+    return { x: box.left + (r.x + r.w / 2) * box.width / g.cv.width, y: box.top + (r.y + r.h / 2) * box.height / g.cv.height };
+  });
+  await page.mouse.click(guide.x, guide.y);
+  assert.equal(await page.evaluate(() => WF.game.ui.screen), 'guide');
+  await page.waitForFunction(() => WF.Audio.playingId === WF.Audio.trackId);
+  for (const k of ['1', 'Enter']) await page.keyboard.press(k);
+  assert.equal(await page.evaluate(() => WF.game.ui.guide.round), 0, 'retry after a wrong answer');
+  for (const k of ['2', 'Enter', '4', 'Enter']) await page.keyboard.press(k);
+  assert.deepEqual(await history(), before, 'the tutorial does not change word history');
+  assert.equal(await page.evaluate(() => WF.game.ui.screen), 'charsel');
+  assert.equal(await page.evaluate(() => WF.game.charselMode()), 'cpu');
+  await page.keyboard.press('Escape');
+}
+
 async function browserSuite() {
   let puppeteer;
   try { puppeteer = require('puppeteer-core'); }
@@ -391,6 +446,7 @@ async function browserSuite() {
       if (!ready) await wait(250);
     }
     if (!ready) throw new Error('game did not become ready\n' + pageErrors.join('\n'));
+    await checkGuide(A);
     console.log('solo begin');
     const solo = await A.evaluate(async () => {
       const g = WF.game;

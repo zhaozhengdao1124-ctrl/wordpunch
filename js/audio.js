@@ -131,6 +131,8 @@ WF.Audio = (function () {
     beep(c, out, t, p) { const f = p.f || 660; osc(c, out, t, 'square', f, f, p.d || 0.12, 0.13); },
     fight(c, out, t) { osc(c, out, t, 'sawtooth', 220, 440, 0.25, 0.15); osc(c, out, t + 0.02, 'square', 330, 660, 0.3, 0.1); nz(c, out, t, 'highpass', 3000, 0.7, 0.2, 0.2); },
     menu(c, out, t) { osc(c, out, t, 'square', 520, 520, 0.035, 0.08); },
+    confirm(c, out, t) { osc(c, out, t, 'triangle', 554, 740, 0.07, 0.19); },
+    back(c, out, t) { osc(c, out, t, 'triangle', 440, 294, 0.07, 0.16); },
     // v1.2：进场名字定格的重鼓（大鼓：低频正弦下滑 + 鼓皮噪声 + 余震）
     drum(c, out, t, p) {
       const k = p.big ? 1.25 : 1;
@@ -193,7 +195,7 @@ WF.Audio = (function () {
     const hc = c.createGain(); hc.gain.value = HIT_CRIT; hc.connect(hg);
     return { main: m, hit: hg, crit: hc };
   }
-  let bus = null;
+  let bus = null, resuming = null;
   function ensure() {
     if (ac) return ac;
     const AC = window.AudioContext || window.webkitAudioContext;
@@ -210,11 +212,23 @@ WF.Audio = (function () {
     get sfxOn() { return sfxOn; }, set sfxOn(v) { sfxOn = !!v; try { localStorage.setItem('wf_sfx', v ? '1' : '0'); } catch (e) {} },
     get musicOn() { return musicOn; },
     set musicOn(v) { musicOn = !!v; try { localStorage.setItem('wf_music', v ? '1' : '0'); } catch (e) {} if (!v) A.stopMusic(); },
-    unlock() { const c = ensure(); if (c && c.state === 'suspended') c.resume(); },
+    unlock() {
+      const c = ensure();
+      if (c && c.state === 'suspended' && !resuming) {
+        resuming = c.resume().catch(() => {}).finally(() => { resuming = null; });
+      }
+    },
     play(name, p = {}) {
       if (recording) { recording.push({ t: WF.frameNo / WF.CFG.FPS, name, p }); return; }
       if (!sfxOn) return;
-      const c = ensure(); if (!c || c.state !== 'running') return;
+      const c = ensure(); if (!c) return;
+      if (c.state !== 'running') {
+        // 第一次按键可能和 AudioContext 启动在同一刻。只补播当次操作的短音。
+        if (resuming && ['menu', 'confirm', 'back'].includes(name)) {
+          resuming.then(() => { if (c.state === 'running' && sfxOn) A.play(name, p); });
+        }
+        return;
+      }
       try { SFX[name](c, busFor(bus, name, p), c.currentTime + 0.005, p); } catch (e) { console.warn('sfx', name, e); }
     },
     TRACKS,

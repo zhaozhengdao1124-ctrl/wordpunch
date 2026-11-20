@@ -123,6 +123,7 @@ WF.Game = class {
     return Math.max(0, lim - (this.t - this.matchStart) / WF.CFG.FPS);
   }
   goSettings() {
+    WF.Audio.play('confirm');
     this.state = 'title'; this.ui.screen = 'settings'; this.menu.row = 0;
   }
 
@@ -889,8 +890,9 @@ WF.Game = class {
 
   // ================= 界面跳转 =================
   goTitle() {
-    WF.Audio.stopMusic();
     if (this.camp) this.campExit();
+    WF.Audio.startMusic({ keep: true });
+    WF.Audio.play('back');
     if (WF.BookUI) WF.BookUI.hide();
     this.state = 'title'; this.ui.screen = 'title'; this.paused = false;
     this.q = null; this.clash = null; this.pendingAttack = null;
@@ -900,6 +902,7 @@ WF.Game = class {
   charselMode() { return this.ui.then === 'campaign' ? 'camp' : (this.menu.cpu ? 'cpu' : 'pvp'); }
   charselPid() { return this.ui.step === 1 ? this.menu.p2 : this.menu.p1; }
   goCharSel(then) {
+    WF.Audio.play('confirm');
     const R = WF.CFG.ROSTER;
     this.state = 'title'; this.ui.screen = 'charsel'; this.ui.then = then || ''; this.ui.step = 0; this.ui.deny = null;
     const mode = this.charselMode();
@@ -934,20 +937,24 @@ WF.Game = class {
     return null;
   }
   charselBack() {
+    WF.Audio.play('back');
     if (this.charselMode() === 'pvp' && this.ui.step === 1) { this.ui.step = 0; this.ui.sel = Math.max(0, WF.CFG.ROSTER.indexOf(this.menu.vs[0])); this.ui.deny = null; this.charselPreview(); return; }
     this.ui.screen = 'title'; this.menu.row = 0; this.applyChars(); this.spawnFighters(); this.layoutTitle();
   }
   goProfiles(side, then) {
+    WF.Audio.play('confirm');
     this.state = 'title'; this.ui.screen = 'profiles'; this.ui.side = side == null ? 0 : side;
     this.ui.sel = 0; this.ui.confirm = null; this.ui.then = then || ''; this.ui.sub = 'list';
   }
   goBook() {
     if (!this.menu.p1) { this.goProfiles(0, 'book'); return; }
+    WF.Audio.play('confirm');
     this.state = 'title'; this.ui.screen = 'book'; this.ui.page = 0; this.ui.query = ''; this.ui.bank = this.menu.bank; this.ui.sel = 0; if (window.WF.Speech) WF.Speech.stop();
     if (WF.BookUI) WF.BookUI.open(this, 'book');
   }
   goWrong() {
     if (!this.menu.p1) { this.goProfiles(0, 'wrong'); return; }
+    WF.Audio.play('confirm');
     this.state = 'title'; this.ui.screen = 'wrongbook'; this.ui.page = 0; this.ui.bankFilter = 'all'; this.ui.sel = 0; if (window.WF.Speech) WF.Speech.stop();
     if (this.bankBg) this.bankBg(this.wrongBanks(WF.Profiles.wrongList(this.menu.p1, 'all')));   // v1.8 错题涉及的按需词库后台下载（补全例句）
     if (WF.BookUI) WF.BookUI.open(this, 'wrong');
@@ -1004,6 +1011,7 @@ WF.Game = class {
     const R = WF.CFG.ROSTER, id = R[this.ui.sel], mode = this.charselMode();
     const why = this.charselBlock(this.ui.sel);
     if (why) { this.ui.deny = { why, t: this.t }; WF.Audio.play('wrong'); return; }
+    WF.Audio.play('confirm');
     if (mode === 'pvp') {
       this.menu.vs = (this.menu.vs || [WF.CFG.P1_CHAR, WF.CFG.P2_CHAR]).slice();
       if (this.ui.step === 0) {
@@ -1011,7 +1019,6 @@ WF.Game = class {
         let j = R.indexOf(this.menu.vs[1]);
         if (j < 0 || this.charselBlock(j)) j = R.findIndex((x, k) => !this.charselBlock(k));
         this.ui.sel = Math.max(0, j); this.ui.deny = null; this.charselPreview();
-        WF.Audio.play('menu');
         return;
       }
       this.menu.vs[1] = id;

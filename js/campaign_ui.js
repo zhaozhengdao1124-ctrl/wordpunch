@@ -344,13 +344,10 @@
     const bw = 400, bh = 64, gx = 20, x0 = (C.SCREEN_W - bw * 2 - gx) / 2;
     for (let i = 0; i < 4; i++) {
       const x = x0 + (i % 2) * (bw + gx), y = 280 + Math.floor(i / 2) * (bh + 16);
-      let fill = '#221a3a', stroke = '#5d4f86';
-      if (r.pick != null) { if (i === q.correct) { fill = '#1d4a2c'; stroke = '#7dff9a'; } else if (i === r.pick) { fill = '#4a1a24'; stroke = '#ff6a6a'; } }
       if (q.erased === i) { this.box(x, y, bw, bh, 'rgba(30,24,44,0.55)', 'rgba(120,110,150,0.5)', 2); this.ctx.fillStyle = '#f4a8c0'; this.ctx.fillRect(x + 20, y + bh / 2, bw - 40, 3); continue; }
-      this.box(x, y, bw, bh, fill, stroke, 3);
-      this.campRects.push({ x, y, w: bw, h: bh, key: 'opt', i });
-      this.txt(String(i + 1), x + 18, y + 18, 16, '#ffd23c', 'center', { sw: 4 });
-      this.txt(q.options[i], x + bw / 2, y + bh / 2 + 3, 21, '#ffffff', 'center', { sw: 4, maxW: bw - 50, weight: 700 });
+      const rect = { x, y, w: bw, h: bh, key: 'opt', i };
+      WF.Buttons.answer(this, rect, q.options[i], { tone: WF.Buttons.resultTone(i, r.pick, q.correct), pressed: i === r.pick });
+      this.campRects.push(rect);
     }
     this.txt('按 1 2 3 4 作答，不限时', C.SCREEN_W / 2, 470, 16, '#bfb3d6', 'center', { sw: 4, weight: 700 });
   };

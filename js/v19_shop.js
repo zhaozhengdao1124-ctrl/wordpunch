@@ -252,6 +252,10 @@
   };
 
   // ---------- 画面 ----------
+  function shopButton(g, rect, selected = false, disabled = false) {
+    WF.Buttons.plate(g, rect, selected ? 'focus' : disabled ? 'disabled' : 'idle');
+    g.campRects.push(rect);
+  }
   // 价签：绿 = ▼现价 + 划掉的标价 + −x%；红 = ▲现价 +x%；平价 = 白
   G.drawPriceTag = function (x, y, w, list, pct, disc, price, poor) {
     const up = pct > 0, down = pct < 0, col = poor ? '#8a90a8' : up ? '#ff6a6a' : down ? '#7dff9a' : '#fff3c8';
@@ -418,13 +422,14 @@
       const s = S.stock[i], sel = m.view === 'shelf' && m.sel === i, dx = sel ? shake : 0, x = L.x + dx, cx = L.cx + dx, y = L.y, w = L.w, h = L.h;
       this.campRects.push({ x: L.x, y, w, h, key: 'slot', i });
       if (!s || s.sold) {
-        this.box(cx - 50, L.icon + 8, 100, 32, 'rgba(60,40,24,0.9)', '#8a6a3a', 2);
+        WF.Buttons.plate(this, { x: cx - 50, y: L.icon + 8, w: 100, h: 32 }, 'disabled');
         this.txt(s ? '已售出' : '售罄', cx, L.icon + 24, 14, '#c9b48a', 'center', { sw: 3 });
         if (sel) this.box(x - 3, y - 3, w + 6, h + 6, 'rgba(0,0,0,0)', '#ffd23c', 3);
         return;
       }
       const d = ITEM(s.id), price = this.shopPrice(s), poor = cp.gold < price;
       if (sel) { c.fillStyle = 'rgba(255,210,60,0.14)'; c.fillRect(x - 3, y - 3, w + 6, h + 6); this.box(x - 3, y - 3, w + 6, h + 6, 'rgba(0,0,0,0)', '#ffd23c', 3); }
+      WF.Buttons.plate(this, { x: cx - 82, y: L.name - 11, w: 164, h: L.sub - L.name + 26 }, sel ? 'focus' : 'idle');
       this.drawItemIcon(s.id, s.up ? this.itemOwnedLv(s.id) + 1 : 1, cx - L.isc * 8 - Math.max(2, L.isc), L.icon, L.isc);
       this.txt(d.name, cx, L.name, 15, C.RARITY_COLOR[d.rarity], 'center', { sw: 4, maxW: w - 8 });
       this.txt(s.up ? `升级 Lv${this.itemOwnedLv(s.id)} → Lv${this.itemOwnedLv(s.id) + 1}` : C.RARITY_NAME[d.rarity] + (d.set ? ' · ' + C.ITEM_SETS[d.set].name : ''), cx, L.sub, 11, s.up ? '#8fd0ff' : '#e9d7a6', 'center', { sw: 3, weight: 700, maxW: w - 8 });
@@ -460,12 +465,10 @@
     // 按钮
     const BTN_REF = T ? BTN_REF_T : BTN_REF0, BTN_LEAVE = T ? BTN_LEAVE_T : BTN_LEAVE0, by = BTN_REF.h / 2;
     const rp = R.refreshPrice(S.refreshN), rsel = m.view === 'shelf' && m.sel === 6, lsel = m.view === 'shelf' && m.sel === 7;
-    this.box(BTN_REF.x, BTN_REF.y, BTN_REF.w, BTN_REF.h, rp == null ? 'rgba(30,24,36,0.9)' : 'rgba(40,30,20,0.95)', rsel ? '#ffd23c' : '#c9a04a', rsel ? 3 : 2);
-    this.campRects.push(Object.assign({ key: 'refresh' }, BTN_REF));
+    shopButton(this, { ...BTN_REF, key: 'refresh' }, rsel, rp == null || cp.gold < rp);
     if (rp == null) this.txt(T ? '今天没货了' : '今天没货了（刷新 3/3）', BTN_REF.x + BTN_REF.w / 2, BTN_REF.y + by, 14, '#8a90a8', 'center', { sw: 3 });
     else { this.txt(T ? '刷新货架' : `R 刷新货架`, BTN_REF.x + 16, BTN_REF.y + by, 15, cp.gold < rp ? '#8a90a8' : '#fff3c8', 'left', { sw: 3 }); this.drawCoin(BTN_REF.x + (T ? 112 : 132), BTN_REF.y + by - 6, 12); this.txt(String(rp), BTN_REF.x + (T ? 128 : 148), BTN_REF.y + by, 16, cp.gold < rp ? '#8a90a8' : '#ffd24a', 'left', { sw: 3, weight: 900 }); this.txt(`${S.refreshN}/3`, BTN_REF.x + BTN_REF.w - 10, BTN_REF.y + by, 11, '#bfb3d6', 'right', { sw: 2 }); }
-    this.box(BTN_LEAVE.x, BTN_LEAVE.y, BTN_LEAVE.w, BTN_LEAVE.h, 'rgba(60,20,30,0.95)', lsel ? '#ffd23c' : '#ff9a9a', lsel ? 3 : 2);
-    this.campRects.push(Object.assign({ key: 'leave' }, BTN_LEAVE));
+    shopButton(this, { ...BTN_LEAVE, key: 'leave' }, lsel);
     this.txt(T ? '离开' : '离开（Esc）', BTN_LEAVE.x + BTN_LEAVE.w / 2, BTN_LEAVE.y + by, T ? 20 : 16, '#ffffff', 'center', { sw: 3 });
     // 焦点货品的效果：写在标题下面那一行（底部留给按钮和提示条）
     const fs = m.view === 'shelf' && m.sel <= 4 && S.stock[m.sel] && !S.stock[m.sel].sold ? S.stock[m.sel] : null;
@@ -492,8 +495,7 @@
     this.wrapLines(cp.shop.line ? cp.shop.line.t : '想要点什么服务呀？', 380, 14, 3).forEach((ln, k) => this.txt(ln, 316, 128 + k * 20, 14, '#ffe0e6', 'left', { sw: 3, weight: 700 }));
     o.forEach((it, i) => {
       const y = 196 + i * 46, x = 316, w = 470, sel = (m.tsel || 0) === i;
-      this.box(x, y, w, 40, sel ? 'rgba(122,31,43,0.95)' : 'rgba(40,20,30,0.9)', sel ? '#ffd23c' : (it.ok ? '#a83246' : '#4a3040'), sel ? 3 : 2);
-      this.campRects.push({ x, y, w, h: 40, key: 'talk', i });
+      shopButton(this, { x, y, w, h: 40, key: 'talk', i }, sel, !it.ok);
       this.txt(`${i + 1}  ${it.t}`, x + 12, y + 20, 15, it.ok ? '#ffffff' : '#8a7a8a', 'left', { sw: 3, maxW: 300 });
       if (it.price != null) this.drawPriceTag(x + w - 150, y + 2, 142, it.base, it.pct, cp.shop.disc, it.price, cp.gold < it.price);
       else if (it.key === 'purify' || it.key === 'remove') this.txt(it.key === 'purify' ? '身上没有霉运' : '身上没有道具', x + w - 12, y + 20, 12, '#8a7a8a', 'right', { sw: 3 });
@@ -511,15 +513,14 @@
     const cw = 90, ch = 74, cols = 8, x0 = 106, y0 = 190, per = 24, start = Math.floor((m.rsel || 0) / per) * per;   // 一页 24 件（3 行），多了用方向键翻
     list.slice(start, start + per).forEach((it, j) => {
       const i = start + j, d = ITEM(it.id), x = x0 + (j % cols) * (cw + 4), y = y0 + Math.floor(j / cols) * (ch + 4), sel = (m.rsel || 0) === i;
-      this.box(x, y, cw, ch, sel ? 'rgba(122,31,43,0.95)' : bad ? 'rgba(46,34,24,0.95)' : 'rgba(30,20,40,0.95)', sel ? '#ffd23c' : C.RARITY_COLOR[d.rarity], sel ? 3 : 2);
-      this.campRects.push({ x, y, w: cw, h: ch, key: 'rm', i });
+      shopButton(this, { x, y, w: cw, h: ch, key: 'rm', i }, sel);
       this.drawItemIcon(it.id, it.lv, x + cw / 2 - 16, y + 6, 2);
       this.txt(d.name, x + cw / 2, y + 50, 11, C.RARITY_COLOR[d.rarity], 'center', { sw: 3, maxW: cw - 6 });
       this.txt(d.kind === 'debuff' || d.noUpgrade ? '' : `Lv${it.lv}`, x + cw / 2, y + 65, 10, '#e9d7a6', 'center', { sw: 3, weight: 700 });
     });
     if (list.length > per) this.txt(`第 ${Math.floor((m.rsel || 0) / per) + 1} / ${Math.ceil(list.length / per)} 页`, 850, 172, 11, '#bfb3d6', 'right', { sw: 2 });
     const sel = list[m.rsel || 0]; if (sel) this.txt(`${ITEM(sel.id).name}：${ITEM(sel.id).kind === 'debuff' ? ITEM(sel.id).desc() : this.itemDescAt(sel.id, Math.max(1, sel.lv))}`, 540, 436, 13, '#e9d7a6', 'center', { sw: 3, weight: 700, maxW: 560 });
-    this.box(110, 420, 130, 32, 'rgba(20,14,40,0.92)', '#5d4f86', 2); this.campRects.push({ x: 110, y: 420, w: 130, h: 32, key: 'rmback' }); this.txt('返回（Esc）', 175, 436, 14, '#e9d7a6', 'center', { sw: 3 });
+    shopButton(this, { x: 110, y: 420, w: 130, h: 32, key: 'rmback' }); this.txt('返回（Esc）', 175, 436, 14, '#e9d7a6', 'center', { sw: 3 });
   };
   G.drawHaggle = function () {
     if (WF.touch) return this.drawHaggleT();
@@ -530,19 +531,17 @@
     this.txt(`砍价 · 第 ${h.i + 1} / ${h.qs.length} 题`, 520, 112, 20, '#ffd23c', 'center', { sw: 4 });
     this.txt('不限时 · 全对随机打 9～7 折 · 答错不扣东西，但本次不能再砍', 520, 140, 12, '#e9d7a6', 'center', { sw: 3, weight: 700 });
     for (let k = 0; k < h.qs.length; k++) { const done = k < h.i || (k === h.i && h.pick != null && h.ok); this.box(450 + k * 50, 156, 40, 12, done ? '#7dff9a' : k === h.i && h.pick != null ? '#ff6a6a' : '#3a2a4a', null); }
-    this.txt(q.word, 520, 206, 40, '#ffffff', 'center', { font: C.FONT_TITLE, sw: 7, maxW: 560 });
+    this.txt(q.displayWord || q.word, 520, 206, 40, '#ffffff', 'center', { font: C.FONT_TITLE, sw: 7, maxW: 560 });
     if (q.pos) this.txt(q.pos, 520, 238, 14, '#bfb3d6', 'center', { sw: 3 });
     const bw = 300, bh = 64;
     q.options.slice(0, 4).forEach((op, k) => {
       const x = 220 + (k % 2) * (bw + 20), y = 262 + Math.floor(k / 2) * (bh + 14), sel = h.pick == null && (h.sel || 0) === k;
-      let col = sel ? '#ffd23c' : '#5d4f86', bg = 'rgba(24,16,44,0.95)';
-      if (h.pick != null) { if (k === q.correct) { col = '#7dff9a'; bg = 'rgba(20,70,30,0.95)'; } else if (k === h.pick) { col = '#ff6a6a'; bg = 'rgba(80,20,24,0.95)'; } }
-      this.box(x, y, bw, bh, bg, col, sel || h.pick != null ? 3 : 2);
-      this.campRects.push({ x, y, w: bw, h: bh, key: 'hg', i: k });
-      this.txt(String(k + 1), x + 16, y + bh / 2, 16, '#ffd23c', 'center', { sw: 3 });
-      this.wrapLines(op, bw - 44, 15, 2).forEach((ln, j, arr) => this.txt(ln, x + 32, y + bh / 2 + (j - (arr.length - 1) / 2) * 20, 15, '#ffffff', 'left', { sw: 3, weight: 700 }));
+      const rect = { x, y, w: bw, h: bh, key: 'hg', i: k };
+      const tone = sel ? 'focus' : WF.Buttons.resultTone(k, h.pick, q.correct);
+      WF.Buttons.answer(this, rect, op, { tone, pressed: h.pick === k, wrap: true, size: 15 });
+      this.campRects.push(rect);
     });
-    this.box(130, 430, 150, 30, 'rgba(60,20,30,0.95)', '#ff9a9a', 2); this.campRects.push({ x: 130, y: 430, w: 150, h: 30, key: 'hgquit' });
+    shopButton(this, { x: 130, y: 430, w: 150, h: 30, key: 'hgquit' });
     this.txt('放弃（Esc，算失败）', 205, 445, 12, '#ffffff', 'center', { sw: 3 });
     this.txt('1–4 / 点选项作答', 620, 448, 13, '#bfb3d6', 'center', { sw: 3, weight: 700 });
   };
@@ -557,8 +556,7 @@
     this.wrapLines(cp.shop.line ? cp.shop.line.t : '想要点什么服务呀？', 640, 16, 3).forEach((ln, k) => this.txt(ln, 250, 46 + k * 20, 16, '#ffe0e6', 'left', { sw: 3, weight: 700 }));
     o.forEach((it, i) => {
       const y = 112 + i * 70, x = 250, w = 650, h = 64, sel = (m.tsel || 0) === i;
-      this.box(x, y, w, h, sel ? 'rgba(122,31,43,0.95)' : 'rgba(40,20,30,0.9)', sel ? '#ffd23c' : (it.ok ? '#a83246' : '#4a3040'), sel ? 3 : 2);
-      this.campRects.push({ x, y, w, h, key: 'talk', i });
+      shopButton(this, { x, y, w, h, key: 'talk', i }, sel, !it.ok);
       this.txt(it.t, x + 14, y + h / 2, 17, it.ok ? '#ffffff' : '#8a7a8a', 'left', { sw: 3, maxW: 330 });
       if (it.price != null) this.drawPriceTag(x + w - 158, y + 10, 150, it.base, it.pct, cp.shop.disc, it.price, cp.gold < it.price);
       else if (it.key === 'purify' || it.key === 'remove') this.txt(it.key === 'purify' ? '身上没有霉运' : '身上没有道具', x + w - 14, y + h / 2, 16, '#8a7a8a', 'right', { sw: 3 });
@@ -574,8 +572,7 @@
     const page = Math.floor((m.rsel || 0) / per), pages = Math.max(1, Math.ceil(list.length / per)), start = page * per;
     list.slice(start, start + per).forEach((it, j) => {
       const i = start + j, d = ITEM(it.id), x = L.x0 + (j % L.cols) * (L.cw + L.gap), y = L.y0 + Math.floor(j / L.cols) * (L.ch + L.gap), sel = (m.rsel || 0) === i;
-      this.box(x, y, L.cw, L.ch, sel ? 'rgba(122,31,43,0.95)' : bad ? 'rgba(46,34,24,0.95)' : 'rgba(30,20,40,0.95)', sel ? '#ffd23c' : C.RARITY_COLOR[d.rarity], sel ? 3 : 2);
-      this.campRects.push({ x, y, w: L.cw, h: L.ch, key: 'rm', i });
+      shopButton(this, { x, y, w: L.cw, h: L.ch, key: 'rm', i }, sel);
       this.drawItemIcon(it.id, it.lv, x + L.cw / 2 - 18, y + 5, 2);
       this.txt(d.name, x + L.cw / 2, y + 58, 16, C.RARITY_COLOR[d.rarity], 'center', { sw: 3, maxW: L.cw - 8 });
       if (!(d.kind === 'debuff' || d.noUpgrade)) this.txt(`Lv${it.lv}`, x + L.cw / 2, y + 78, 16, '#e9d7a6', 'center', { sw: 3, weight: 700 });
@@ -583,9 +580,14 @@
     const sel = list[m.rsel || 0];
     if (sel) this.wrapLines(`${ITEM(sel.id).name}：${ITEM(sel.id).kind === 'debuff' ? ITEM(sel.id).desc() : this.itemDescAt(sel.id, Math.max(1, sel.lv))}`, 840, 16, 2).forEach((ln, k) => this.txt(ln, 480, 414 + k * 20, 16, '#e9d7a6', 'center', { sw: 3, weight: 700 }));
     const by = 448, bh = 64;
-    this.box(50, by, 170, bh, 'rgba(20,14,40,0.92)', '#5d4f86', 2); this.campRects.push({ x: 50, y: by, w: 170, h: bh, key: 'rmback' }); this.txt('返回', 135, by + bh / 2, 18, '#e9d7a6', 'center', { sw: 3 });
+    shopButton(this, { x: 50, y: by, w: 170, h: bh, key: 'rmback' }); this.txt('返回', 135, by + bh / 2, 18, '#e9d7a6', 'center', { sw: 3 });
     if (pages > 1) {
-      const pb = (x, w, on, label, d) => { this.box(x, by, w, bh, on ? 'rgba(20,14,40,0.92)' : 'rgba(20,14,40,0.4)', on ? '#5d4f86' : '#2e2b3e', 2); this.txt(label, x + w / 2, by + bh / 2, 16, on ? '#e9d7a6' : '#5d5878', 'center', { sw: 3 }); if (on) this.campRects.push({ x, y: by, w, h: bh, key: 'rmpg', i: d }); };
+      const pb = (x, w, on, label, d) => {
+        const rect = { x, y: by, w, h: bh, key: 'rmpg', i: d };
+        if (on) shopButton(this, rect);
+        else WF.Buttons.plate(this, rect, 'disabled');
+        this.txt(label, x + w / 2, by + bh / 2, 16, on ? '#e9d7a6' : '#a89ea9', 'center', { sw: 3 });
+      };
       pb(560, 130, page > 0, '◀ 上一页', -1); this.txt(`${page + 1} / ${pages}`, 745, by + bh / 2, 16, '#bfb3d6', 'center', { sw: 3 }); pb(800, 120, page < pages - 1, '下一页 ▶', 1);
     }
   };
@@ -597,18 +599,17 @@
     this.txt(`砍价 · 第 ${h.i + 1} / ${h.qs.length} 题`, 520, 50, 22, '#ffd23c', 'center', { sw: 4 });
     this.txt('不限时 · 全对随机打 9～7 折 · 答错不扣东西，但本次不能再砍', 530, 82, 16, '#e9d7a6', 'center', { sw: 3, weight: 700, maxW: 740 });
     for (let k = 0; k < h.qs.length; k++) { const done = k < h.i || (k === h.i && h.pick != null && h.ok); this.box(450 + k * 50, 100, 40, 12, done ? '#7dff9a' : k === h.i && h.pick != null ? '#ff6a6a' : '#3a2a4a', null); }
-    this.txt(q.word, 520, 150, 40, '#ffffff', 'center', { font: C.FONT_TITLE, sw: 7, maxW: 640 });
+    this.txt(q.displayWord || q.word, 520, 150, 40, '#ffffff', 'center', { font: C.FONT_TITLE, sw: 7, maxW: 640 });
     if (q.pos) this.txt(q.pos, 520, 184, 16, '#bfb3d6', 'center', { sw: 3 });
     const bw = 400, bh = 80;
     q.options.slice(0, 4).forEach((op, k) => {
       const x = 70 + (k % 2) * (bw + 20), y = 204 + Math.floor(k / 2) * (bh + 12), sel = h.pick == null && (h.sel || 0) === k;
-      let col = sel ? '#ffd23c' : '#5d4f86', bg = 'rgba(24,16,44,0.95)';
-      if (h.pick != null) { if (k === q.correct) { col = '#7dff9a'; bg = 'rgba(20,70,30,0.95)'; } else if (k === h.pick) { col = '#ff6a6a'; bg = 'rgba(80,20,24,0.95)'; } }
-      this.box(x, y, bw, bh, bg, col, sel || h.pick != null ? 3 : 2);
-      this.campRects.push({ x, y, w: bw, h: bh, key: 'hg', i: k });
-      this.wrapLines(op, bw - 32, 17, 2).forEach((ln, j, arr) => this.txt(ln, x + 16, y + bh / 2 + (j - (arr.length - 1) / 2) * 22, 17, '#ffffff', 'left', { sw: 3, weight: 700 }));
+      const rect = { x, y, w: bw, h: bh, key: 'hg', i: k };
+      const tone = sel ? 'focus' : WF.Buttons.resultTone(k, h.pick, q.correct);
+      WF.Buttons.answer(this, rect, op, { tone, pressed: h.pick === k, wrap: true, size: 17 });
+      this.campRects.push(rect);
     });
-    this.box(50, 440, 280, 64, 'rgba(60,20,30,0.95)', '#ff9a9a', 2); this.campRects.push({ x: 50, y: 440, w: 280, h: 64, key: 'hgquit' });
+    shopButton(this, { x: 50, y: 440, w: 280, h: 64, key: 'hgquit' });
     this.txt('放弃（算失败）', 190, 472, 18, '#ffffff', 'center', { sw: 3 });
   };
 })();

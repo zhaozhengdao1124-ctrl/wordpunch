@@ -72,6 +72,8 @@
         return;
       }
       if (WF.BookUI) WF.BookUI.hide();
+      if (sc === 'versus') return this.drawVersusMenu();
+      if (sc === 'guide') return WF.Guide.draw(this);
       if (sc === 'charsel') return this.drawCharSel();
       if (sc === 'profiles') return this.drawProfiles();
       if (sc === 'settings') return this.drawSettings();
@@ -248,8 +250,9 @@
     } else {
     const qFont = q.kind === 'math' ? C.FONT_TITLE : '"Noto Serif","Georgia",serif';
     const wy = hasEx ? top + 22 : top + 30;
-    this.txt(q.word, C.SCREEN_W / 2, wy, q.kind === 'math' ? 36 : (hasEx ? 30 : 38), '#ffffff', 'center', { font: qFont, weight: 700, sw: 6, maxW: 420 });
-    const ww = Math.min(210, c.measureText(q.word).width / 2);
+    const prompt = q.displayWord || q.word;
+    this.txt(prompt, C.SCREEN_W / 2, wy, q.kind === 'math' ? 36 : (hasEx ? 30 : 38), '#ffffff', 'center', { font: qFont, weight: 700, sw: 6, maxW: 420 });
+    const ww = Math.min(210, c.measureText(prompt).width / 2);
     // v1.3：有例句时词性默认不显示（例句已经点明是哪个意思）；没例句或戴了学霸眼镜就显示
     if (q.pos && (!hasEx || q.posHint)) this.txt(q.pos, C.SCREEN_W / 2 + ww + 14, wy + 4, 16, q.posHint ? '#8fd0ff' : '#bfb3d6', 'left', { sw: 3, weight: 700 });
     if (q.hint && !q.revealed) this.txt('提示：' + q.hint + '…', C.SCREEN_W / 2 - ww - 20, wy + 4, 15, '#8fd0ff', 'right', { sw: 3, weight: 700 });
@@ -270,19 +273,9 @@
     const bw = 222, gap = 12, x0 = (C.SCREEN_W - (bw * 4 + gap * 3)) / 2, y = phrase ? 468 : (hasEx ? top + 68 : top + 60), bh = phrase ? 66 : (hasEx ? 60 : 66);
     this.ansRects = [];   // v1.8 触屏 / 鼠标点选项
     for (let i = 0; i < 4; i++) this.ansRects.push({ x: x0 + i * (bw + gap), y, w: bw, h: bh, i });
-    const k1 = ['1', '2', '3', '4'], k2 = ['7', '8', '9', '0'];
-    const fl = q.flash;
-    for (let i = 0; i < 4; i++) {
-      const x = x0 + i * (bw + gap);
-      let fill = '#221a3a', stroke = '#5d4f86';
-      const wrongBy = [0, 1].filter(s => q.ans[s] && !q.ans[s].ok && q.ans[s].idx === i);
-      if (wrongBy.length) { fill = '#4a1a24'; stroke = '#ff6a6a'; }
-      if (q.revealed && i === q.correct) { fill = '#1d4a2c'; stroke = '#7dff9a'; }
-      if (fl && fl.idx === i && fl.t < 8) {
-        const k = 1 - fl.t / 8;
-        if (fl.ok) { fill = k > 0.5 ? '#3d6a28' : fill; stroke = '#c8ff9a'; }
-        else { fill = k > 0.5 ? '#6a2030' : fill; stroke = '#ff9aa0'; }
-      }
+    const k2 = ['7', '8', '9', '0'];
+    for (const rect of this.ansRects) {
+      const { x, i } = rect;
       if (q.erased === i) {
         this.box(x, y, bw, bh, 'rgba(30,24,44,0.55)', 'rgba(120,110,150,0.5)', 2);
         this.ctx.globalAlpha = 0.4; this.txt(q.options[i], x + bw / 2, y + bh / 2 + 4, 21, '#8a90a8', 'center', { sw: 3, maxW: bw - 30, weight: 700 }); this.ctx.globalAlpha = 1;
@@ -290,10 +283,15 @@
         this.txt('橡皮擦', x + bw - 10, y + 12, phrase ? 16 : 12, '#f4a8c0', 'right', { sw: 3 });
         continue;
       }
-      this.box(x, y, bw, bh, fill, stroke, 3);
-      this.txt(k1[i], x + 14, y + 14, phrase ? 16 : 15, this.p[0].mv.color, 'center', { sw: 4 });
-      if (!this.menu.cpu) this.txt(k2[i], x + bw - 14, y + 14, phrase ? 16 : 15, this.p[1].mv.color, 'center', { sw: 4 });
-      this.txt(q.options[i], x + bw / 2, y + bh / 2 + 4, q.kind === 'math' ? 28 : 21, '#ffffff', 'center', { sw: 4, maxW: bw - 30, weight: 700, font: q.kind === 'math' ? C.FONT_TITLE : C.FONT });
+      const picked = q.ans.some(a => a && a.idx === i);
+      const wrong = q.ans.some(a => a && a.idx === i && !a.ok);
+      const flash = q.flash && q.flash.idx === i && q.flash.t < 8;
+      const correct = (q.revealed && i === q.correct) || (flash && q.flash.ok);
+      WF.Buttons.answer(this, rect, q.options[i], {
+        tone: correct ? 'correct' : wrong ? 'wrong' : 'idle', pressed: picked,
+        keyColor: this.p[0].mv.color, otherKey: !this.menu.cpu && k2[i], otherColor: this.p[1].mv.color,
+        size: q.kind === 'math' ? 28 : 21, font: q.kind === 'math' ? C.FONT_TITLE : C.FONT,
+      });
       for (const s of (this.camp ? [0] : [0, 1])) {
         const a = q.ans[s]; if (!a || a.idx !== i || (a.ok && !q.revealed)) continue;
         const bx = s === 0 ? x + 4 : x + bw - 40;
@@ -423,12 +421,37 @@
   // ================= 标题画面 =================
   G.homeButtons = function () {
     return [
-      { key: 'start', label: '开始对战' },
-      { key: 'campaign', label: '闯关' },
-      { key: 'book', label: '单词书' },
-      { key: 'wrongbook', label: '错题本' },
+      { key: 'start', label: '电脑陪练', group: 'play' },
+      { key: 'guide', label: '新手引导', group: 'play' },
+      { key: 'versus', label: '双人对战' },
+      { key: 'campaign', label: '单人闯关' },
+      { key: 'book', label: '单词书', group: 'study' },
+      { key: 'wrongbook', label: '错题本', group: 'study' },
       { key: 'settings', label: '设置' },
     ];
+  };
+  const versusChoices = [
+    { key: 'net', label: '同 WiFi 对战', hint: '两台设备连同一 WiFi，由电脑开房' },
+    { key: 'local', label: '同机对战', hint: '共用键盘，玩家一按 1–4，玩家二按 7、8、9、0' },
+    { key: 'versusBack', label: '返回首页' },
+  ];
+  G.titleChoices = function () { return this.ui.screen === 'versus' ? versusChoices : this.homeButtons(); };
+  G.showVersusMenu = function (selected = 'net') {
+    this.ui.screen = 'versus';
+    this.menu.row = versusChoices.findIndex(action => action.key === selected);
+  };
+  G.drawVersusMenu = function () {
+    this.box(0, 0, 960, 540, 'rgba(10,7,23,0.68)');
+    this.txt('双人对战', 480, 94, 46, '#ffd23c', 'center', { font: WF.CFG.FONT_TITLE, sw: 7 });
+    this.menuRects = [];
+    versusChoices.forEach((choice, i) => {
+      const y = 154 + i * 104, w = choice.hint ? 520 : 216;
+      const rect = { x: 480 - w / 2, y, w, h: choice.hint ? 80 : 52, key: choice.key, i };
+      WF.Buttons.plate(this, rect, this.menu.row === i ? 'focus' : 'idle');
+      this.txt(choice.label, 480, y + (choice.hint ? 28 : 26), 25, '#fff4dc', 'center', { sw: 5 });
+      if (choice.hint) this.txt(choice.hint, 480, y + 56, 17, '#efe3da', 'center', { sw: 3, maxW: w - 32 });
+      this.menuRects.push(rect);
+    });
   };
   G.settingsItems = function () {
     const b = this.banks[this.menu.bank];
@@ -441,7 +464,6 @@
     return [
       { key: 'bank', label: '词库', value: need ? (b ? `${b.name}（${b.count || b.words.length} 词${b.lazy && !b.loaded ? ' · 首次需下载 ' + WF.Banks.sizeText(b) : ''}）` : '无') : '本题型不用词库', disabled: !need },
       { key: 'qtype', label: '题型', value: qtype },
-      { key: 'cpu', label: '对手', value: this.menu.cpu ? '电脑陪练' : '双人对战（同一键盘）' },
       { key: 'round', label: '回合时间', value: rtLabel },
       { key: 'sfx', label: '音效', value: WF.Audio.sfxOn ? '开' : '关' },
       { key: 'music', label: '音乐', value: WF.Audio.musicOn ? '开' : '关' },
@@ -467,10 +489,6 @@
     if (key === 'bank' && this.needsBank()) this.menu.bank = (this.menu.bank + d + n) % n;
     if (key === 'mode') this.cycleQtype(d);
     if (key === 'qtype') this.cycleQtype(d);
-    if (key === 'cpu') {
-      this.menu.cpu = !this.menu.cpu;
-      this.applyChars(); this.spawnFighters(); this.layoutTitle();
-    }
     if (key === 'round') {
       const times = WF.CFG.ROUND_TIMES || [0, 60, 90, 120, 180];
       const i = Math.max(0, times.indexOf(this.menu.roundTime || 0));
@@ -486,7 +504,13 @@
       if (this.menu.p1) WF.Profiles.setBgm(this.menu.p1, WF.Audio.trackId);
     }
     if (key === 'hap') WF.Haptics.enabled = !WF.Haptics.enabled;
-    if (key === 'start') { this.requestStart(); return; }
+    if (key === 'versus') { this.showVersusMenu(); WF.Audio.play('confirm'); return; }
+    if (key === 'versusBack') {
+      this.goTitle(); this.menu.row = this.homeButtons().findIndex(b => b.key === 'versus'); return;
+    }
+    if (key === 'start' || key === 'local') { this.menu.cpu = key === 'start'; this.requestStart(); return; }
+    if (key === 'net') { WF.Audio.play('confirm'); this.openNet(); return; }
+    if (key === 'guide') { WF.Guide.open(this); return; }
     if (key === 'campaign') { this.requestCampaign(); return; }
     if (key === 'wrongfight') { this.requestStart(true); return; }
     if (key === 'book') { this.goBook(); return; }
@@ -530,14 +554,14 @@
       const y = y0 + r * (bh + gap), n = row.length, g = 8, w = (bw - g * (n - 1)) / n;
       row.forEach(({ bt, i }, k) => {
         const x = x0 + k * (w + g), sel = this.menu.row === i, gold = bt.key === 'start' || bt.key === 'campaign', small = n > 1;
-        this.box(x, y, w, bh, sel ? 'rgba(255,210,60,0.24)' : 'rgba(20,14,40,0.88)', sel || gold ? '#ffd23c' : '#5d4f86', sel ? 3 : 2);
+        WF.Buttons.plate(this, { x, y, w, h: bh }, sel ? 'focus' : 'idle');
         const label = small ? bt.label : (sel ? '▶  ' : '') + bt.label + (sel ? '  ◀' : '');
         this.txt(label, x + w / 2, y + bh / 2 + 2, small ? 19 : gold ? 28 : 24, sel || gold ? '#ffd23c' : '#ffffff', 'center', { font: gold ? C.FONT_TITLE : C.FONT, sw: 5, weight: 700, maxW: w - 12 });
         if (bt.dot) { const c = this.ctx; c.fillStyle = '#120c1c'; c.fillRect(x + w - 16, y - 5, 16, 16); c.fillStyle = '#ff3a3a'; c.fillRect(x + w - 14, y - 3, 12, 12); c.fillStyle = '#ffb0b0'; c.fillRect(x + w - 12, y - 1, 4, 4); }
         this.menuRects.push({ x, y, w, h: bh, key: bt.key, i });
       });
     });
-    this.txt('↑↓ 选择    Enter 确定    鼠标也可点', C.SCREEN_W / 2, 520, 14, '#bfb3d6', 'center', { sw: 3, weight: 700 });
+    this.txt(WF.touch ? '点按菜单进入' : '方向键选择    Enter 确定    鼠标也可点', C.SCREEN_W / 2, 520, 14, '#bfb3d6', 'center', { sw: 3, weight: 700 });
   };
 
   G.drawSettings = function () {

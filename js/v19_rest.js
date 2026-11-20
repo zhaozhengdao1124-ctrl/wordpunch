@@ -71,8 +71,9 @@
     if (m.shop) {   // 商店按钮：不占名额
       const sel = m.sel === 2, T = WF.touch, bw = T ? 480 : 420, bx = (C.SCREEN_W - bw) / 2, by = T ? 396 : 394, bh = T ? 72 : 52;   // 触屏：72 高（≈50 CSS 像素）
       const pulse = Math.floor(m.t / 18) % 2 === 0;   // v1.10.2：商店按钮会闪（金 / 红边），一眼看到
-      this.box(bx, by, bw, bh, sel ? 'rgba(122,31,43,0.95)' : 'rgba(70,16,30,0.92)', sel || pulse ? '#ffd23c' : '#d3263c', sel ? 4 : 3);
-      this.campRects.push({ x: bx, y: by, w: bw, h: bh, key: 'opt', i: 2 });
+      const rect = { x: bx, y: by, w: bw, h: bh, key: 'opt', i: 2 };
+      WF.Buttons.plate(this, rect, sel || pulse ? 'focus' : 'idle', false, 'wood');
+      this.campRects.push(rect);
       if (!T) this.txt('3', bx + 18, by + 18, 16, '#ffd23c', 'center', { sw: 4 });
       this.txt('胭脂的杂货铺开着！进去逛逛（不占名额）', bx + bw / 2 + (T ? 0 : 8), by + (T ? 24 : 20), 18, '#ffe0e6', 'center', { sw: 4, weight: 900, maxW: bw - 50 });
       this.txt('买道具 · 净化霉运 · 砍价', bx + bw / 2 + (T ? 0 : 8), by + (T ? 52 : 40), 13, '#ffb6c1', 'center', { sw: 3, weight: 700 });
@@ -135,6 +136,13 @@
       ['现在：' + this.itemDescAt(m.confirm.id, this.itemOwnedLv(m.confirm.id)), '升级后：' + this.itemDescAt(m.confirm.id, this.itemOwnedLv(m.confirm.id) + 1)]);
   };
   // 通用确认条（大字价格、防误触）：按钮 key = yes / no
+  function confirmButton(g, rect, label, size) {
+    const yes = rect.key === 'yes';
+    if (g.state === 'shop') WF.Buttons.plate(g, rect, yes ? 'focus' : 'idle');
+    else g.box(rect.x, rect.y, rect.w, rect.h, yes ? 'rgba(40,90,40,0.95)' : 'rgba(60,20,30,0.95)', yes ? '#7dff9a' : '#ff9a9a', yes ? 3 : 2);
+    g.campRects.push(rect);
+    g.txt(label, rect.x + rect.w / 2, rect.y + rect.h / 2, size, '#ffffff', 'center', { sw: 4 });
+  }
   G.drawConfirm19 = function (title, lines = [], yesTxt = '确定（Enter）', noTxt = '取消（Esc）') {
     if (WF.touch) return this.drawConfirm19T(title, lines, yesTxt.replace(/（[^）]*）$/, ''), noTxt.replace(/（[^）]*）$/, ''));
     const w = 640, h = 112 + lines.length * 20, x = (C.SCREEN_W - w) / 2, y = (C.SCREEN_H - h) / 2;
@@ -144,10 +152,8 @@
     this.txt(title, C.SCREEN_W / 2, y + 26, 18, '#ffd23c', 'center', { sw: 4, maxW: w - 30 });
     lines.forEach((l, i) => this.txt(l, C.SCREEN_W / 2, y + 54 + i * 20, 13, i ? '#8fd0ff' : '#ffffff', 'center', { sw: 3, weight: 700, maxW: w - 30 }));
     const by = y + h - 50;
-    this.box(x + 90, by, 200, 40, 'rgba(40,90,40,0.95)', '#7dff9a', 3); this.campRects.push({ x: x + 90, y: by, w: 200, h: 40, key: 'yes' });
-    this.txt(yesTxt, x + 190, by + 20, 16, '#ffffff', 'center', { sw: 4 });
-    this.box(x + w - 290, by, 200, 40, 'rgba(60,20,30,0.95)', '#ff9a9a', 2); this.campRects.push({ x: x + w - 290, y: by, w: 200, h: 40, key: 'no' });
-    this.txt(noTxt, x + w - 190, by + 20, 16, '#ffffff', 'center', { sw: 4 });
+    confirmButton(this, { x: x + 90, y: by, w: 200, h: 40, key: 'yes' }, yesTxt, 16);
+    confirmButton(this, { x: x + w - 290, y: by, w: 200, h: 40, key: 'no' }, noTxt, 16);
   };
 
   // ================= 触屏版（v1.9 手机）：点击区 ≥ 64 逻辑像素、字 ≥ 16 逻辑像素 =================
@@ -188,9 +194,7 @@
     this.wrapLines(title, w - 40, 20, 2).forEach((ln, k, a) => this.txt(ln, C.SCREEN_W / 2, y + 30 + k * 24 - (a.length - 1) * 6, 20, '#ffd23c', 'center', { sw: 4 }));
     let ly = y + 66; wrapped.forEach((ls, i) => ls.forEach(l => { this.txt(l, C.SCREEN_W / 2, ly, 16, i ? '#8fd0ff' : '#ffffff', 'center', { sw: 3, weight: 700 }); ly += 22; }));
     const by = y + h - 82, bw = 260, bh = 68;
-    this.box(x + 90, by, bw, bh, 'rgba(40,90,40,0.95)', '#7dff9a', 3); this.campRects.push({ x: x + 90, y: by, w: bw, h: bh, key: 'yes' });
-    this.txt(yesTxt, x + 90 + bw / 2, by + bh / 2, 20, '#ffffff', 'center', { sw: 4 });
-    this.box(x + w - 90 - bw, by, bw, bh, 'rgba(60,20,30,0.95)', '#ff9a9a', 2); this.campRects.push({ x: x + w - 90 - bw, y: by, w: bw, h: bh, key: 'no' });
-    this.txt(noTxt, x + w - 90 - bw / 2, by + bh / 2, 20, '#ffffff', 'center', { sw: 4 });
+    confirmButton(this, { x: x + 90, y: by, w: bw, h: bh, key: 'yes' }, yesTxt, 20);
+    confirmButton(this, { x: x + w - 90 - bw, y: by, w: bw, h: bh, key: 'no' }, noTxt, 20);
   };
 })();

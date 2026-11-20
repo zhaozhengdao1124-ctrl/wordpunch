@@ -81,6 +81,7 @@
 
   function titleKey(g, code) {
     const sc = g.ui.screen || 'title';
+    if (sc === 'guide') return WF.Guide.key(g, code);
     if (sc === 'charsel') return charselKey(g, code);
     if (sc === 'profiles') return profilesKey(g, code);
     if (sc === 'book') return bookKey(g, code);
@@ -90,17 +91,19 @@
     if (sc === 'growth') return g.growKey(code);   // v1.7.1 角色成长
     if (sc === 'daily') return g.dailyKey(code);   // v1.7.1 每日任务
     if (sc === 'codex') return g.codexKey(code);   // v1.8 收藏 / 图鉴
-    const items = g.homeButtons();
+    const items = g.titleChoices();
+    if (sc === 'versus' && code === 'Escape') { g.menuAct('versusBack'); return; }
     if (code === 'ArrowUp' || code === 'KeyW' || code === 'ArrowLeft') { g.menu.row = (g.menu.row + items.length - 1) % items.length; WF.Audio.play('menu'); }
     else if (code === 'ArrowDown' || code === 'KeyS' || code === 'ArrowRight') { g.menu.row = (g.menu.row + 1) % items.length; WF.Audio.play('menu'); }
     else if (code === 'Enter' || code === 'NumpadEnter' || code === 'Space') g.menuAct(items[g.menu.row].key, 1);
+    else if (sc === 'versus') return;
     else if (code === 'KeyB') g.goBook();
     else if (code === 'KeyE') g.goWrong();
     else if (code === 'KeyO' || code === 'Comma') g.goSettings();
   }
   function settingsKey(g, code) {
     const items = g.settingsItems();
-    if (code === 'Escape') { g.ui.screen = 'title'; g.menu.row = 0; return; }
+    if (code === 'Escape') { g.goTitle(); g.menu.row = 0; return; }
     if (code === 'ArrowUp' || code === 'KeyW') { g.menu.row = (g.menu.row + items.length - 1) % items.length; WF.Audio.play('menu'); }
     else if (code === 'ArrowDown' || code === 'KeyS') { g.menu.row = (g.menu.row + 1) % items.length; WF.Audio.play('menu'); }
     else if (code === 'ArrowLeft' || code === 'KeyA') g.menuAct(items[g.menu.row].key, -1);
@@ -282,6 +285,7 @@
     if (g.bankLoad) { g.bankLoadInput(); e.preventDefault(); g.render(); return; }   // v1.8 词库下载中：Esc/任意键取消
     if (g.unlockShow && g.unlockShow.length) { if (g.unlockShow[0].t > 20) g.unlockShow.shift(); e.preventDefault(); g.render(); return; } // v1.4 解锁卡片：任意键继续
     if (g.ui && g.ui.typing && g.state === 'title') { /* input element handles it */ e.preventDefault(); return; }
+    if (g.state === 'title' && g.ui.screen === 'net') return;
     if (g.state === 'title') { titleKey(g, code); e.preventDefault(); g.render(); return; }
     if (g.camp && g.campKey(code)) { e.preventDefault(); g.render(); return; }
     if (g.state === 'result') {
@@ -314,13 +318,12 @@
     const hit = WF.pickRect ? WF.pickRect(rects, x, y) : rects.find(m => x >= m.x && x <= m.x + m.w && y >= m.y && y <= m.y + m.h);
     if (!hit) return;
     const sc = g.ui.screen || 'title';
-    if (sc === 'title') {
-      if (hit.key === 'book') g.goBook();
-      else if (hit.key === 'wrongbook') g.goWrong();
-      else if (hit.key === 'settings') g.goSettings();
-      else if (hit.key === 'players' || hit.key === 'p1') g.goProfiles(0);
+    if (sc === 'title' || sc === 'versus') {
+      if (hit.key === 'players' || hit.key === 'p1') g.goProfiles(0);
       else if (hit.key === 'p2') g.goProfiles(1);
       else { g.menu.row = hit.i >= 0 ? hit.i : g.menu.row; g.menuAct(hit.key, 1); }
+    } else if (sc === 'guide') {
+      WF.Guide.act(g, hit.key, hit.i);
     } else if (sc === 'achievements') {
       g.achClick(hit);
     } else if (sc === 'growth') {
@@ -330,7 +333,7 @@
     } else if (sc === 'codex') {
       g.codexClick(hit);
     } else if (sc === 'settings') {
-      if (hit.key === 'back') { g.ui.screen = 'title'; g.menu.row = 0; }
+      if (hit.key === 'back') { g.goTitle(); g.menu.row = 0; }
       else { g.menu.row = hit.i >= 0 ? hit.i : g.menu.row; g.menuAct(hit.key, 1); }
     } else if (sc === 'charsel') {
       if (hit.key === 'back') g.charselBack();
@@ -397,6 +400,7 @@
     if (WF.Run && WF.Run.preloadAll) WF.Run.preloadAll();
     WF.Sprites.load(() => {
       game = new WF.Game(cv); WF.game = game;
+      WF.Audio.startMusic({ keep: true });
       window.addEventListener('keydown', onKey);
       cv.addEventListener('mousedown', onClick);
       cv.addEventListener('touchstart', (e) => {   // v1.8 触屏：直接换算坐标走同一个点击入口，并挡掉浏览器补发的鼠标事件

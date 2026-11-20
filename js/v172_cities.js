@@ -71,6 +71,8 @@
       const d = lev(w0, x, cap); if (d > cap) continue;
       const s = WF.Quiz.senses(w)[0]; if (!s) continue;
       const g = WF.Quiz.short(s.zh); if (!g || q.options.includes(g) || out.some(o => o.g === g) || WF.Quiz.clash(pf, g)) continue;
+      if (q.fmt === 'zh-en' && (q.options.some(option => option.toLowerCase() === x)
+          || out.some(o => o.word.toLowerCase() === x) || !WF.Quiz.englishDistractor(w, q.meaning))) continue;
       out.push({ d, word: w.word, g });
     }
     out.sort((a, b) => a.d - b.d || Math.random() - 0.5);
@@ -87,7 +89,13 @@
       if (S.mummy && S.mummy.ph !== 'die' && q.kind === 'word' && q.options && q.options.length === 4) {
         const alts = this.ncLookalikes(q).slice(0, NC.pharaoh.LOOKALIKE), slots = [0, 1, 2, 3].filter(i => i !== q.correct && i !== q.erased);
         q.lookalike = {};
-        alts.forEach((a, n) => { const i = slots[n]; if (i == null) return; q.options[i] = a.g; q.lookalike[i] = a.word; });
+        alts.forEach((a, n) => {
+          const i = slots[n];
+          if (i == null) return;
+          const reverse = q.fmt === 'zh-en';
+          q.options[i] = reverse ? a.word : a.g;
+          q.lookalike[i] = reverse ? a.g : a.word;
+        });
         if (alts.length) { S.lookN++; this.say(`木乃伊干扰：${q.word} ← ${alts.map(a => a.word).join(', ')}`); }
       }
       if (S.sandNext) { S.sandNext = false; q.sand = { t: 0, dur: Math.round(NC.pharaoh.SAND_S * C.FPS) }; S.sandN++; this.say('沙暴：选项盖沙 ' + NC.pharaoh.SAND_S + ' 秒'); }

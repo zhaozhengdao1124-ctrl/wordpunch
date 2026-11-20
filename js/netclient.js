@@ -136,6 +136,7 @@
   G.netDefaultUrl = function () {
     // 只认当前页面同源。同一 WiFi 场景要求双方都打开电脑启动时打印的局域网游戏地址，不再让玩家填服务器。
     try { localStorage.removeItem('wf_net_srv'); } catch (e) {}
+    if (document.documentElement.hasAttribute('data-static-host')) return '';
     return Rules.defaultServer(location, '');
   };
   G.netName = function () {
@@ -663,18 +664,6 @@
   $('wf-net-bar-leave').addEventListener('click', leave);
   $('wf-net-rematch').addEventListener('click', () => { const g = W.game; if (g) g.netRematch(); });
 
-  const baseHome = G.homeButtons;
-  G.homeButtons = function () {
-    const b = baseHome.call(this).slice();
-    const i = b.findIndex(x => x.key === 'start');
-    b.splice(i + 1, 0, { key: 'net', label: '同 WiFi 对战' });
-    return b;
-  };
-  const baseAct = G.menuAct;
-  G.menuAct = function (key, d) {
-    if (key === 'net') { this.openNet(); return; }
-    return baseAct.call(this, key, d);
-  };
   const basePersist = G.persistMenu;
   G.persistMenu = function () { if (this.netLive || (this.ui && this.ui.screen === 'net')) return; return basePersist.call(this); };
   const baseShow = G.showResult;

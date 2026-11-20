@@ -150,13 +150,13 @@
     const pub = {
       n: q.n,
       word: q.displayWord || q.word,
-      rawWord: q.word,
       pos: q.pos || '',
       options: (q.options || []).slice(0, 4),
       kind: q.kind || 'word',
       bank: q.bank || '',
       fmt: q.fmt || '',
     };
+    if (q.fmt !== 'zh-en' || reveal) pub.rawWord = q.word;
     if (q.kind === 'phrase' && q.fmt === 'blank') pub.hint = q.meaning || q.phraseHint || '';
     if (q.ex && q.ex.en) pub.exEn = q.ex.en;
     if (reveal) {

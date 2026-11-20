@@ -37,6 +37,11 @@ WF.Quiz = class {
   }
   // 兼容 v1.2 的调用（WrongSource 以外的地方也用到）
   static similar(a, b) { return WF.Quiz.clash(WF.Quiz.profile({ meaning: a }), b); }
+  static englishDistractor(w, prompt) {
+    // 一个英文选项的其他义项也不能与中文题面重合。
+    return /[a-z]/i.test(w.word) && !/\p{Script=Han}/u.test(w.word)
+      && !WF.Quiz.clash(WF.Quiz.profile(w), prompt);
+  }
   index() {
     if (this.pools) return this.pools;
     const pools = { all: [] };
@@ -76,10 +81,13 @@ WF.Quiz = class {
     this.used.add(w.word);
     return this.build(w);
   }
-  build(w, senseId) {
+  build(w, senseId, preferReverse = this.rnd() < WF.CFG.QUIZ.reverseRatio) {
     const s = this.pickSense(w, senseId), gloss = WF.Quiz.short(s.zh), pf = WF.Quiz.profile(w), P = this.index();
-    const opts = [gloss], picked = [], words = new Set([w.word]);
-    const ok = (e) => !words.has(e.w.word) && !opts.includes(e.g) && !WF.Quiz.clash(pf, e.g)
+    const reverse = preferReverse && /\p{Script=Han}/u.test(gloss) && !/[a-z]/i.test(gloss)
+      && /[a-z]/i.test(w.word) && !/\p{Script=Han}/u.test(w.word);
+    const opts = [gloss], picked = [], words = new Set([w.word.toLowerCase()]);
+    const ok = (e) => !words.has(e.w.word.toLowerCase()) && !opts.includes(e.g) && !WF.Quiz.clash(pf, e.g)
+      && (!reverse || WF.Quiz.englishDistractor(e.w, gloss))
       && !picked.some(p => WF.Quiz.clash(WF.Quiz.profile({ senses: [p.s] }), e.g));
     const passes = [[P[s.pos] || [], 2], [P[s.pos] || [], 4], [P.all, 4], [P.all, 99]];
     for (const [pool, dl] of passes) {
@@ -87,16 +95,19 @@ WF.Quiz = class {
       for (let i = 0; i < 300 && opts.length < 4; i++) {
         const e = pool[Math.floor(this.rnd() * pool.length)];
         if (Math.abs(e.len - gloss.length) > dl || !ok(e)) continue;
-        opts.push(e.g); picked.push(e); words.add(e.w.word);
+        opts.push(e.g); picked.push(e); words.add(e.w.word.toLowerCase());
       }
       if (opts.length >= 4) break;
     }
+    if (reverse && opts.length < 4) return this.build(w, s.id, false);
     while (opts.length < 4) opts.push('（其他）' + opts.length);
     const order = [0, 1, 2, 3];
     for (let i = 3; i > 0; i--) { const j = Math.floor(this.rnd() * (i + 1)); [order[i], order[j]] = [order[j], order[i]]; }
-    const exs = (s.ex || []).filter(WF.Quiz.okEx), ex = exs.length ? exs[Math.floor(this.rnd() * exs.length)] : null;
+    const exs = reverse ? [] : (s.ex || []).filter(WF.Quiz.okEx), ex = exs.length ? exs[Math.floor(this.rnd() * exs.length)] : null;
     const samePos = picked.every(p => p.s.pos === s.pos);
+    const choices = reverse ? [w.word, ...picked.map(e => e.w.word)] : opts;
     return { word: w.word, pos: s.pos || '', posAll: samePos, meaning: gloss, senseId: s.id, ex,
-      options: order.map(i => opts[i]), correct: order.indexOf(0) };
+      ...(reverse ? { fmt: 'zh-en', displayWord: gloss } : {}),
+      options: order.map(i => choices[i]), correct: order.indexOf(0) };
   }
 };

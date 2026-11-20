@@ -880,7 +880,7 @@
     if (this.state === 'cine' && this.cine) this.campCineTick();
     const q = this.q, cp = this.camp;
     if (q && this.state === 'question' && q.hintAt && !q.hint && !q.ans[0] && q.t >= q.hintAt && cp.hintsLeft > 0) {
-      const m = String(q.meaning || '').replace(/^[（(].*?[）)]/, '').trim();
+      const m = String(q.options[q.correct] || '').replace(/^[（(].*?[）)]/, '').trim();
       if (m) { q.hint = m[0]; cp.hintsLeft--; }
     }
   };

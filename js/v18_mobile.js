@@ -53,7 +53,9 @@ body{height:100vh;height:100dvh;touch-action:none;}
     if (tap.style.display !== 'flex') return;
     if (e && e.cancelable) e.preventDefault();
     tap.style.display = 'none';
-    try { W.Audio && W.Audio.unlock(); } catch (x) {}
+    W.Audio.unlock();
+    if (!W.game || W.game.state === 'title') W.Audio.startMusic({ keep: true });
+    W.Audio.play('confirm');
     try { const el = document.documentElement; if (W.touch && el.requestFullscreen && !document.fullscreenElement) { const p = el.requestFullscreen(); p && p.catch && p.catch(() => {}); } } catch (x) {}
     try { if (screen.orientation && screen.orientation.lock) { const p = screen.orientation.lock('landscape'); p && p.catch && p.catch(() => {}); } } catch (x) {}
     layout();

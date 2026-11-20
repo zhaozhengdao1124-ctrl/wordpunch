@@ -174,7 +174,7 @@ WF.CFG = {
     WAVE_TEXT: 40,        // 段落评价字停留（约 1.3 秒），叠在休息或跑向街尾上
   },
   // v1.4 出题：例句固定用最常见的义项（第一个义项）；它没有能用的例句才换别的义项，都没有就只显示单词 + 词性
-  QUIZ: { firstSense: true },
+  QUIZ: { firstSense: true, reverseRatio: 0.5 }, // 普通单词题中，看中文选英语的概率
 
   // 电脑对手（单人练习）
   CPU: { accuracy: 0.72, delayMin: 1.6, delayMax: 9.0, clashDelayMin: 1.2, clashDelayMax: 4.5 },
