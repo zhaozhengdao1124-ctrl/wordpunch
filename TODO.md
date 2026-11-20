@@ -34,6 +34,8 @@
 
 ## 发布记录
 
+- 2026-11-20 三轴与大奖五段演出已上线。源码版本为 `3a0e102`，Pages 构建为 `8de3e57`。线上 `optimize/` 的 4 个改动文件与源码逐字节一致，旧版首页与 `6bfc4f0` 逐字节一致。线上用控制台预览开关播完一次大奖演出，无页面报错；线上网址参数 `?lootfx` 不生效。改动细节见 `改动说明.md`。[新版试玩](https://zhaozhengdao1124-ctrl.github.io/wordpunch/optimize/) · [旧版试玩](https://zhaozhengdao1124-ctrl.github.io/wordpunch/)
+
 - 2026-11-20 三轴入场演出、每局 10 次和错题挑战追加 5 次已上线。游戏源码为 `6b4b8b6`，Pages 构建为 `a242543`。已在公开试玩页用桌面和模拟横屏触屏验证三轴入场、金币单次结算、跨战利品页计数和单局限额。旧版首页文件与发布前逐字节一致。[新版试玩](https://zhaozhengdao1124-ctrl.github.io/wordpunch/optimize/) · [旧版试玩](https://zhaozhengdao1124-ctrl.github.io/wordpunch/)
 
 - 2026-11-20 像素图案、手动倍数和生词补位已上线。源码版本为 `7e854de`，Pages 构建为 `8c5f716`。新旧页面均返回 HTTP 200，旧版首页与发布前逐字节一致。[新版试玩](https://zhaozhengdao1124-ctrl.github.io/wordpunch/optimize/) · [旧版试玩](https://zhaozhengdao1124-ctrl.github.io/wordpunch/)
