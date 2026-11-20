@@ -123,6 +123,13 @@ body{height:100vh;height:100dvh;touch-action:none;}
 
   // ---------- PWA：只在 http(s) 下注册，file:// 下什么也不做 ----------
   if ('serviceWorker' in navigator && /^https?:$/.test(location.protocol)) {
-    window.addEventListener('load', () => navigator.serviceWorker.register('sw.js').catch(() => {}));
+    // 页面若由别的 service worker 控制（例如旧版主页那一个），本目录的 service worker 接管后重新载入一次。
+    const mine = new URL('sw.js', location.href).href, first = navigator.serviceWorker.controller;
+    let reloaded = false;
+    navigator.serviceWorker.addEventListener('controllerchange', () => {
+      if (reloaded || !first || first.scriptURL === mine) return;
+      reloaded = true; location.reload();
+    });
+    window.addEventListener('load', () => navigator.serviceWorker.register('sw.js', { updateViaCache: 'none' }).catch(() => {}));
   }
 })();
