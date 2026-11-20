@@ -27,11 +27,34 @@ WF.LootReels = (() => {
   ]) {
     stepAt.push(stepAt[stepAt.length - 1] + gap);
   }
-  const outerEnd = stepAt[stepAt.length - 1],
-    rollStart = outerEnd + 420;
-  const stopsAt = [2050, 2750, 3650].map((ms) => rollStart + ms);
-  const finishAt = stopsAt[2] + 1150;
-  const surgeDuration = 980;
+  // 三轴演出五段：预兆 0.5 秒 → 点灯 1 秒 → 三轴约 2.3 秒（第三轴最久）→ 爆发 1.5 秒 → 余韵 1 秒。
+  const outerEnd = stepAt[stepAt.length - 1];
+  const OMEN = 500, LIGHT = 1000, BURST = 1500, GLOW = 1000;
+  const rollStart = outerEnd + OMEN + LIGHT;
+  const stopsAt = [900, 1400, 2300].map((ms) => rollStart + ms);
+  const burstEnd = stopsAt[2] + BURST;
+  const finishAt = burstEnd + GLOW;
+  // 点灯段：18 格从中奖格开始依次点亮，越点越快。
+  const lightAt = Array.from({ length: 18 }, (_, k) => outerEnd + OMEN + LIGHT * Math.sqrt(k / 18));
+  function phaseAt(t, mode) {
+    if (mode === 'none' || t < outerEnd) return null;
+    const marks = [['omen', outerEnd], ['light', outerEnd + OMEN], ['reels', rollStart], ['burst', stopsAt[2]], ['glow', burstEnd], ['rest', finishAt]];
+    let k = marks.length - 1;
+    while (t < marks[k][1]) k--;
+    const end = k + 1 < marks.length ? marks[k + 1][1] : Infinity;
+    return { name: marks[k][0], age: t - marks[k][1], p: end === Infinity ? 1 : (t - marks[k][1]) / (end - marks[k][1]) };
+  }
+  // 演出音效的时间表：点灯蜂鸣逐格升调，爆发时一记重锤，随后金币连续落盘。
+  function fxEvents(mode) {
+    if (mode === 'none') return [];
+    const list = lightAt.map((at, i) => ({ at, name: 'lootLight', p: { i } }));
+    list.push({ at: stopsAt[2] + 15, name: 'lootSlam', p: { big: mode === 'jackpot' } });
+    for (let at = stopsAt[2] + 70, n = 0; at < burstEnd + 300; n++) {
+      list.push({ at, name: 'lootCoin', p: { n } });
+      at += 48 + ((n * 37) % 5) * 9;
+    }
+    return list.sort((a, b) => a.at - b.at);
+  }
   const spinUp = 0.14, braking = 0.32;
   const totalTravel = braking - spinUp / 2 + (1 - braking) / 2;
 
@@ -47,11 +70,13 @@ WF.LootReels = (() => {
 
   function cueAt(t) {
     if (t < outerEnd) return '外圈跑灯';
-    if (t < rollStart) return '轰——三轴启动！';
+    if (t < outerEnd + OMEN) return '……有动静？';
+    if (t < rollStart) return '灯 · 全 · 亮！';
     const locked = stopsAt.filter(at => t >= at).length;
-    if (locked === 0) return '咔咔咔 · 三轴转动';
-    if (locked === stopsAt.length) return '叮！三轴锁定';
-    return `咔哒！第 ${locked} 轴锁定`;
+    if (locked === 0) return '三轴高速转动！';
+    if (locked === 1) return '咔！';
+    if (locked === 2) return t - stopsAt[1] < 380 ? '咔！' : '咔……';
+    return '三轴锁定！';
   }
 
   // Same travel curve as the animation. One contact per quarter of a symbol.
@@ -210,11 +235,26 @@ WF.LootReels = (() => {
       ctx.strokeStyle = '#b9d7a359';
       ctx.stroke();
     }
+    function cell(i, outer, inner, bar, soft) {
+      const [x, y] = stops[i];
+      bevel(x - 45, y - 29, 90, 58, 9, '#172321');
+      if (soft) {
+        ctx.shadowColor = '#ffbe48';
+        ctx.shadowBlur = 15;
+      }
+      bevel(x - 43, y - 28, 86, 54, 8, outer);
+      ctx.shadowBlur = 0;
+      bevel(x - 39, y - 24, 78, 46, 6, inner);
+      sprite(tiles[i], x, y - 1, 40);
+      if (bar) fill(x - 20, y + 20, 40, 3, '#fff1ae');
+    }
+    let fxOn = false;
     function shell(t, selected, reelMode) {
-      const gold = reelMode === 'jackpot' && t >= outerEnd;
-      const age = t - outerEnd;
-      const chasing = reelMode !== 'none' && !still.matches && age >= 0 && age < surgeDuration;
-      const phase = Math.floor(age / 44);
+      const ph = phaseAt(t, reelMode);
+      fxOn = !!ph;
+      const gold = reelMode === 'jackpot' && ph && (ph.name === 'glow' || ph.name === 'rest');
+      const chasing = ph && !still.matches && (ph.name === 'reels' || ph.name === 'burst');
+      const phase = ph ? Math.floor(ph.age / (ph.name === 'burst' ? 60 : 80)) : 0;
       fill(0, 0, 960, 540, '#21191e');
       bevel(7, 6, 946, 526, 20, '#3b2527');
       bevel(12, 10, 936, 515, 18, '#a77d4c');
@@ -309,19 +349,7 @@ WF.LootReels = (() => {
           fill(dx - 1.3, dy - 2, 2, 2, light ? '#fff2bf' : '#c0a278');
         }
         const active = selected === i;
-        const outer = active ? (gold ? '#ffdc71' : '#ffe4ab') : '#a1865d';
-        bevel(x - 45, y - 29, 90, 58, 9, '#172321');
-        if (active) {
-          ctx.shadowColor = '#ffbe48';
-          ctx.shadowBlur = 15;
-        }
-        bevel(x - 43, y - 28, 86, 54, 8, outer);
-        ctx.shadowBlur = 0;
-        bevel(x - 39, y - 24, 78, 46, 6, active ? '#95552b' : '#352e2c');
-        sprite(tiles[i], x, y - 1, 40);
-        if (active) {
-          fill(x - 20, y + 20, 40, 3, '#fff1ae');
-        }
+        cell(i, active ? (gold ? '#ffdc71' : '#ffe4ab') : '#a1865d', active ? '#95552b' : '#352e2c', active, active && !fxOn);
       });
       bevel(249, 160, 462, 201, 16, '#0e201e');
       bevel(
@@ -420,105 +448,101 @@ WF.LootReels = (() => {
         }
       }
     }
-    function celebration(t, slot, reelMode) {
-      const finale = t >= stopsAt[2];
-      const p = (t - (finale ? stopsAt[2] : outerEnd)) / (finale ? 1150 : surgeDuration);
-      if (reelMode === 'none' || (finale && reelMode !== 'jackpot') || still.matches || p < 0 || p >= 1) return 0;
-      const pulse = Math.sin((Math.PI * Math.min(1, p / 0.24)) / 2) * Math.pow(1 - p, 1.15);
-      const [cx, cy] = finale ? [480, 248] : stops[slot];
-      ctx.save();
-      ctx.globalCompositeOperation = 'screen';
-      ctx.globalAlpha = pulse * (finale ? 0.53 : 0.82);
-      fill(0, 0, 960, 540, finale ? '#c77623' : '#db3a20');
-      const bloom = ctx.createRadialGradient(cx, cy, 8, cx, cy, 750);
-      bloom.addColorStop(0, '#ffdb87');
-      bloom.addColorStop(0.35, '#d18138');
-      bloom.addColorStop(1, '#150b06');
-      fill(0, 0, 960, 540, bloom);
-      ctx.globalAlpha = (finale ? 0.35 : 0.53) * pulse;
-      const rayCount = finale ? 16 : 24;
-      for (let j = 0; j < rayCount; j++) {
-        const a = (j * Math.PI * 2) / rayCount + p * 0.16,
-          half = 0.018 + (j % 3) * 0.012;
-        polygon(
-          [
-            [cx, cy],
-            [cx + 1180 * Math.cos(a - half), cy + 1180 * Math.sin(a - half)],
-            [cx + 1180 * Math.cos(a + half), cy + 1180 * Math.sin(a + half)]
-          ],
-          '#ffcf7c'
-        );
+    const RAINBOW = ['#ff4b5c', '#ff9b2f', '#ffe14a', '#5be36a', '#3fd2ff', '#6f7bff', '#d65bff'];
+    // 每一格在当前时刻的外框和底色。null 表示保持外圈跑灯原样。
+    function cellLook(i, t, slot, mode, after, smallWin) {
+      const ph = phaseAt(t, mode);
+      const order = (i - slot + stops.length) % stops.length;
+      if (!ph) {
+        if (smallWin && i === slot && after < 75 && (still.matches || Math.floor(after / 6) % 2 === 0)) return ['#fff4b8', '#c8632d', true];
+        return null;
       }
-      // A single expanding light wave crosses every edge of the cabinet.
-      const radius = 18 + 1000 * (1 - (1 - p) ** 1.6);
-      const wave = ctx.createRadialGradient(cx, cy, 0, cx, cy, radius);
-      wave.addColorStop(0, '#f5aa3b00');
-      wave.addColorStop(0.8, '#f5aa3b00');
-      wave.addColorStop(0.94, '#ffd48d');
-      wave.addColorStop(1, '#f5aa3b00');
-      ctx.globalAlpha = pulse * 0.78;
-      fill(0, 0, 960, 540, wave);
-      if (!finale) {
-        // A hot band of light runs across the cabinet while its lamps chase the perimeter.
-        const x = -260 + 1470 * p;
-        const sweep = ctx.createLinearGradient(x - 170, 0, x + 170, 220);
-        sweep.addColorStop(0, '#ffbd6500');
-        sweep.addColorStop(0.37, '#ff853f');
-        sweep.addColorStop(0.50, '#fff6c9');
-        sweep.addColorStop(0.65, '#ffc253');
-        sweep.addColorStop(1, '#ffbd6500');
-        ctx.globalAlpha = pulse * 0.90;
-        polygon([[x - 220, 0], [x + 130, 0], [x + 220, 540], [x - 130, 540]], sweep);
-        ctx.strokeStyle = '#ffc66f';
-        ctx.globalAlpha = pulse * 0.72;
-        ctx.lineWidth = 5;
-        ctx.strokeRect(10, 10, 940, 520);
-        for (let i = 0; i < 30; i++) {
-          const angle = i * 2.399 + 0.45;
-          const radius = 100 + (i * 107) % 680 + p * 230;
-          const x = cx + Math.cos(angle) * radius, y = cy + Math.sin(angle) * radius;
-          const length = 18 + (i * 13) % 55;
-          ctx.strokeStyle = i % 3 === 0 ? '#fff2ae' : '#ff7f49';
-          ctx.lineWidth = 2 + i % 3;
-          ctx.beginPath();
-          ctx.moveTo(x, y);
-          ctx.lineTo(x + Math.cos(angle) * length, y + Math.sin(angle) * length);
-          ctx.stroke();
+      const hot = ['#fff1ae', '#c8632d', true], warm = ['#e9b35a', '#6d3a26', false], dark = ['#3b3027', '#1d1918', false];
+      if (ph.name === 'omen') return dark;
+      if (ph.name === 'light') {
+        const lit = lightAt.filter(at => t >= at).length;
+        return order < lit ? (order === lit - 1 ? hot : warm) : dark;
+      }
+      if (ph.name === 'reels') return still.matches || (order + Math.floor(ph.age / 70)) % 3 === 0 ? hot : warm;
+      if (ph.name === 'burst') {
+        if (still.matches) return hot;
+        const c = RAINBOW[(i + Math.floor(ph.age / 85)) % RAINBOW.length];
+        return [c, RAINBOW[(i + 3 + Math.floor(ph.age / 85)) % RAINBOW.length], true];
+      }
+      if (mode === 'jackpot' || order === 0) return ['#ffdc71', '#95552b', true];
+      return warm;
+    }
+    function coin(x, y, w) {
+      // 像素金币：宽度 2–14 变化表示翻转。
+      x = Math.round(x); y = Math.round(y);
+      fill(x - w / 2 - 2, y - 8, w + 4, 16, '#5c3410');
+      fill(x - w / 2, y - 6, w, 12, '#e9a823');
+      if (w > 4) fill(x - w / 2 + 2, y - 5, w - 4, 3, '#fff1a6');
+      if (w > 8) fill(x - 2, y - 1, 4, 5, '#a8650f');
+    }
+    function overlay(t, slot, reelMode, after, smallWin) {
+      const ph = phaseAt(t, reelMode);
+      if (ph && (ph.name === 'omen' || ph.name === 'light')) {
+        // 预兆：整台机器熄灯；点灯段逐渐恢复。
+        const dim = ph.name === 'omen' ? 0.8 * Math.min(1, ph.age / 90) : 0.8 * (1 - ph.p);
+        ctx.globalAlpha = dim;
+        fill(0, 0, 960, 540, '#07040a');
+        ctx.globalAlpha = 1;
+      }
+      for (let i = 0; i < stops.length; i++) {
+        const look = cellLook(i, t, slot, reelMode, after, smallWin);
+        if (look) cell(i, look[0], look[1], look[2], false);
+      }
+      if (!ph || still.matches) return;
+      const age = t - stopsAt[2];
+      if (age >= 0 && age < 2300) {
+        // 金币从出币口喷出，带重力落下；宽度变化表示翻转。
+        for (let i = 0; i < 64; i++) {
+          const tau = age - ((i * 37) % 1150);
+          if (tau < 0) continue;
+          const vx = (((i * 73) % 41) - 20) * 0.03, vy = -(0.62 + ((i * 29) % 17) * 0.03);
+          const x = 480 + vx * tau, y = 330 + vy * tau + 0.0012 * tau * tau;
+          if (y > 560) continue;
+          coin(x, y, [14, 10, 2, 10][Math.floor(tau / 70 + i) % 4]);
         }
       }
-      ctx.globalAlpha = Math.sin(Math.PI * p);
-      for (let j = 0; j < 40; j++) {
-        const a = j * 2.39996,
-          r = (48 + ((j * 137) % 580)) * (0.18 + p);
-        const x = cx + Math.cos(a) * r * 1.5,
-          y = cy + Math.sin(a) * r * 0.82 + 68 * p * p;
-        const s = 2 + (j % 4);
-        fill(x - s, y - 1, s * 2, 2, '#ffdc8b');
-        fill(x - 1, y - s, 2, s * 2, '#fff1c1');
+      if (age >= 0 && age < 240) {
+        // 只闪一次全屏白光。
+        ctx.globalAlpha = 0.85 * (1 - age / 240);
+        fill(0, 0, 960, 540, '#ffffff');
+        ctx.globalAlpha = 1;
       }
-      ctx.restore();
-      return pulse * 0.88;
     }
-    return function draw(t, slot, reelMode = 'none') {
+    // 外部按钮与字幕共用的演出状态。
+    function buttonLook(t, reelMode, after, k, smallWin) {
+      const ph = phaseAt(t, reelMode);
+      if (!ph) return smallWin && after < 75 && Math.floor(after / 6) % 2 === 0 ? { color: '#fff1ae', alpha: 0.35 } : null;
+      if (ph.name === 'omen') return { color: '#07040a', alpha: 0.7, fill: true };
+      if (ph.name === 'light') {
+        const lit = lightAt.filter(at => t >= at).length;
+        return lit % 2 ? { color: '#ffe27a', alpha: 0.45 } : { color: '#07040a', alpha: 0.35 * (1 - ph.p), fill: true };
+      }
+      if (ph.name === 'reels') return (k + Math.floor(ph.age / 140)) % 2 ? { color: '#ffc85a', alpha: 0.3 } : null;
+      if (ph.name === 'burst') return { color: still.matches ? '#ffe27a' : RAINBOW[(k * 2 + Math.floor(ph.age / 85)) % RAINBOW.length], alpha: 0.45 };
+      const breath = still.matches ? 0.5 : 0.5 + 0.5 * Math.sin((after + (ph.name === 'glow' ? ph.age / 16.7 : 0)) * 0.1);
+      return { color: '#ffd76a', alpha: 0.12 + 0.28 * breath };
+    }
+    function draw(t, slot, reelMode = 'none', after = 0, smallWin = false) {
       const selected = slot < 0 || (still.matches && t < outerEnd) ? -1 : outerIndex(t, slot);
       ctx.save();
-      const age = t - outerEnd;
-      if (reelMode !== 'none' && !still.matches && age >= 0 && age < 760) {
-        const force = (1 - age / 760) ** 1.4;
-        const dx = Math.round(Math.sin(age * 0.066) * 25 * force);
-        const dy = Math.round(Math.cos(age * 0.087) * 15 * force);
-        const zoom = 1 + 0.053 * force;
+      const age = t - stopsAt[2];
+      if (reelMode !== 'none' && !still.matches && age >= 0 && age < 600) {
+        // 爆发瞬间整机震动，取整像素保持像素风。
+        const force = (1 - age / 600) ** 1.5;
         fill(0, 0, 960, 540, '#21191e');
-        ctx.translate(480 + dx, 270 + dy);
-        ctx.rotate(Math.sin(age * 0.045) * 0.033 * force);
-        ctx.scale(zoom, zoom);
-        ctx.translate(-480, -270);
+        ctx.translate(Math.round(Math.sin(age * 0.09) * 14 * force), Math.round(Math.cos(age * 0.11) * 9 * force));
       }
       shell(t, selected, reelMode);
-      const glow = celebration(t, slot, reelMode);
+      if (slot >= 0) overlay(t, slot, reelMode, after, smallWin);
       ctx.restore();
-      return glow;
-    };
+    }
+    draw.buttonLook = buttonLook;
+    return draw;
   }
-  return { create, gearTicks, cueAt, stepAt, outerEnd, rollStart, stopsAt, finishAt };
+  return { create, gearTicks, cueAt, phaseAt, fxEvents, stepAt, lightAt, outerEnd, rollStart, stopsAt, burstEnd, finishAt };
 })();

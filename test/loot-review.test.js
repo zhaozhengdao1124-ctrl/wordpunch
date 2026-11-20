@@ -93,3 +93,19 @@ test('reel entry expands to five times the jackpot weight without changing the p
   assert.equal(rules.lootReelMode(() => 0.999, board, top), 'jackpot');
   assert.equal(rules.lootReelMode(() => 0.999, board, regular), 'none');
 });
+
+test('three-axis show runs omen, light-up, reels, burst and afterglow in order', () => {
+  const { phaseAt, fxEvents, outerEnd, rollStart, stopsAt, burstEnd, finishAt, lightAt } = WF.LootReels;
+  assert.equal(phaseAt(outerEnd + 100, 'none'), null);
+  const names = [outerEnd + 10, outerEnd + 600, rollStart + 10, stopsAt[2] + 10, burstEnd + 10, finishAt + 10].map(t => phaseAt(t, 'jackpot').name);
+  assert.deepEqual(names, ['omen', 'light', 'reels', 'burst', 'glow', 'rest']);
+  assert.ok(stopsAt[2] - stopsAt[1] > stopsAt[1] - stopsAt[0], 'the third reel spins longest');
+  const gaps = lightAt.slice(1).map((at, i) => at - lightAt[i]);
+  assert.equal(lightAt.length, 18);
+  assert.ok(gaps.every((gap, i) => i === 0 || gap < gaps[i - 1]), 'cells light up faster and faster');
+  const events = fxEvents('reels');
+  assert.equal(events.filter(e => e.name === 'lootLight').length, 18);
+  assert.equal(events.filter(e => e.name === 'lootSlam').length, 1);
+  assert.ok(events.filter(e => e.name === 'lootCoin').every(e => e.at > stopsAt[2] && e.at < finishAt));
+  assert.deepEqual(fxEvents('none'), []);
+});
