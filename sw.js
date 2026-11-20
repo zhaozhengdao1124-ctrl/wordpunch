@@ -6,7 +6,7 @@
 // 2026-11-20 起：页面和代码（html / js / json）改为「先联网、断网才用缓存」，刷新一次就能拿到新版；图片和音频仍先用缓存。
 // 缓存名带 core-nf- 表示这一代规则。从旧的「先缓存」版本升级时，新版激活后会把已打开的页面自动重新载入一次。
 const PREFIX = 'wordfight@' + self.registration.scope + ':';
-const CACHE = PREFIX + 'core-nf-v1.13-batchb1';
+const CACHE = PREFIX + 'core-nf-v1.13-batchb2';
 const NET_TIMEOUT = 3000;   // 联网超过 3 秒就先用缓存（网络慢或被墙时不卡死），联网结果回来后悄悄更新缓存
 const PRECACHE_PARALLEL = 4; // 预缓存每次只并发 4 个，不和页面本身抢带宽
 const isCode = u => { const p = new URL(u).pathname; return p.endsWith('/') || /\.(html|js|json|webmanifest)$/.test(p); };

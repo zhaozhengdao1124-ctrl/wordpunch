@@ -27,7 +27,8 @@ Object.assign(WF.Game.prototype, {
   goTitle() { this.state = 'title'; this.ui.screen = 'title'; },
   startMatch() { this.state = 'intro'; this.p = [{ mv: { name: 'A' }, hp: 800 }, { mv: { name: 'B' }, hp: 800 }]; this.source = this.makeSrc ? this.makeSrc() : null; },
   showResult() { this.state = 'result'; this.result = { winner: this._winner, draw: false, t: 0 }; },
-  answerNormal(s, idx) { const q = this.q; q.ans[s] = { ok: idx === q.correct, t: 30 }; },
+  answerNormal(s, idx) { const q = this.q; q.ans[s] = { ok: idx === q.correct, t: 30 }; if (s === 0) WF.Profiles.markAnswer(this.menu.p1, q, q.ans[s].ok); },
+  damage(A, D, amt) { D.hp -= amt; return D.hp <= 0; }, pickMove() { return 'punch'; }, *attackSeq() {}, run(gen) { (this.runs = this.runs || []).push(gen); },
   newQuestion() {}, input() { return false; }, fastS() { return 5; }, slowS() { return 10; },
   wheelTick() { const w = this.wheel; w.t++; if (w.phase === 'spin' && w.t >= 150) { w.phase = 'done'; w.t = 0; } else if (w.phase === 'done' && w.t >= WF.CFG.CAMPAIGN.WHEEL.HOLD) this.wheelEnd(); },
   wheelSpin() { const w = this.wheel; if (w.phase === 'idle') { w.phase = 'spin'; w.t = 0; } else if (w.phase === 'spin') w.t = 150; else if (w.phase === 'done' && w.t > 12) this.wheelEnd(); },
@@ -83,14 +84,41 @@ test('今日踢馆 fight: guardian with thick HP, queue source re-asks misses, w
   g.kickStart();
   assert.ok(g.dailyKick); assert.equal(g.menu.cpu, true); assert.equal(g.menu.mode, 'word'); assert.notEqual(g.menu.cpuChar, 'suling');
   assert.equal(g.p[1].maxHp, g.kickHp(k.words.length)); assert.ok(g.p[1].maxHp >= C.HP);
-  const src = g.source, seen = new Set();
-  for (let i = 0; i < k.words.length; i++) { const q = src.next(); seen.add(q.word); assert.equal(q.kind, 'word'); }
-  assert.equal(seen.size, k.words.length, 'every queued word comes up once before repeats');
-  const q = src.next(); q.ans = [null, null]; g.q = q;
-  g.answerNormal(0, (q.correct + 1) % 4);
-  assert.equal(src.pending[0], q.kick, 'a miss comes back soon');
-  assert.match(g.qtypeName(), /今日踢馆 · 已复习/);
-  g._winner = 1; g.showResult();
+  WF.game = g;
+  const src = g.source, seen = new Set(), N = k.words.length, A = g.p[0], E = g.p[1];
+  A.hp = 800; A.mv = { combo: [[]] }; E.hp = E.maxHp;
+  const ask = () => { const q = g.source.next(); q.ans = [null, null]; g.q = q; g.state = 'question'; return q; };
+  // 3 deliberate misses (each fixed on the re-ask), one word answered inside a 角力 (markAnswer only), everything else normal
+  let n = 0; const miss = new Set();
+  while (!src.exhausted && n < 100) {
+    const q = ask(); n++; if (q.kick) seen.add(q.word);
+    if (q.kick && miss.size < 3 && !q.kick.miss && !miss.has(q.word)) { miss.add(q.word); g.answerNormal(0, (q.correct + 1) % 4); continue; }
+    if (n === 7) { P.markAnswer(pid, q, true); continue; }   // 角力里答对：不经过 answerNormal
+    g.answerNormal(0, q.correct);
+    const before = E.hp, ko = g.damage(A, E, 999);      // normal hit visuals; HP follows the list
+    assert.equal(E.hp, g.kickTargetHp()); assert.ok(E.hp <= before);
+    if (src.exhausted) assert.equal(ko, true, 'last listed word KOs');
+  }
+  assert.equal(seen.size, N, 'every listed word asked');
+  assert.equal(n, N + 3, '20 words + 3 re-asks');
+  assert.equal(src.correct, N); assert.equal(E.hp, 0);
+  assert.match(g.qtypeName(), new RegExp('已复习 ' + N + ' / ' + N));
+  // 一直答错：最多补考 EXTRA 次，然后词单考完 → 守馆人收尾倒下；答过的错词照样记进记忆
+  g.state = 'result'; g.startMatch();
+  const s2 = g.source, E2 = g.p[1]; g.p[0].hp = 800; g.p[0].mv = { combo: [[]] }; E2.hp = E2.maxHp;
+  let m = 0, timeouts = 0;
+  while (!s2.exhausted && m < 200) {
+    const q = ask(); m++;
+    if (m % 4 === 0) { timeouts++; g.endQuestion(); continue; }   // 超时没答
+    g.answerNormal(0, (q.correct + 1) % 4);
+  }
+  assert.equal(m, N + C.KICK.EXTRA, 'capped at N + EXTRA questions: ' + m + ' n=' + N);
+  assert.equal(s2.correct, 0); assert.equal(g.kickTargetHp(), 0);
+  const h = P.get(pid).history[s2.words[0].bank + '\t' + s2.words[0].word]; assert.ok(h.m && h.m.lv === 0, 'failed words scheduled in memory');
+  g.runs = []; g.ko = null; g.newQuestion();
+  assert.equal(g.state, 'resolve'); assert.equal(g.runs.length, 1, 'finisher attack instead of another question');
+  // 守馆人打倒玩家：照常判负，当天可再来
+  g.runs = []; g._winner = 1; g.showResult();
   assert.equal(g.result.kick.win, false); assert.equal(g.kickState(pid), 'ready', 'loss → can retry today');
   g.startMatch();                                      // Enter on result = retry
   g._winner = 0; g.showResult();
