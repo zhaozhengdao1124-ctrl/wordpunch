@@ -79,19 +79,38 @@ test('weighted selection maps each draw to the configured slot', () => {
   }
 });
 
-test('reel entry expands to five times the jackpot weight without changing the prize draw', () => {
+test('three-axis shows about 8% of spins including the jackpot, without changing the prize draw', () => {
   const board = rules.makeLootMachineBoard(rules.rng(65), rules.lootPrice(2));
   const top = board.reduce((best, card) => card.gold > best.gold ? card : best);
   const regular = board.find(card => card !== top);
-  const otherWeight = board.reduce((sum, card) => sum + card.weight, 0) - top.weight;
+  const total = board.reduce((sum, card) => sum + card.weight, 0);
+  const tickets = 100000;
   let reelOnly = 0;
-  for (let ticket = 0; ticket < otherWeight; ticket++) {
-    const rng = () => (ticket + 0.5) / otherWeight;
-    if (rules.lootReelMode(rng, board, regular) === 'reels') reelOnly++;
+  for (let ticket = 0; ticket < tickets; ticket++) {
+    if (rules.lootReelMode(() => (ticket + 0.5) / tickets, board, regular) === 'reels') reelOnly++;
   }
-  assert.equal(top.weight + reelOnly, top.weight * 5);
+  const rate = top.weight / total + (reelOnly / tickets) * (1 - top.weight / total);
+  assert.ok(Math.abs(rate - 0.08) < 0.0005, 'total three-axis rate ' + rate);
+  assert.equal(top.weight / total, 0.003, 'jackpot stays 0.3%');
   assert.equal(rules.lootReelMode(() => 0.999, board, top), 'jackpot');
   assert.equal(rules.lootReelMode(() => 0.999, board, regular), 'none');
+});
+
+test('pity forces three-axis on the 12th spin only when the run has not seen one', () => {
+  const board = rules.makeLootMachineBoard(rules.rng(5), rules.lootPrice());
+  const regular = board.find(card => card.gold < 150);
+  const miss = () => 0.999;
+  assert.equal(rules.lootReelMode(miss, board, regular, { serial: 11, seen: false }), 'none');
+  assert.equal(rules.lootReelMode(miss, board, regular, { serial: 12, seen: false }), 'reels');
+  assert.equal(rules.lootReelMode(miss, board, regular, { serial: 12, seen: true }), 'none');
+  assert.equal(rules.lootReelMode(miss, board, regular, { serial: 13, seen: false }), 'none');
+});
+
+test('three-axis regular prizes pay double; jackpot and plain spins pay the cell', () => {
+  const card = { gold: 7 };
+  assert.equal(rules.lootPayout(card, 'reels'), 14);
+  assert.equal(rules.lootPayout(card, 'none'), 7);
+  assert.equal(rules.lootPayout({ gold: 150 }, 'jackpot'), 150);
 });
 
 test('three-axis show runs omen, light-up, reels, burst and afterglow in order', () => {

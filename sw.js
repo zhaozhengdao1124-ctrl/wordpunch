@@ -4,7 +4,7 @@
 // 其他清单外的文件走「先缓存、再联网」。
 // GitHub Pages 的旧版和新版位于不同目录，各自维护离线资源。
 const PREFIX = 'wordfight@' + self.registration.scope + ':';
-const CACHE = PREFIX + 'core-v1.12-loot-fx1';
+const CACHE = PREFIX + 'core-v1.12-loot-odds1';
 const BANKS = PREFIX + 'banks';          // 不随版本清理
 const isBank = u => /\/data\/bank_[a-z0-9]+\.js$/.test(new URL(u).pathname);
 self.addEventListener('install', e => {

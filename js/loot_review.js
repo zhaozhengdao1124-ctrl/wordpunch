@@ -131,7 +131,7 @@ WF.LootReview = (() => {
     const rng = g.campRng('lootMachine' + serial);
     const tiles = WF.R19.makeLootMachineBoard(rng, price);
     let slot = WF.R19.pickLootSlot(rng, tiles);
-    let reelMode = WF.R19.lootReelMode(g.campRng('lootReels' + serial), tiles, tiles[slot]);
+    let reelMode = WF.R19.lootReelMode(g.campRng('lootReels' + serial), tiles, tiles[slot], { serial, seen: !!cp.lootReelSeen });
     const preview = previewMode();
     if (preview) {
       const top = tiles.reduce((best, card) => card.gold > best.gold ? card : best);
@@ -154,6 +154,7 @@ WF.LootReview = (() => {
       gear: reelMode !== 'none' ? reels.gearTicks(strip.length, destinations) : [],
       nextGear: 0,
       fx: reels.fxEvents(reelMode), nextFx: 0, after: 0,
+      payout: WF.R19.lootPayout(won, reelMode),
       smallWin: reelMode === 'none' && won.gold > price
     };
   }
@@ -165,6 +166,7 @@ WF.LootReview = (() => {
     const round = current.stage === 'ready' ? current : makeMachine(g, current.multiplier);
     if (!g.spendGold(round.price, '战利品摇奖机')) return;
     cp.lootSpinN = round.serial;
+    if (round.reelMode !== 'none') cp.lootReelSeen = true;
     round.stage = 'spin';
     m.machine = round;
     WF.Audio.play('whoosh');
@@ -182,7 +184,7 @@ WF.LootReview = (() => {
     const r = m.machine;
     if (r.settled) return;
     r.settled = true;
-    g.addGold(r.won.gold, '摇奖机', { raw: true });
+    g.addGold(r.payout, '摇奖机', { raw: true });
     if (r.reelMode !== 'none') return;
     if (r.smallWin) WF.Audio.play('lootDing');
     else WF.Audio.play('beep', { f: 310, d: 0.06 });
@@ -304,9 +306,9 @@ WF.LootReview = (() => {
     let result = '请选择启动';
     if (spinning) result = reels.cueAt(r.time);
     else if (r.settled) {
-      const net = r.won.gold - r.price;
+      const net = r.payout - r.price;
       const delta = net > 0 ? `净赚 ${net}` : net < 0 ? `净亏 ${-net}` : '回本';
-      result = `返还 ${r.won.gold} 金币 · ${delta}`;
+      result = `返还 ${r.payout} 金币 · ${delta}`;
       if (phase) result += '　再来一次？';
       else if (r.smallWin && r.after < 75) result = `小赢！${result}`;
     }
@@ -316,9 +318,9 @@ WF.LootReview = (() => {
       // 爆发：大字砸下，返还金额从 0 快速跳到实际数目。
       const age = r.time - reels.stopsAt[2];
       const slam = still ? 1 : Math.min(1, age / 170);
-      const title = r.reelMode === 'jackpot' ? '大 · 当 · 选！' : '三 · 连 · 中！';
+      const title = r.reelMode === 'jackpot' ? '大 · 当 · 选！' : `三 · 连 · 中！×${WF.CFG.CAMPAIGN.LOOT_MACHINE.REEL_MULTIPLIER}`;
       g.txt(title, 480, 140, Math.round(64 * (1 + 1.6 * (1 - slam) ** 2)), '#fff4b8', 'center', { font: WF.CFG.FONT_TITLE, sw: 10, stroke: '#491d2a', weight: 900 });
-      const shown = Math.round(r.won.gold * Math.min(1, age / 900));
+      const shown = Math.round(r.payout * Math.min(1, age / 900));
       if (spinning) g.txt(`+${shown} 金币`, 480, 335, 26, '#ffe27a', 'center', { sw: 6, stroke: '#3a1a10', weight: 900, maxW: 385 });
       else g.txt(result, 480, 335, 20, '#ffdf93', 'center', { maxW: 385 });
     } else if (impact) g.txt(result, 480, 248, 49, '#fff4b8', 'center', { sw: 10, stroke: '#491d2a', weight: 900, maxW: 550 });
