@@ -4,12 +4,15 @@ WF.rng = function (seed) { let s = seed >>> 0 || 1; return () => ((s = (s * 1664
 WF.Sprites = {
   img: {},
   load(done) {
-    const ids = Object.keys(window.WF_ASSETS); let left = ids.length * 3;
+    const ids = Object.keys(window.WF_ASSETS); let left = ids.length * 3, called = false;
+    // 网络很慢或个别图片卡住时，最多等 20 秒就先进游戏，没到的图之后到了照常显示。
+    const finish = () => { if (called) return; called = true; done(); };
+    setTimeout(finish, 20000);
     for (const id of ids) {
       WF.Sprites.img[id] = {};
       for (const v of ['', '_white', '_red']) {
         const im = new Image();
-        im.onload = im.onerror = () => { if (--left === 0) done(); };
+        im.onload = im.onerror = () => { if (--left === 0) finish(); };
         im.src = 'assets/' + id + v + '.png';
         WF.Sprites.img[id][v.replace('_', '') || 'normal'] = im;
       }

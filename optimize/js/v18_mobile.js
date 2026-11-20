@@ -28,7 +28,12 @@ body{height:100vh;height:100dvh;touch-action:none;}
   document.head.appendChild(st);
   const mk = (id, html) => { const d = document.createElement('div'); d.id = id; d.innerHTML = html; document.body.appendChild(d); return d; };
   const rot = mk('wf-rot', '<i></i><b>请横屏</b><small>把手机横过来玩 · Please rotate your device</small>');
-  const tap = mk('wf-tap', '<b>单词格斗</b><em>点击屏幕开始</em><small>先点一下，声音才会出来</small>');
+  const tap = mk('wf-tap', '<b>单词格斗</b><em>点击屏幕开始</em><small>先点一下，声音才会出来</small><small class="wf-load"></small>');
+  // 游戏还没加载完时，在点击开始页显示进度，点了也先留在这页，加载完自动进入。
+  const loadNote = tap.querySelector('.wf-load');
+  let tapPending = false;
+  loadNote.textContent = '正在加载…';
+  const readyWatch = setInterval(() => { if (W.ready) { clearInterval(readyWatch); if (!tapPending) loadNote.textContent = ''; } }, 400);
   if (W.touch) document.body.classList.add('wf-touch');
 
   // ---------- 缩放：整数倍优先（损失 ≤3% 屏幕才取整数，否则铺满用最近邻分数倍），否则最近邻分数倍；黑边居中 ----------
@@ -52,10 +57,19 @@ body{height:100vh;height:100dvh;touch-action:none;}
   function startTap(e) {
     if (tap.style.display !== 'flex') return;
     if (e && e.cancelable) e.preventDefault();
+    try { W.Audio.unlock(); } catch (x) {}
+    if (!W.ready) {
+      if (tapPending) return;
+      tapPending = true;
+      loadNote.textContent = '正在加载，网络慢时请稍等…';
+      const wait = setInterval(() => { if (W.ready) { clearInterval(wait); tapPending = false; startTap(); } }, 300);
+      return;
+    }
     tap.style.display = 'none';
-    W.Audio.unlock();
-    if (!W.game || W.game.state === 'title') W.Audio.startMusic({ keep: true });
-    W.Audio.play('confirm');
+    try {
+      if (!W.game || W.game.state === 'title') W.Audio.startMusic({ keep: true });
+      W.Audio.play('confirm');
+    } catch (x) {}
     try { const el = document.documentElement; if (W.touch && el.requestFullscreen && !document.fullscreenElement) { const p = el.requestFullscreen(); p && p.catch && p.catch(() => {}); } } catch (x) {}
     try { if (screen.orientation && screen.orientation.lock) { const p = screen.orientation.lock('landscape'); p && p.catch && p.catch(() => {}); } } catch (x) {}
     layout();
@@ -128,8 +142,13 @@ body{height:100vh;height:100dvh;touch-action:none;}
     let reloaded = false;
     navigator.serviceWorker.addEventListener('controllerchange', () => {
       if (reloaded || !first || first.scriptURL === mine) return;
+      // 同一标签页 30 秒内最多自动重载一次，避免反复重载。
+      const last = +sessionStorage.getItem('wf-sw-reload') || 0;
+      if (Date.now() - last < 30000) return;
+      sessionStorage.setItem('wf-sw-reload', String(Date.now()));
       reloaded = true; location.reload();
     });
-    window.addEventListener('load', () => navigator.serviceWorker.register('sw.js', { updateViaCache: 'none' }).catch(() => {}));
+    // 不等页面全部加载完就注册 / 检查更新：网络卡住时，新版 service worker 也能先装上并接管。
+    navigator.serviceWorker.register('sw.js', { updateViaCache: 'none' }).catch(() => {});
   }
 })();
