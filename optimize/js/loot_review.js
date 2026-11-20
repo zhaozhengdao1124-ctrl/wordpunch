@@ -118,15 +118,29 @@ WF.LootReview = (() => {
     WF.Audio.play('confirm');
   }
 
+  // 预览演出用：控制台设 WF.LootReview.preview，或在本机地址加 ?lootfx=jackpot|reels|win。线上地址的网址参数无效。
+  function previewMode() {
+    if (api.preview) return api.preview;
+    const local = ['localhost', '127.0.0.1', ''].includes(location.hostname);
+    return local ? new URLSearchParams(location.search).get('lootfx') : null;
+  }
   function makeMachine(g, multiplier = 1) {
     const cp = g.camp;
     const price = WF.R19.lootPrice(multiplier);
     const serial = spinsUsed(cp) + 1;
     const rng = g.campRng('lootMachine' + serial);
     const tiles = WF.R19.makeLootMachineBoard(rng, price);
-    const slot = WF.R19.pickLootSlot(rng, tiles);
+    let slot = WF.R19.pickLootSlot(rng, tiles);
+    let reelMode = WF.R19.lootReelMode(g.campRng('lootReels' + serial), tiles, tiles[slot]);
+    const preview = previewMode();
+    if (preview) {
+      const top = tiles.reduce((best, card) => card.gold > best.gold ? card : best);
+      const small = tiles.filter(card => card !== top && card.gold > price).sort((a, b) => a.gold - b.gold)[0];
+      if (preview === 'jackpot') slot = tiles.indexOf(top);
+      else if (tiles[slot] === top || preview === 'win') slot = tiles.indexOf(small);
+      reelMode = { jackpot: 'jackpot', reels: 'reels', win: 'none' }[preview] || reelMode;
+    }
     const won = tiles[slot];
-    const reelMode = WF.R19.lootReelMode(g.campRng('lootReels' + serial), tiles, won);
     // 滚轴待机时显示同一组固定位置，开奖后才转到实际奖格的图案。
     const strip = tiles.slice(0, 3);
     strip.push(strip.includes(won) ? tiles[3] : won);
@@ -138,7 +152,9 @@ WF.LootReview = (() => {
       stage: 'ready', frame: 0, time: 0, settled: false,
       multiplier, price, serial, slot, won, reelMode, draw,
       gear: reelMode !== 'none' ? reels.gearTicks(strip.length, destinations) : [],
-      nextGear: 0
+      nextGear: 0,
+      fx: reels.fxEvents(reelMode), nextFx: 0, after: 0,
+      smallWin: reelMode === 'none' && won.gold > price
     };
   }
 
@@ -168,7 +184,7 @@ WF.LootReview = (() => {
     r.settled = true;
     g.addGold(r.won.gold, '摇奖机', { raw: true });
     if (r.reelMode !== 'none') return;
-    if (r.won.gold > r.price) WF.Audio.play('pickup');
+    if (r.smallWin) WF.Audio.play('lootDing');
     else WF.Audio.play('beep', { f: 310, d: 0.06 });
   }
   function finish(g, m) {
@@ -180,6 +196,7 @@ WF.LootReview = (() => {
 
   function tick(g, m) {
     const r = m.machine;
+    if (r?.stage === 'done') r.after++;
     if (r?.stage !== 'spin') return;
     const prev = r.time;
     r.time = (++r.frame * 1000) / WF.CFG.FPS;
@@ -192,12 +209,16 @@ WF.LootReview = (() => {
         finish(g, m);
         return;
       }
-      WF.Audio.play('reelSurge', { big: r.reelMode === 'jackpot' });
+      WF.Audio.play('lootOmen');
       WF.Haptics.pulse('reelSurge', r.reelMode === 'jackpot' ? [38, 45, 58] : [25, 40, 38], 2);
     }
     while (r.nextGear < r.gear.length && r.gear[r.nextGear].at <= r.time) {
       const { axis } = r.gear[r.nextGear++];
       WF.Audio.play('reelGear', { axis });
+    }
+    while (r.nextFx < r.fx.length && r.fx[r.nextFx].at <= r.time) {
+      const { name, p } = r.fx[r.nextFx++];
+      WF.Audio.play(name, p);
     }
     for (const [i, at] of reels.stopsAt.entries())
       if (crossed(at)) {
@@ -269,7 +290,9 @@ WF.LootReview = (() => {
     const price = r.price;
     const enough = cp.gold >= price;
     const available = hasSpins(cp);
-    r.draw(r.time, r.stage === 'ready' ? -1 : r.slot, r.stage === 'ready' ? 'none' : r.reelMode);
+    const mode = r.stage === 'ready' ? 'none' : r.reelMode;
+    r.draw(r.time, r.stage === 'ready' ? -1 : r.slot, mode, r.after, r.smallWin && r.settled);
+    const phase = reels.phaseAt(r.time, mode);
     g.txt('金币摇奖机', 480, 40, 30, '#ffe1a5', 'center', { sw: 5 });
     g.box(721, 22, 181, 36, '#422a25', '#a67e4d', 2);
     g.txt(`余额 ${g.camp.gold} 金币`, 811, 40, 17, '#ffdf93', 'center', { maxW: 164 });
@@ -284,9 +307,22 @@ WF.LootReview = (() => {
       const net = r.won.gold - r.price;
       const delta = net > 0 ? `净赚 ${net}` : net < 0 ? `净亏 ${-net}` : '回本';
       result = `返还 ${r.won.gold} 金币 · ${delta}`;
+      if (phase) result += '　再来一次？';
+      else if (r.smallWin && r.after < 75) result = `小赢！${result}`;
     }
-    const impact = spinning && r.reelMode !== 'none' && r.time >= reels.outerEnd && r.time < reels.rollStart;
-    if (impact) g.txt(result, 480, 248, 49, '#fff4b8', 'center', { sw: 10, stroke: '#491d2a', weight: 900, maxW: 550 });
+    const impact = spinning && phase && (phase.name === 'omen' || phase.name === 'light');
+    const still = matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (phase && (phase.name === 'burst' || phase.name === 'glow' || phase.name === 'rest')) {
+      // 爆发：大字砸下，返还金额从 0 快速跳到实际数目。
+      const age = r.time - reels.stopsAt[2];
+      const slam = still ? 1 : Math.min(1, age / 170);
+      const title = r.reelMode === 'jackpot' ? '大 · 当 · 选！' : '三 · 连 · 中！';
+      g.txt(title, 480, 140, Math.round(64 * (1 + 1.6 * (1 - slam) ** 2)), '#fff4b8', 'center', { font: WF.CFG.FONT_TITLE, sw: 10, stroke: '#491d2a', weight: 900 });
+      const shown = Math.round(r.won.gold * Math.min(1, age / 900));
+      if (spinning) g.txt(`+${shown} 金币`, 480, 335, 26, '#ffe27a', 'center', { sw: 6, stroke: '#3a1a10', weight: 900, maxW: 385 });
+      else g.txt(result, 480, 335, 20, '#ffdf93', 'center', { maxW: 385 });
+    } else if (impact) g.txt(result, 480, 248, 49, '#fff4b8', 'center', { sw: 10, stroke: '#491d2a', weight: 900, maxW: 550 });
+    else if (spinning && phase) g.txt(result, 480, 335, result.length <= 3 ? 30 : 22, '#ffe27a', 'center', { sw: 5, weight: 900, maxW: 385 });
     else g.txt(result, 480, 335, 20, '#ffdf93', 'center', { maxW: 385 });
     const startLabel = spinning ? '转动中' : `启动 · ${price} 金币  R`;
     button(g, startButton, startLabel, !spinning && available && enough);
@@ -295,6 +331,22 @@ WF.LootReview = (() => {
     button(g, raiseButton, '+', !spinning && available && cp.gold >= price + PRICE);
     const challengeLabel = cp.lootChallengeDone ? `本局已加 ${CHALLENGE_SPINS} 次` : `挑战错题 +${CHALLENGE_SPINS} 次  C`;
     button(g, challengeButton, challengeLabel, !spinning && !cp.lootChallengeDone);
+    // 演出期间所有按键和余额框跟着灯光一起闪。
+    [startButton, lowerButton, raiseButton, challengeButton, { x: 721, y: 22, w: 181, h: 36 }, ...(spinning ? [] : [{ x: 56, y: 22, w: 181, h: 36 }])].forEach((rect, k) => {
+      const look = r.draw.buttonLook(r.time, mode, r.after, k, r.smallWin && r.settled && rect === startButton);
+      if (!look) return;
+      const c = g.ctx;
+      c.save();
+      c.globalAlpha = look.alpha;
+      c.fillStyle = look.color;
+      if (look.fill) c.fillRect(rect.x, rect.y, rect.w, rect.h);
+      else {
+        c.fillRect(rect.x + 4, rect.y + 4, rect.w - 8, rect.h - 8);
+        c.globalAlpha = Math.min(1, look.alpha * 2.2);
+        for (const [x, y, w, h] of [[rect.x, rect.y, rect.w, 4], [rect.x, rect.y + rect.h - 4, rect.w, 4], [rect.x, rect.y, 4, rect.h], [rect.x + rect.w - 4, rect.y, 4, rect.h]]) c.fillRect(x, y, w, h);
+      }
+      c.restore();
+    });
     const count = `本局 ${spinsUsed(cp)} / ${spinLimit(cp)} 次`;
     const hint = spinning ? '' : !available ? ' · 次数已用完' : !enough ? ' · 金币余额不足' : '';
     g.txt(count + hint, 480, 443, 17, '#ffe1a5', 'center', { sw: 4 });
@@ -332,5 +384,6 @@ WF.LootReview = (() => {
     const done = r.isChallenge ? `领取额外 ${CHALLENGE_SPINS} 次` : '激活机器';
     if (answered) button(g, next, r.count === ACTIVATION_WORDS ? done : '继续');
   }
-  return { drawEntry, open, draw, tick, key, click };
+  const api = { drawEntry, open, draw, tick, key, click, preview: null };
+  return api;
 })();

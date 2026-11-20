@@ -156,6 +156,41 @@ WF.Audio = (function () {
         osc(c, out, t + 0.060, 'sine', 2235, 2235, 0.24, 0.065);
       }
     },
+    // 摇奖机三轴演出（全部 WebAudio 现场合成，无外部音频素材）。
+    lootOmen(c, out, t) {
+      // 熄灯时的低沉一声“咚”。
+      osc(c, out, t, 'sine', 82, 34, 0.55, 0.9, 0.004);
+      osc(c, out, t, 'triangle', 55, 30, 0.45, 0.35, 0.004);
+      nz(c, out, t, 'lowpass', 320, 0.8, 0.28, 0.45, 0.003, 70);
+    },
+    lootLight(c, out, t, { i = 0 }) {
+      // 逐格点灯，音高一格比一格高。
+      const f = 392 * Math.pow(2, i / 8);
+      osc(c, out, t, 'square', f, f, 0.045, 0.085, 0.001);
+      osc(c, out, t, 'triangle', f * 2, f * 2, 0.03, 0.04, 0.001);
+    },
+    lootSlam(c, out, t, { big }) {
+      // 大当选：重锤 + 镲片 + 上行和弦。
+      const k = big ? 1.15 : 1;
+      osc(c, out, t, 'sine', 130, 36, 0.7, 0.95 * k, 0.002);
+      nz(c, out, t, 'highpass', 3200, 0.7, 0.9, 0.38 * k, 0.002);
+      nz(c, out, t, 'bandpass', 900, 0.9, 0.18, 0.5, 0.002);
+      [523, 659, 784, 1046].forEach((f, n) => osc(c, out, t + 0.05 + n * 0.06, 'square', f, f, 0.5 - n * 0.06, 0.07 * k));
+      if (big) [1318, 1568, 2093].forEach((f, n) => osc(c, out, t + 0.32 + n * 0.07, 'triangle', f, f, 0.45, 0.06));
+    },
+    lootCoin(c, out, t, { n = 0 }) {
+      // 金币落盘的清脆“叮当”，按序号错开音高。
+      const f = 2100 + ((n * 389) % 7) * 170;
+      osc(c, out, t, 'triangle', f, f * 0.97, 0.06, 0.07, 0.001);
+      osc(c, out, t + 0.012, 'sine', f * 1.5, f * 1.48, 0.05, 0.04, 0.001);
+      nz(c, out, t, 'bandpass', 5200, 3, 0.02, 0.08, 0.001);
+    },
+    lootDing(c, out, t) {
+      // 小赢：两声清亮的铃。
+      osc(c, out, t, 'triangle', 1318, 1318, 0.18, 0.16);
+      osc(c, out, t + 0.09, 'sine', 1760, 1760, 0.35, 0.14);
+      osc(c, out, t + 0.09, 'sine', 3520, 3520, 0.15, 0.03);
+    },
     fight(c, out, t) { osc(c, out, t, 'sawtooth', 220, 440, 0.25, 0.15); osc(c, out, t + 0.02, 'square', 330, 660, 0.3, 0.1); nz(c, out, t, 'highpass', 3000, 0.7, 0.2, 0.2); },
     menu(c, out, t) { osc(c, out, t, 'square', 520, 520, 0.035, 0.08); },
     confirm(c, out, t) { osc(c, out, t, 'triangle', 554, 740, 0.07, 0.19); },
