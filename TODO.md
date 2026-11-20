@@ -39,6 +39,7 @@
 ## 发布记录
 
 - 2026-11-20 国内慢网加载修复已上线。源码版本为 `f7323d6`，Pages 构建为 `260afae`。线上 `sw.js`、`js/v18_mobile.js`、`js/render.js` 与源码逐字节一致，旧版首页与 `6bfc4f0` 逐字节一致；线上模拟 Pixel 5：竖屏提示横屏、横屏点击开始进入首页，刷新 1.4 秒就绪，缓存名 `core-nf-v1.12-net-timeout1`，无页面报错。[新版试玩](https://zhaozhengdao1124-ctrl.github.io/wordpunch/optimize/) · [旧版试玩](https://zhaozhengdao1124-ctrl.github.io/wordpunch/)
+- 2026-11-20 开始页自救与缓存修复已上线。源码版本为 `c441e2d`，Pages 构建为 `18ecbcb`。线上 `sw.js`、`js/v18_mobile.js` 与源码逐字节一致，旧版首页 `index.html`、`sw.js`、`manifest.webmanifest` 与 `6bfc4f0` 逐字节一致；线上模拟 Pixel 5 从 `index.html` 打开：点击开始即进入，缓存名 `core-nf-v1.12-net-timeout2`；打开 `?reset=1` 清除后自动回到试玩页并就绪，无页面报错。[新版试玩](https://zhaozhengdao1124-ctrl.github.io/wordpunch/optimize/) · [旧版试玩](https://zhaozhengdao1124-ctrl.github.io/wordpunch/)
 
 - 2026-11-20 试玩页离线缓存改为先联网已上线。源码版本为 `5269447`，Pages 构建为 `e1f1e07`。线上 `sw.js`、`js/v18_mobile.js` 与源码逐字节一致，旧版首页与 `6bfc4f0` 逐字节一致；线上缓存名为 `core-nf-v1.12-loot-pity2`，无页面报错。[新版试玩](https://zhaozhengdao1124-ctrl.github.io/wordpunch/optimize/) · [旧版试玩](https://zhaozhengdao1124-ctrl.github.io/wordpunch/)
 
