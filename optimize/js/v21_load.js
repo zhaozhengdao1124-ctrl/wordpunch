@@ -19,8 +19,14 @@
     return r;
   };
 
+  // 第一次打开时词库在 SW 接管前就下好了，没进词库缓存：warm 时把已下载的词库文件一并告诉 SW
   function warm() {
-    try { const sw = navigator.serviceWorker; if (sw && sw.controller) sw.controller.postMessage({ type: 'warm' }); } catch (e) {}
+    try {
+      const sw = navigator.serviceWorker; if (!sw) return;
+      if (!sw.controller) { if (!warm.wait) { warm.wait = 1; sw.addEventListener('controllerchange', () => setTimeout(warm, 2000)); } return; }
+      const banks = (window.WF_BANKS || []).filter(b => b.lazy && b.loaded && b.file).map(b => b.file);
+      sw.controller.postMessage({ type: 'warm', banks });
+    } catch (e) {}
   }
   const iv = setInterval(() => { if (W.ready) { clearInterval(iv); setTimeout(warm, 8000); } }, 500);
 })();

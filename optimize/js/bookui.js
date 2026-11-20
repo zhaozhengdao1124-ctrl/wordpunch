@@ -40,6 +40,7 @@
 #wf-dict .wf-spacer{flex:1 1 0;}
 #wf-dict .wf-count{flex:0 0 auto;color:#bfb3d6;font-size:13px;white-space:nowrap;}
 #wf-dict .wf-count b{color:#7df9ff;font-weight:700;}
+#wf-dict .wf-mastery b{color:#7dff9a;}
 #wf-dict .wf-row2{display:flex;align-items:center;gap:6px;min-width:0;}
 #wf-dict .wf-status{flex:0 0 auto;display:flex;gap:4px;padding-right:6px;border-right:1px solid #3a2f55;}
 #wf-dict .wf-tabs{flex:1 1 auto;min-width:0;display:flex;gap:6px;overflow-x:auto;overflow-y:hidden;scrollbar-width:none;touch-action:pan-x;-webkit-overflow-scrolling:touch;}
@@ -245,6 +246,10 @@
     if (list.length && g.ui.sel >= list.length) g.ui.sel = list.length - 1;
     els.count.innerHTML = '';
     els.count.append(mode === 'wrong' ? '错题 ' : '单词数 ', el('b', '', String(list.length)));
+    if (mode !== 'wrong' && g.masteryLine) {   // v2.1 掌握进度：3 个不同的日子答对算掌握
+      const m = g.masteryLine(g.menu.p1, (g.banks || [])[g.ui.bank]);
+      if (m) { const sp = el('span', 'wf-mastery'); sp.title = '同一个词在 3 个不同的日子答对，算真正掌握'; sp.append(' · 掌握 ', el('b', '', String(m.done)), ' / ' + m.total); els.count.appendChild(sp); }
+    }
     els.maskBtn.textContent = showAll ? '全部遮住' : '全部显示'; els.maskBtn.classList.toggle('hot', showAll);
     const touch = isTouch();
     els.foot.textContent = touch
