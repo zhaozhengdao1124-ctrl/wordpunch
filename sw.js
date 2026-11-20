@@ -3,8 +3,11 @@
 // 按需词库（考研/雅思/托福/SAT/新概念）：玩家第一次选到时才下载，下完存进单独的 BANKS 缓存（升级版本也不会丢），之后离线也能用。
 // 其他清单外的文件走「先缓存、再联网」。
 // GitHub Pages 的旧版和新版位于不同目录，各自维护离线资源。
+// 2026-11-20 起：页面和代码（html / js / json）改为「先联网、断网才用缓存」，刷新一次就能拿到新版；图片和音频仍先用缓存。
+// 缓存名带 core-nf- 表示这一代规则。从旧的「先缓存」版本升级时，新版激活后会把已打开的页面自动重新载入一次。
 const PREFIX = 'wordfight@' + self.registration.scope + ':';
-const CACHE = PREFIX + 'core-v1.12-loot-odds1';
+const CACHE = PREFIX + 'core-nf-v1.12-loot-pity2';
+const isCode = u => { const p = new URL(u).pathname; return p.endsWith('/') || /\.(html|js|json|webmanifest)$/.test(p); };
 const BANKS = PREFIX + 'banks';          // 不随版本清理
 const isBank = u => /\/data\/bank_[a-z0-9]+\.js$/.test(new URL(u).pathname);
 self.addEventListener('install', e => {
@@ -19,17 +22,38 @@ self.addEventListener('install', e => {
   })());
 });
 self.addEventListener('activate', e => {
-  e.waitUntil((async () => { for (const k of await caches.keys()) if (k.startsWith(PREFIX + 'core-') && k !== CACHE) await caches.delete(k); await self.clients.claim(); })());
+  e.waitUntil((async () => {
+    let legacy = false;
+    for (const k of await caches.keys()) if (k.startsWith(PREFIX + 'core-') && k !== CACHE) {
+      if (!k.startsWith(PREFIX + 'core-nf-')) legacy = true;
+      await caches.delete(k);
+    }
+    await self.clients.claim();
+    // 旧版页面是从旧缓存载入的，代码已过时：重新载入一次，玩家不用再手动刷新。
+    if (legacy) for (const client of await self.clients.matchAll({ type: 'window' })) client.navigate(client.url).catch(() => {});
+  })());
 });
 self.addEventListener('fetch', e => {
   const req = e.request; if (req.method !== 'GET' || !req.url.startsWith(self.location.origin)) return;
   if (isBank(req.url)) { e.respondWith(bankFetch(req)); return; }
+  if (req.mode === 'navigate' || isCode(req.url)) { e.respondWith(codeFetch(req)); return; }
   e.respondWith((async () => {
     const c = await caches.open(CACHE), hit = await c.match(req, { ignoreSearch: true });
     if (hit) return hit;
     try { const r = await fetch(req); if (r && r.ok) c.put(req, r.clone()); return r; } catch (x) { return hit || Response.error(); }
   })());
 });
+// 页面和代码：先联网（向服务器确认是否有新版，绕过浏览器 10 分钟的 HTTP 缓存），断网时才用缓存。
+async function codeFetch(req) {
+  const c = await caches.open(CACHE);
+  try {
+    const r = await fetch(req.url, { cache: 'no-cache', credentials: 'same-origin' });
+    if (r && r.ok && r.status === 200) c.put(req.url, r.clone());
+    return r;
+  } catch (x) {
+    return (await c.match(req, { ignoreSearch: true })) || Response.error();
+  }
+}
 // 按需词库：缓存里有就直接用（后台悄悄更新一份）；没有就联网下载并存下。带 ?r= 的是页面发现缓存内容不对后的重试 → 跳过缓存直接联网。
 async function bankFetch(req) {
   const c = await caches.open(BANKS), key = new URL(req.url); key.search = '';
