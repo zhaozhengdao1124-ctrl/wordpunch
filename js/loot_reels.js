@@ -305,7 +305,7 @@ WF.LootReels = (() => {
         bevel(x - 43, y - 28, 86, 54, 8, outer);
         ctx.shadowBlur = 0;
         bevel(x - 39, y - 24, 78, 46, 6, active ? '#95552b' : '#352e2c');
-        sprite(tiles[i], x, y - 1, 38, true);
+        sprite(tiles[i], x, y - 1, 40);
         if (active) {
           fill(x - 20, y + 20, 40, 3, '#fff1ae');
         }
@@ -371,7 +371,7 @@ WF.LootReels = (() => {
         for (let n = Math.floor(off) - 1; n <= Math.floor(off) + 1; n++) {
           const cy = 248 + (n - off) * 76;
           const sym = strip[((n % strip.length) + strip.length) % strip.length];
-          sprite(sym, x + 60, cy, 59);
+          sprite(sym, x + 60, cy, 60);
         }
         const sides = ctx.createLinearGradient(x + 7, 0, x + 113, 0);
         sides.addColorStop(0, '#4d352840');

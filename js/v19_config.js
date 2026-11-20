@@ -20,11 +20,13 @@
   K.LOOT_MACHINE = {
     PRICE: 10,
     ACTIVATION_WORDS: 5,
-    // 首摇奖额与相对权重。权重总和 1000，理论返还率 92.5%。
+    // 基础奖额、抽取权重和对应的像素图案。
     GOLD_PAYTABLE: [
-      [1, 14], [2, 15], [3, 20], [4, 30], [5, 55], [6, 85],
-      [7, 105], [8, 112], [9, 112], [10, 99], [11, 93], [12, 71],
-      [13, 60], [14, 48], [15, 39], [16, 23], [17, 16], [20, 3],
+      [1, 14, 'plum'], [2, 15, 'lemon'], [3, 20, 'orange'], [4, 30, 'apple'],
+      [5, 55, 'pear'], [6, 85, 'strawberry'], [7, 105, 'grapes'], [8, 112, 'cherries'],
+      [9, 112, 'watermelon'], [10, 99, 'pineapple'], [11, 93, 'heart'], [12, 71, 'clover'],
+      [13, 60, 'horseshoe'], [14, 48, 'star'], [15, 39, 'diamond'], [16, 23, 'bar'],
+      [17, 16, 'bell'], [20, 3, 'seven'],
     ],
   };
   K.REST = { HEAL: 0.35, UPGRADE_PRICE: { common: 70, rare: 140, legend: 280, curse: 105 }, UPGRADE_FLOAT: false };

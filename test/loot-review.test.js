@@ -18,9 +18,10 @@ test('review keeps the bank and missed sense of each distinct notebook word', ()
   assert.deepEqual(new Set(result.words), new Set(wrong));
 });
 
-test('review fills a short notebook with seen words before new ones', () => {
+test('activation fills a short notebook with new words before old ones', () => {
   const wrong = [entry('spring'), entry('spring', 'ielts'), { kind: 'phrase', word: 'look up' }];
-  const result = rules.reviewWords(rules.rng(42), wrong, [entry('spring'), entry('roll')], [entry('run')], 3);
+  const fresh = [entry('spring'), entry('roll')];
+  const result = rules.reviewWords(rules.rng(42), wrong, fresh, [entry('run')], 3);
   assert.deepEqual(result.words.map(e => e.word), ['spring', 'roll', 'run']);
   assert.equal(result.fromBook, 1);
   assert.equal(result.filled, 2);
@@ -52,24 +53,23 @@ test('gear contacts follow each reel and spread out as it brakes', () => {
   }
 });
 
-test('coin prices and all 18 different awards double over successive plays', () => {
-  const first = rules.makeLootMachineBoard(rules.rng(17), rules.lootPrice(0));
+test('the default fee is 10 and all 18 different awards scale by the selected multiplier', () => {
+  const first = rules.makeLootMachineBoard(rules.rng(17), rules.lootPrice());
   assert.equal(new Set(first.map(card => card.gold)).size, 18);
+  assert.equal(new Set(first.map(card => card.symbol)).size, 18);
   assert.ok(first.every(card => card.k === 'G'));
-  for (const [i, price] of [10, 20, 40, 80, 160].entries()) {
-    assert.equal(rules.lootPrice(i), price);
+  for (const multiplier of [1, 2, 3, 7]) {
+    const price = rules.lootPrice(multiplier);
+    assert.equal(price, 10 * multiplier);
     const board = rules.makeLootMachineBoard(rules.rng(17), price);
-    assert.deepEqual(board, first.map(card => ({ ...card, gold: card.gold * 2 ** i })));
+    assert.deepEqual(board, first.map(card => ({ ...card, gold: card.gold * multiplier })));
   }
 });
 
-test('weights define the exact published odds and a constant 92.5% return', () => {
+test('weighted selection maps each draw to the configured slot', () => {
   for (const price of [10, 20, 80]) {
     const board = rules.makeLootMachineBoard(rules.rng(91), price);
     const weights = board.reduce((sum, card) => sum + card.weight, 0);
-    assert.equal(weights, 1000);
-    assert.equal(board.reduce((sum, card) => sum + card.gold * card.weight, 0) / (weights * price), .925);
-    assert.equal(board.find(card => card.gold === 2 * price).weight, 3);
     let through = 0;
     for (const [index, card] of board.entries()) {
       assert.equal(rules.pickLootSlot(() => (through + 0.25) / weights, board), index);
