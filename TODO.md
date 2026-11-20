@@ -41,6 +41,7 @@
 
 ## 发布记录
 
+- 2026-11-21 记忆复习七项 · 批次 A 已上线（每词记忆状态、速度打分、复习混合出词、存档备份、首屏提速）。源码版本为 `1881cc4`、`af8566d`、`e3f311d`，Pages 构建为 `0a6b34e`。线上改动文件与源码逐字节一致，旧版首页与 `6bfc4f0` 逐字节一致；缓存名 `core-nf-v1.13-fastload2`。首屏流量（线上模拟 Pixel 5 横屏、新玩家、到主菜单可操作）：改前 5,928,625 字节 / 403 个请求，改后 749,994 字节 / 71 个请求；默认四级词库进菜单后后台下载 1,095,851 字节。线上验证：新玩家 Pixel 5 横屏与桌面开闯关 / 电脑陪练出词带记忆、答错本局重考；存档备份导出下载、坏文件提示、导入覆盖后重载（触屏和桌面）；用旧版建的老存档（Pixel 5 横屏、桌面各一个）升级后玩家、错题本保留，旧词按到期出题，离线缓存升级完成；`?reset=1` 正常；全程无页面报错。[新版试玩](https://zhaozhengdao1124-ctrl.github.io/wordpunch/optimize/) · [旧版试玩](https://zhaozhengdao1124-ctrl.github.io/wordpunch/)
 - 2026-11-20 《答对就出招》45 秒预告片已发布到独立播放页。Pages 构建为 `957c633`。线上 MP4 与成片逐字节一致，390px 模拟手机浏览器已验证播放和拖动进度。[观看预告片](https://zhaozhengdao1124-ctrl.github.io/wordpunch/optimize/trailer/)
 
 - 2026-11-20 国内慢网加载修复已上线。源码版本为 `f7323d6`，Pages 构建为 `260afae`。线上 `sw.js`、`js/v18_mobile.js`、`js/render.js` 与源码逐字节一致，旧版首页与 `6bfc4f0` 逐字节一致；线上模拟 Pixel 5：竖屏提示横屏、横屏点击开始进入首页，刷新 1.4 秒就绪，缓存名 `core-nf-v1.12-net-timeout1`，无页面报错。[新版试玩](https://zhaozhengdao1124-ctrl.github.io/wordpunch/optimize/) · [旧版试玩](https://zhaozhengdao1124-ctrl.github.io/wordpunch/)
