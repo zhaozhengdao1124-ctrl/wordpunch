@@ -6,7 +6,7 @@
 // 2026-11-20 起：页面和代码（html / js / json）改为「先联网、断网才用缓存」，刷新一次就能拿到新版；图片和音频仍先用缓存。
 // 缓存名带 core-nf- 表示这一代规则。从旧的「先缓存」版本升级时，新版激活后会把已打开的页面自动重新载入一次。
 const PREFIX = 'wordfight@' + self.registration.scope + ':';
-const CACHE = PREFIX + 'core-nf-v1.12-net-timeout1';
+const CACHE = PREFIX + 'core-nf-v1.12-net-timeout2';
 const NET_TIMEOUT = 3000;   // 联网超过 3 秒就先用缓存（网络慢或被墙时不卡死），联网结果回来后悄悄更新缓存
 const PRECACHE_PARALLEL = 4; // 预缓存每次只并发 4 个，不和页面本身抢带宽
 const isCode = u => { const p = new URL(u).pathname; return p.endsWith('/') || /\.(html|js|json|webmanifest)$/.test(p); };
@@ -32,7 +32,8 @@ self.addEventListener('install', e => {
         const u = list[next++];
         try {
           let hit = null;
-          for (const o of old) { hit = await o.match(u, { ignoreSearch: true }); if (hit) break; }
+          // 只复制图片、音频等素材；代码一律重新下载，避免新旧版本的代码混在一起。
+          if (!isCode(new URL(u, self.location.href).href)) for (const o of old) { hit = await o.match(u, { ignoreSearch: true }); if (hit) break; }
           if (hit) await c.put(u, hit);
           else {
             // 单个文件最多等 10 秒，卡住的跳过（之后玩到时再按需缓存）。
@@ -73,7 +74,12 @@ self.addEventListener('fetch', e => {
 // 网络超过 NET_TIMEOUT 还没回来、或出错时，有缓存就先用缓存；没有缓存只能继续等网络。
 async function codeFetch(req) {
   const c = await caches.open(CACHE);
-  const cached = async () => (await c.match(req, { ignoreSearch: true })) || (await caches.match(req, { ignoreSearch: true }));
+  // 只用本版本自己的缓存，不拿旧版本缓存里的代码。首页地址（./ 与 index.html）互为备用。
+  const cached = async () => {
+    const hit = await c.match(req, { ignoreSearch: true });
+    if (hit || req.mode !== 'navigate') return hit;
+    return (await c.match(new URL('./', self.location.href).href)) || (await c.match(new URL('index.html', self.location.href).href));
+  };
   const net = fetch(req.url, { cache: 'no-cache', credentials: 'same-origin' }).then(r => {
     if (r && r.ok && r.status === 200) c.put(req.url, r.clone()).catch(() => {});
     return r;
