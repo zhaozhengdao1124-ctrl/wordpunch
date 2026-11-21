@@ -352,7 +352,8 @@
     c.fillStyle = `rgba(0,0,0,${0.75 * k})`; c.fillRect(0, y, C.SCREEN_W, h);
     c.fillStyle = col; c.fillRect(0, y, C.SCREEN_W * k, 4); c.fillRect(C.SCREEN_W * (1 - k), y + h - 4, C.SCREEN_W * k, 4);
     const x = b.side === 0 ? -300 + 780 * Math.min(1, b.t / 10) - Math.min(40, Math.max(0, b.t - 10) * 1.2) : C.SCREEN_W + 300 - 780 * Math.min(1, b.t / 10) + Math.min(40, Math.max(0, b.t - 10) * 1.2);   // v1.7.1：漂移封顶 40px，长必杀横幅不再滑出屏幕
-    this.txt('超必杀', x - (b.side === 0 ? 170 : -170), y + h / 2, 22, '#ffffff', 'center', { sw: 5 });
+    c.font = `900 46px ${C.FONT_TITLE}`; const off = Math.max(170, Math.round(c.measureText(b.text).width / 2) + 52);   // v2.2：7 字必杀名（终章·万页合书 / 金钟罩·千佛手）不再压住「超必杀」
+    this.txt('超必杀', x - (b.side === 0 ? off : -off), y + h / 2, 22, '#ffffff', 'center', { sw: 5 });
     this.txt(b.text, x, y + h / 2 + 2, 46, '#ffd23c', 'center', { font: C.FONT_TITLE, sw: 9, stroke: '#3a0d0d' });
   };
 

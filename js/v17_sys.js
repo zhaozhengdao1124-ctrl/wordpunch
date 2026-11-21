@@ -224,7 +224,7 @@
       const done = cp.cleared.concat(full ? [cp.cityId] : []);
       if (done.includes('beijing')) A('beat_dashixiong'); if (done.includes('seoul')) A('beat_seoul'); if (done.includes('tokyo')) A('beat_tokyo');
       if (done.includes('washington')) A('beat_jinbawang'); if (done.includes('buenosaires')) A('beat_mileiba'); if (done.includes('rocketbase')) A('beat_maxike');
-      if (done.includes('pyramid')) A('beat_falaowang'); if (done.includes('shaolin')) A('beat_xuantie'); if (done.includes('foshan')) A('beat_huangshifu');   // v1.7.2 挑战城市池三城
+      if (done.includes('pyramid')) A('beat_falaowang'); if (done.includes('shaolin')) A('beat_xuantie'); if (done.includes('foshan')) A('beat_huangshifu'); if (done.includes('paris')) A('beat_margot');   // v1.7.2 挑战城市池三城
       if (full) A(cp.mode === 'challenge' ? 'challenge_clear' : 'story_clear');
       if ((st.maxCombo || st.maxStreak) >= 20) A('combo20'); if ((st.maxCombo || st.maxStreak) >= 50) A('combo50');
       if (st.ults >= 10) A('ult10'); if (full && sc.acc >= 0.95) A('acc95'); if (full && sc.rank === 'S') A('rank_s');

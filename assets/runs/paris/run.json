@@ -1,0 +1,346 @@
+{
+  "id": "paris",
+  "name": "巴黎",
+  "scene_name": "塞纳河旧书长街",
+  "time_of_day": "入夜",
+  "viewport": [
+    192,
+    108
+  ],
+  "ground_y": 76,
+  "layers": [
+    {
+      "id": "sky",
+      "file": "run_sky.png",
+      "width": 192,
+      "height": 108,
+      "parallax": 0.1,
+      "repeat_x": true
+    },
+    {
+      "id": "far",
+      "file": "run_far.png",
+      "width": 256,
+      "height": 108,
+      "parallax": 0.3,
+      "repeat_x": true
+    },
+    {
+      "id": "mid",
+      "file": "run_mid.png",
+      "width": 384,
+      "height": 108,
+      "parallax": 0.6,
+      "repeat_x": true
+    },
+    {
+      "id": "near",
+      "file": "run_near.png",
+      "width": 384,
+      "height": 108,
+      "parallax": 0.85,
+      "repeat_x": true
+    },
+    {
+      "id": "floor",
+      "file": "run_floor.png",
+      "width": 192,
+      "height": 108,
+      "parallax": 1.0,
+      "repeat_x": true
+    }
+  ],
+  "props": [
+    {
+      "id": "gate",
+      "file": "prop_gate.png",
+      "name": "石拱桥门",
+      "layer": "mid",
+      "width": 88,
+      "height": 61,
+      "anchor_px": [
+        44,
+        60
+      ],
+      "anchor_y": 67,
+      "placement": {
+        "mode": "spaced_landmark",
+        "first_world_x": 260,
+        "suggested_interval_px": 920,
+        "end_clearance_px": 185
+      }
+    },
+    {
+      "id": "stall",
+      "file": "prop_stall.png",
+      "name": "河岸旧书车",
+      "layer": "near",
+      "width": 56,
+      "height": 38,
+      "anchor_px": [
+        28,
+        37
+      ],
+      "anchor_y": 69,
+      "placement": {
+        "mode": "spaced_landmark",
+        "first_world_x": 430,
+        "suggested_interval_px": 870,
+        "end_clearance_px": 185
+      }
+    },
+    {
+      "id": "tree",
+      "file": "prop_tree.png",
+      "name": "河岸梧桐",
+      "layer": "near",
+      "width": 42,
+      "height": 72,
+      "anchor_px": [
+        21,
+        71
+      ],
+      "anchor_y": 69,
+      "placement": {
+        "mode": "spaced_landmark",
+        "first_world_x": 645,
+        "suggested_interval_px": 1210,
+        "end_clearance_px": 185
+      }
+    },
+    {
+      "id": "extra",
+      "file": "prop_extra.png",
+      "name": "画框堆",
+      "layer": "near",
+      "width": 44,
+      "height": 27,
+      "anchor_px": [
+        22,
+        26
+      ],
+      "anchor_y": 69,
+      "placement": {
+        "mode": "spaced_landmark",
+        "first_world_x": 810,
+        "suggested_interval_px": 1030,
+        "end_clearance_px": 185
+      }
+    },
+    {
+      "id": "end",
+      "file": "prop_end.png",
+      "name": "玛戈摊位入口",
+      "layer": "mid",
+      "width": 192,
+      "height": 108,
+      "anchor_px": [
+        96,
+        67
+      ],
+      "anchor_y": 67,
+      "placement": {
+        "mode": "at_level_end",
+        "max_count": 1,
+        "offset_px": 0
+      }
+    }
+  ],
+  "dynamic_elements": [
+    {
+      "id": "river_glint",
+      "name": "塞纳河倒影",
+      "file": "fx_river_glint.png",
+      "frame_w": 18,
+      "frame_h": 4,
+      "cell_size": [
+        18,
+        4
+      ],
+      "frames": 4,
+      "frame_count": 4,
+      "ticks_per_frame": 5,
+      "frame_duration_ms": 167,
+      "frame_order": [
+        0,
+        1,
+        2,
+        3
+      ],
+      "sheet_layout": "horizontal",
+      "space": "repeat_with_layer",
+      "coordinate_layer": "far",
+      "repeat_world_layer_px": 256,
+      "anchor_left_px": 79,
+      "anchor_top_px": 64,
+      "layer": "far",
+      "anchor_y": 66,
+      "loop": true,
+      "optional": true
+    }
+  ],
+  "palette_count": 32,
+  "palette": [
+    [
+      30,
+      44,
+      42
+    ],
+    [
+      36,
+      47,
+      67
+    ],
+    [
+      39,
+      46,
+      74
+    ],
+    [
+      41,
+      41,
+      52
+    ],
+    [
+      41,
+      52,
+      64
+    ],
+    [
+      41,
+      52,
+      72
+    ],
+    [
+      42,
+      60,
+      54
+    ],
+    [
+      53,
+      52,
+      68
+    ],
+    [
+      53,
+      64,
+      91
+    ],
+    [
+      54,
+      55,
+      67
+    ],
+    [
+      55,
+      62,
+      85
+    ],
+    [
+      57,
+      75,
+      96
+    ],
+    [
+      59,
+      80,
+      73
+    ],
+    [
+      65,
+      67,
+      81
+    ],
+    [
+      66,
+      71,
+      89
+    ],
+    [
+      73,
+      81,
+      102
+    ],
+    [
+      75,
+      76,
+      90
+    ],
+    [
+      75,
+      82,
+      107
+    ],
+    [
+      75,
+      96,
+      115
+    ],
+    [
+      75,
+      101,
+      114
+    ],
+    [
+      79,
+      86,
+      107
+    ],
+    [
+      85,
+      72,
+      62
+    ],
+    [
+      87,
+      82,
+      99
+    ],
+    [
+      103,
+      103,
+      122
+    ],
+    [
+      112,
+      78,
+      81
+    ],
+    [
+      120,
+      112,
+      125
+    ],
+    [
+      133,
+      113,
+      87
+    ],
+    [
+      154,
+      121,
+      91
+    ],
+    [
+      167,
+      154,
+      113
+    ],
+    [
+      172,
+      171,
+      165
+    ],
+    [
+      200,
+      154,
+      98
+    ],
+    [
+      228,
+      188,
+      131
+    ]
+  ],
+  "credits": "Word Punch 巴黎关原创像素场景"
+}
