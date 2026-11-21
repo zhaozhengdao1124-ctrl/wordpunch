@@ -132,6 +132,15 @@ WF.CFG = {
     huangshifu:    { name: '黄师傅', combo: [['combo_a', 'light_kick'], ['combo_b', 'dash_punch'], ['combo_c', 'heavy_kick'], ['heavy_punch', 'grab_and_beatdown', 'uppercut']], slow: ['combo_b', 'heavy_punch', 'light_kick'], late: 'combo_a',
                      ult: ['mega_charge_a', 'mega_charge_b'], ultName: '佛山无影脚', intro: 'intro', idleAlt: true, newCity: 'huang',
                      title: '佛山 Boss', city: '佛山·宝芝林', color: '#7ad0a0', catchphrase: null, blurb: '长衫雨伞的医馆师傅，慢答会被他闪开' },
+    // v2.2 巴黎关（挑战模式城市池，Codex 美术 R3–R3.2.1 已锁定）：Boss 玛戈（壮硕身 + 大词典，盾型：后仰减半、收招回胸前立书）+ 卢克 / 伊娜 / 巴斯蒂安
+    pa_newsboy:    { name: '卢克', combo: [['combo_a'], ['combo_a', 'heavy_punch'], ['heavy_punch'], ['heavy_punch']], slow: ['combo_a'], late: 'combo_a', ult: null, color: '#c9a24a', intro: null, minion: true },
+    pa_sketcher:   { name: '伊娜', combo: [['combo_a'], ['combo_a', 'heavy_punch'], ['heavy_punch'], ['heavy_punch']], slow: ['combo_a'], late: 'combo_a', ult: null, color: '#d4a452', intro: null, minion: true },
+    pa_porter:     { name: '巴斯蒂安', combo: [['combo_a'], ['heavy_punch'], ['heavy_punch'], ['heavy_punch']], slow: ['heavy_punch'], late: 'combo_a', ult: null, color: '#936235', intro: null, minion: true, elite: true },
+    // 玛戈：同词换页见 js/v22_paris.js（血量 70% / 30% 各一次；第二题答错固定「合书！」heavy_kick 反击）。idle_alt「舔指翻页」只留给同词换页当提示，不随机播
+    margot:        { name: '玛戈', combo: [['combo_a', 'light_kick'], ['combo_b', 'dash_punch'], ['combo_c', 'heavy_punch', 'uppercut'], ['heavy_kick', 'grab_and_beatdown']], slow: ['combo_b', 'heavy_punch', 'light_kick'], late: 'combo_a',
+                     ult: ['mega_charge_a', 'mega_charge_b'], ultName: '终章·万页合书', intro: 'intro', idleAlt: false, newCity: 'margot',
+                     moveNames: { combo_a: 'Pointe！书脊点', combo_b: 'Balayez！书面横扫', combo_c: 'Coin！书角上挑', heavy_punch: 'Presse-papier！镇纸压', uppercut: 'Dos du livre！书脊上撩', dash_punch: 'En avant！推书前冲', light_kick: 'Petit pas！裙下正蹬', heavy_kick: 'Fermez！合书', grab_and_beatdown: 'Marque-page！书签夹' },
+                     title: '巴黎 Boss', city: '巴黎·塞纳河旧书摊', color: '#c86478', catchphrase: 'Fermez le livre !', catchColor: '#eee0b3', blurb: '塞纳河边旧书摊的老板娘，词典当盾也当武器' },
   },
   P1_CHAR: 'suling', P2_CHAR: 'mrj',   // 双人对战的默认角色（v1.4 起可在选角界面换）
 
@@ -185,9 +194,9 @@ WF.CFG = {
     // v1.7：六城，剧情模式 北京→首尔→东京→布宜诺斯艾利斯（米雷霸）→火箭基地（马西克，城市 Boss）→华盛顿（金霸霸，最终 Boss）
     ROUTE: ['beijing', 'seoul', 'tokyo', 'buenosaires', 'rocketbase', 'washington'],
     OPEN: ['beijing', 'seoul', 'tokyo', 'buenosaires', 'rocketbase', 'washington'],
-    CITY_NAMES: { beijing: '北京', tokyo: '东京', seoul: '首尔', washington: '华盛顿', buenosaires: '布宜诺斯艾利斯', rocketbase: '火箭基地', pyramid: '金字塔', shaolin: '少林寺', foshan: '佛山' },
+    CITY_NAMES: { beijing: '北京', tokyo: '东京', seoul: '首尔', washington: '华盛顿', buenosaires: '布宜诺斯艾利斯', rocketbase: '火箭基地', pyramid: '金字塔', shaolin: '少林寺', foshan: '佛山', paris: '巴黎' },
     // v1.7.2 挑战模式的随机城市池：剧情路线前 5 城 + 这三城，每局抽 5 城打乱，最后一站固定华盛顿（金霸霸）。剧情路线不变
-    POOL: ['pyramid', 'shaolin', 'foshan'],
+    POOL: ['pyramid', 'shaolin', 'foshan', 'paris'],
     PLAYER_HP: 800,
     CITY_HEAL: 0.30,                 // 每过一个城市（飞往下一城时）回复 30%
     CITY_MULT: 1.1,                  // 每往后一城，小怪血量和伤害 ×1.1
@@ -230,6 +239,11 @@ WF.CFG = {
       foshan: {
         stage: 'foshan', normals: ['fs_lion', 'fs_coolie'], elite: 'fs_thug', opponent: 'huangshifu', poolOnly: true,
         opponentHp: 1650, cine: 'city', hpMult: 0.95, accAdj: -0.03, delayMult: 0.85, ai: { accuracy: 0.85, delay: [1.0, 4.2] },
+      },
+      // v2.2 巴黎（挑战模式城市池）：玛戈血厚一点、答题略慢（盾型、出手慢）
+      paris: {
+        stage: 'paris', normals: ['pa_newsboy', 'pa_sketcher'], elite: 'pa_porter', opponent: 'margot', poolOnly: true,
+        opponentHp: 1700, cine: 'city', hpMult: 1.0, accAdj: -0.02, delayMult: 1.1, ai: { accuracy: 0.86, delay: [1.5, 5.6] },
       },
       rocketbase: {
         stage: 'rocketbase', normals: ['rb_engineer', 'rb_intern'], elite: 'rb_security', opponent: 'maxike',
