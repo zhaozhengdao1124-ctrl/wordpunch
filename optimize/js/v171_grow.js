@@ -66,8 +66,8 @@
     this.txt('角色成长', W / 2, 36, 36, '#7dffe0', 'center', { font: C.FONT_TITLE, sw: 8 });
     this.txt(g ? `${prof ? prof.name + ' · ' : ''}玩家 Lv${g.lv}` : '还没有玩家档', W - 40, 30, 15, '#e9d7a6', 'right', { sw: 3, weight: 700 });
 
-    // 角色页签（一排 7 个）
-    const tw = 118, tg = 8, tx0 = (W - (tw * R.length + tg * (R.length - 1))) / 2, ty = 62, th = 84;
+    // 角色页签（一排排满；v2.2 起 8 个角色，宽度按人数自动算，最宽 118）
+    const tg = 8, tw = Math.min(118, Math.floor((W - 40 - tg * (R.length - 1)) / R.length)), tx0 = (W - (tw * R.length + tg * (R.length - 1))) / 2, ty = 62, th = 84;
     R.forEach((id, i) => {
       const open = pid ? U.has(pid, id) : U.rule(id).start, ch = Prog.char(pid, id), x = tx0 + i * (tw + tg), on = i === sel, mv = C.MOVES[id];
       this.box(x, ty, tw, th, on ? 'rgba(125,255,224,0.14)' : open ? 'rgba(20,14,40,0.86)' : 'rgba(10,8,20,0.86)', on ? '#7dffe0' : open ? '#5d4f86' : '#3a3352', on ? 3 : 2);

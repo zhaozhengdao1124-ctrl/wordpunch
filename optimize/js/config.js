@@ -146,7 +146,7 @@ WF.CFG = {
 
   // ================= v1.4 可选角色 + 解锁 =================
   // 选角界面从左到右的顺序。金霸霸、小怪永远不能选。
-  ROSTER: ['suling', 'mrj', 'chenbanshan', 'handawei', 'yukino', 'mileiba', 'maxike'],
+  ROSTER: ['suling', 'mrj', 'chenbanshan', 'handawei', 'yukino', 'mileiba', 'maxike', 'margot'],   // v2.2 玛戈：第一个可选的城市池 Boss（用户 2026-11-22 拍板）
   // 解锁条件（按玩家存档分别记）：start = 一开始就有；clear = 闯关全部通关过一次；
   // flawless = 单局打通四城且正确率 ≥ acc；master = banks 里任一词库每个词都「连续答对 streak 次」过
   UNLOCK: {
@@ -157,6 +157,8 @@ WF.CFG = {
     // v1.7：打败过一次就能选（玩家版必杀效果反过来作用在对手身上）
     mileiba: { type: 'beat', boss: 'mileiba', hint: '闯关打败布宜诺斯艾利斯的米雷霸', card: ['闯关打败', '布宜诺斯艾利斯', '的米雷霸'] },
     maxike: { type: 'beat', boss: 'maxike', hint: '闯关打败火箭基地的马西克', card: ['闯关打败', '火箭基地', '的马西克'] },
+    // v2.2 玛戈（U1）：挑战模式打败巴黎的玛戈 1 次（巴黎只在挑战模式的随机城市池里出现）
+    margot: { type: 'beat', boss: 'margot', hint: '挑战模式打败巴黎旧书摊的玛戈', card: ['挑战模式打败', '巴黎', '的玛戈'] },
     yukino: { type: 'master', banks: ['senior', 'cet4', 'cet6', 'gre'], streak: 3, hint: '完整掌握高中 / 四级 / 六级 / GRE 任一词库：每个词都连续答对 3 次', card: ['掌握高中及以上', '任一词库', '（每词连对 3 次）'] },
   },
   // 闯关积分：每局（死了也算）按打到哪、正确率、最高连击结算，累计在玩家存档里。
@@ -295,7 +297,10 @@ WF.CFG = {
     MAP: { ticks: 78, longTicks: 108, zoom: 2.2, hold: 18 },
     // v1.4 玩家选了某城的城市对手时，那一城的对手换成「同体型的原版角色」（避免自己打自己）：
     // 陈半山（Mr.J 男身改绘）→ Mr.J；韩多蔚、雪乃（苏绫女身改绘）→ 苏绫。血量、答题水平、进场镜头仍按那一城。
-    MIRROR_SUB: { chenbanshan: 'mrj', handawei: 'suling', yukino: 'suling', mileiba: 'mrj', maxike: 'jinbawang' },   // 飞行 ~2.6 秒（跨太平洋 ~3.6 秒），可按键跳过
+    MIRROR_SUB: { chenbanshan: 'mrj', handawei: 'suling', yukino: 'suling', mileiba: 'mrj', maxike: 'jinbawang' },
+    // v2.2 玩家选了玛戈、挑战路线又抽到巴黎：对手不换人，换成「换色版玛戈」（同一套动作和命中数据，只换图集，见 js/v22_paris.js）。
+    // 图集在 assets/skins/<id>{,_white,_red}.png；现在是 tools/margot_mirror_placeholder.py 程序换色的临时图，Codex 的换色图集到了直接覆盖这三个文件
+    MIRROR_SKIN: { margot: 'margot_mirror' },   // 飞行 ~2.6 秒（跨太平洋 ~3.6 秒），可按键跳过
   },
 
   // v1.7 两个新大招（触发规则不变：连续 5 次速答，带金腰带 4 次）。数值是初稿，试打后再调

@@ -643,8 +643,9 @@
         line = `电脑对手：${C.MOVES[cid].name}（按 Tab 或点这里换一个）`; col = C.MOVES[cid].color;
         this.menuRects.push({ x: 200, y: 440, w: C.SCREEN_W - 400, h: 26, key: 'cpu', i: -1 });
       } else if (mode === 'camp') {
-        const KC = C.CAMPAIGN, ci = KC.ROUTE.find(c => KC.CITIES[c].opponent === id);
-        line = ci ? `${KC.CITY_NAMES[ci]}站的城市对手会换成 ${C.MOVES[this.campOppFor(id, KC.CITIES[ci])].name}（不和自己打）` : `每城 20 个小怪 + 城市对手 × ${KC.ROUTE.length} 城，血量一路带着走`;
+        const KC = C.CAMPAIGN, ci = KC.ROUTE.find(c => KC.CITIES[c].opponent === id) || Object.keys(KC.CITIES).find(c => KC.CITIES[c].opponent === id);
+        const sub = ci ? this.campOppFor(id, KC.CITIES[ci]) : null;   // v2.2 玛戈：巴黎在挑战模式城市池里，对手换成换色版玛戈
+        line = ci ? `${KC.CITY_NAMES[ci]}站的城市对手会换成 ${sub === id ? '换色版' + C.MOVES[id].name : C.MOVES[sub].name}（不和自己打）` : `每城 20 个小怪 + 城市对手 × ${KC.ROUTE.length} 城，血量一路带着走`;
       } else line = step === 0 ? '选好后轮到 P2 选（不能和 P1 一样）' : `P1：${C.MOVES[this.menu.vs[0]].name}    Esc 回去重选 P1`;
       this.txt(line, C.SCREEN_W / 2, 453, 15, col, 'center', { sw: 3, weight: 700, maxW: C.SCREEN_W - 150 });
       if (dn && dn.why === 'taken') this.txt('P1 已经选了这个角色', C.SCREEN_W / 2, 476, 14, '#ff6a6a', 'center', { sw: 3, weight: 700 });
