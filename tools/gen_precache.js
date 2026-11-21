@@ -8,7 +8,7 @@ const old = JSON.parse(fs.readFileSync(path.join(ROOT, 'sw-precache.json'), 'utf
 const all = Array.isArray(old) ? old : old.core.concat(old.rest);
 const html = fs.readFileSync(path.join(ROOT, 'index.html'), 'utf8');
 const scripts = [...html.matchAll(/<script src="([^"]+)"/g)].map(m => m[1]);
-const ROSTER = ['suling', 'mrj', 'chenbanshan', 'handawei', 'yukino', 'mileiba', 'maxike'];
+const ROSTER = ['suling', 'mrj', 'chenbanshan', 'handawei', 'yukino', 'mileiba', 'maxike', 'margot'];
 const cfg = fs.readFileSync(path.join(ROOT, 'js/config.js'), 'utf8').match(/ROSTER:\s*\[([^\]]+)\]/);
 const roster = cfg ? cfg[1].split(',').map(x => x.trim().replace(/'/g, '')) : ROSTER;
 const core = ['./', 'index.html', 'manifest.webmanifest', 'icons/icon-192.png', 'icons/icon-512.png', ...scripts, ...roster.map(id => 'assets/' + id + '.png')];
