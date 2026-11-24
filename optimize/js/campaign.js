@@ -495,6 +495,7 @@
     // 奔跑只推镜头，玩家钉在屏幕槽位上；对词时镜头钉住、两人钉在槽位
     if (moving && !this.campStreetBusy(P)) {
       this.cam += spd;
+      if (st.fixedEntrance) this.cam = Math.min(this.cam, st.endX + C.VIEW_W * (0.5 - (R.SLOT || 1 / 3)));
       if (this.cam < C.VIEW_W / 2) this.cam = C.VIEW_W / 2;
       P.x = this.streetSlot(0); P.dir = 1; P.ox = 0; P.home = null; P.tween = (P.tween && P.tween.kind === 'ox') ? null : P.tween;
       if (P.anim !== 'run' && P.anim !== 'walk') P.play(P.has('run') ? 'run' : 'walk', { loop: true, speed: R.ANIM || 1.2 });
@@ -527,7 +528,7 @@
   };
   G.campStreetToEnd = function () {
     const R = K().RUN || {}, P = this.p[0];
-    const pad = R.END_PAD || 160;
+    const pad = this.street.fixedEntrance ? this.street.endX - this.streetSlot(0) : R.END_PAD || 160;
     const x = this.streetSlot(0) + pad;
     if (WF.Run) WF.Run.setEnd(this.street, x);
     else this.street.endX = x;
