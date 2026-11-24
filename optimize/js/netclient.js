@@ -491,7 +491,7 @@
   };
   G.netAnimate = function (outcome) {
     if (!outcome || outcome.attacker == null || outcome.kind === 'miss' || outcome.kind === 'clash' || outcome.kind === 'clash-draw') {
-      if (outcome && outcome.kind === 'clash') this.announce = { text: '角力！', sub: '先答对 3 题', t: 0, life: 36 };
+      // 角力规则在 drawClashUI 的计分条上，不闪会盖住题目的「先答对 3 题」。
       return;
     }
     const A = this.p[outcome.attacker], D = this.p[1 - outcome.attacker];

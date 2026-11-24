@@ -269,10 +269,12 @@
     if (q.hint && !q.revealed) this.txt('提示：' + q.hint + '…', C.SCREEN_W / 2 - ww - 20, wy + 4, 15, '#8fd0ff', 'right', { sw: 3, weight: 700 });
     if (hasEx) this.drawExample(q.revealed && q.ex.zh ? q.ex.zh : q.ex.en, q.revealed && q.ex.zh ? null : q.word, C.SCREEN_W / 2, top + 50, 17);
     }
+    const coach = this.state === 'clash' && this.clashCoach ? this.clashCoach() : null;
     for (const s of [0, 1]) {
       const f = this.p[s], a = q.ans[s], L = s === 0, x = L ? 22 : C.SCREEN_W - 22, al = L ? 'left' : 'right';
       const keys = L ? '按 1 2 3 4' : (this.camp ? f.mv.name : (this.menu.cpu ? '电脑' : '按 7 8 9 0'));
-      let st = `${L ? 'P1' : (this.camp ? '' : 'P2')} ${keys}`.trim(), col = f.mv.color;
+      const idle = coach ? (L ? coach.p1idle : coach.p2idle) : '';
+      let st = idle || `${L ? 'P1' : (this.camp ? '' : 'P2')} ${keys}`.trim(), col = f.mv.color;
       if (!L && this.camp && f.mv.minion) { if (!q.revealed) { this.txt(st, x, top + (phrase ? 14 : 30), phrase ? 16 : 19, col, al, { sw: 5 }); } continue; }
       if (a) {
         if (!a.ok) { st = `${L ? 'P1' : 'P2'} ✗ 答错`; col = '#ff6a6a'; }
@@ -341,18 +343,64 @@
     }
   };
 
+  // 角力进行中的操作说明。只描述现有规则：答对给己方加一格，先满 CLASH_WIN_COUNT 格的人打出一击；
+  // 计时归零则平手、不掉血。按键 / 点选跟普通题同一套，不在这里发明新操作。
+  G.clashCoach = function () {
+    const n = WF.CFG.CLASH_WIN_COUNT;
+    const touch = !!WF.touch;
+    const net = !!this.netLive;
+    const camp = !!this.camp && !net;
+    const cpu = (!!(this.menu && this.menu.cpu) || camp) && !net;
+    let rival = '电脑';
+    if (!cpu) rival = 'P2';
+    else if (camp && this.p && this.p[1] && this.p[1].mv && this.p[1].mv.name) {
+      const name = this.p[1].mv.name;
+      rival = name.length <= 4 ? name : '对手';
+    }
+    let how, p1idle, p2idle;
+    if (net) {
+      how = touch ? '点选答案抢答' : '按 1–4 或 7–0 抢答';
+      p1idle = '';
+      p2idle = '';
+    } else if (!cpu) {
+      how = touch ? 'P1 点选答案，P2 按 7 8 9 0' : 'P1 按 1–4，P2 按 7 8 9 0';
+      p1idle = touch ? 'P1 点选' : 'P1 按 1 2 3 4';
+      p2idle = 'P2 按 7 8 9 0';
+    } else {
+      how = touch ? '点选答案抢答' : '按 1 2 3 4 抢答';
+      p1idle = touch ? 'P1 点选' : 'P1 按 1 2 3 4';
+      p2idle = camp ? rival : 'P2 电脑';
+    }
+    const goal = `答对点亮己方一格，先满 ${n} 格打出一击；归零平手，不掉血`;
+    return { how, goal, line1: how, line2: goal, left: 'P1', right: rival, p1idle, p2idle, n };
+  };
+
   G.drawClashUI = function () {
     const C = WF.CFG, cl = this.clash; if (!cl || this.state === 'clashIntro') return;
+    const coach = this.clashCoach();
     const cx = C.SCREEN_W / 2, y = 146;
-    this.box(cx - 170, y - 18, 340, 44, 'rgba(12,8,26,0.85)', '#ffd23c', 2);
+    // 计分格和倒计时仍在原来的位置。只把盒子加宽，腾出两侧的 P1 / 对手名。
+    this.box(cx - 230, y - 18, 460, 44, 'rgba(12,8,26,0.85)', '#ffd23c', 2);
+    const pips = [];
     for (const s of [0, 1]) for (let i = 0; i < C.CLASH_WIN_COUNT; i++) {
       const x = s === 0 ? cx - 150 + i * 30 : cx + 150 - 20 - i * 30;
       const on = i < cl.score[s];
       this.box(x, y - 8, 20, 20, on ? this.p[s].mv.color : 'rgba(255,255,255,0.1)', '#e9d7a6', 2);
+      pips.push({ x, y: y - 8, w: 20, h: 20, s, on });
     }
+    this.txt(coach.left, cx - 162, y + 2, 16, this.p[0].mv.color, 'right', { sw: 3 });
+    this.txt(coach.right, cx + 162, y + 2, 16, this.p[1].mv.color, 'left', { sw: 3, maxW: 64 });
     const left = Math.max(0, C.CLASH_CAP_S - cl.t / C.FPS);
-    this.txt(`角力 ${left.toFixed(1)}`, cx, y + 2, 18, '#ffd23c', 'center', { sw: 4 });
-    const r = left / C.CLASH_CAP_S; this.ctx.fillStyle = '#ffd23c'; this.ctx.fillRect(cx - 160, y + 20, 320 * r, 3);
+    const timer = `角力 ${left.toFixed(1)}`;
+    this.txt(timer, cx, y + 2, 18, '#ffd23c', 'center', { sw: 4 });
+    const bar = { x: cx - 160, y: y + 20, w: 320, h: 3 };
+    const r = left / C.CLASH_CAP_S; this.ctx.fillStyle = '#ffd23c'; this.ctx.fillRect(bar.x, bar.y, bar.w * r, bar.h);
+    // 说明卡贴在计分条下方、偏左：右边 y=186 起是成就提示的位置，不挡倒计时、格子和下面的选项。
+    const cap = { x: 36, y: 176, w: 548, h: 52 };
+    this.box(cap.x, cap.y, cap.w, cap.h, 'rgba(12,8,26,0.9)', '#ffd23c', 2);
+    this.txt(coach.line1, cap.x + cap.w / 2, cap.y + 16, 16, '#fff6dc', 'center', { sw: 3, maxW: cap.w - 20, weight: 700 });
+    this.txt(coach.line2, cap.x + cap.w / 2, cap.y + 36, 16, '#ffd23c', 'center', { sw: 3, maxW: cap.w - 20, weight: 700 });
+    this.clashHud = { pips, bar, caption: cap, timer, coach };
   };
 
   G.drawBanner = function () {

@@ -796,7 +796,7 @@ WF.Game = class {
     b.play('clash_impact', { hold: true, onEnd: () => ended++ });
     yield () => ended >= 2;
     a.play('clash_lock', { loop: true }); b.play('clash_lock', { loop: true });
-    this.announce = { text: '角力！', sub: `先答对 ${WF.CFG.CLASH_WIN_COUNT} 题获胜`, t: 0, life: 45 };
+    // 不在这里闪「先答对 N 题获胜」：那行只停 1.5 秒，而且盖在人身上，没写按键、格子和到时平手。规则改画在计分条上，角力全程都在。
     this.clash = { score: [0, 0], t: 0, n: 0, shift: 0 };
     this.state = 'clash'; this.newClashQ();
   }
