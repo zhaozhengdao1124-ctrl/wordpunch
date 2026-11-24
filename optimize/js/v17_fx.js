@@ -99,7 +99,7 @@
   const baseCU = G.campUpdate;
   G.campUpdate = function () { if (this.state === 'wheel' && this.wheel) { if (!this.paused) this.wheelTick(); return true; } return baseCU.call(this); };
   const baseRender = G.render;
-  G.render = function () { if (this.camp && this.state === 'wheel' && this.wheel) { this.ctx.setTransform(1, 0, 0, 1, 0, 0); this.drawWheel(); return; } return baseRender.call(this); };
+  G.render = function () { if (this.camp && this.state === 'wheel' && this.wheel) { WF.uiTransform(this.ctx); this.drawWheel(); return; } return baseRender.call(this); };
   const baseKey = G.campKey;
   G.campKey = function (code) {
     if (this.state === 'wheel') { if (code === 'Escape') { this.wheel = null; this.goTitle(); } else this.wheelSpin(); return true; }

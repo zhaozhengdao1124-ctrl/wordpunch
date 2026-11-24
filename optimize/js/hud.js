@@ -22,16 +22,18 @@
   };
 
   G.renderWorld = function () {
-    const C = WF.CFG, S = C.SCALE, ctx = this.ctx, w = this.wctx;
+    const C = WF.CFG, WS = C.WORLD_SCALE || C.SCALE, ctx = this.ctx, w = this.wctx;
     const left = this.cam - C.VIEW_W / 2, li = Math.floor(left), frac = left - li;
-    w.clearRect(0, 0, this.world.width, this.world.height);
+    const lw = C.VIEW_W + 2, lh = C.VIEW_H;
+    w.setTransform(WS, 0, 0, WS, 0, 0); w.imageSmoothingEnabled = false;
+    w.clearRect(0, 0, lw, lh);
     if (this.onStreet && this.onStreet()) WF.Run.draw(w, li + C.VIEW_W / 2, this.t, this.street);
     else WF.Stage.draw(w, li + C.VIEW_W / 2, this.t, this.excite || 0);
     if (this.darken > 0.01) {
-      w.fillStyle = `rgba(6,3,16,${this.darken})`; w.fillRect(0, 0, this.world.width, this.world.height);
+      w.fillStyle = `rgba(6,3,16,${this.darken})`; w.fillRect(0, 0, lw, lh);
       if (this.banner) {
         const R = WF.rng(this.t >> 1); w.fillStyle = 'rgba(255,240,200,0.35)';
-        for (let i = 0; i < 14; i++) w.fillRect(Math.floor(R() * this.world.width), Math.floor(R() * 70), 6 + Math.floor(R() * 20), 1);
+        for (let i = 0; i < 14; i++) w.fillRect(Math.floor(R() * lw), Math.floor(R() * 70), 6 + Math.floor(R() * 20), 1);
       }
     }
     const order = this.fighters().slice().sort((a, b) => (ATTACKS.test(a.anim) ? 1 : 0) - (ATTACKS.test(b.anim) ? 1 : 0));
@@ -40,19 +42,23 @@
     for (const f of order) f.draw(w, li, this.t);
     WF.FX.draw(w, li);
     if (this.drawWorldFront) this.drawWorldFront(w, li);
-    ctx.imageSmoothingEnabled = false;
-    ctx.fillStyle = '#05030c'; ctx.fillRect(0, 0, C.SCREEN_W, C.SCREEN_H);
+    // 世界缓冲已经是 ×WORLD_SCALE 的设备像素。晃屏数值沿用 960 画面的像素，再乘 UI_SCALE。
+    WF.deviceTransform(ctx);
+    ctx.fillStyle = '#05030c'; ctx.fillRect(0, 0, C.OUT_W, C.OUT_H);
     const onTitle = this.state === 'title';
-    const sx = onTitle ? 0 : (this.shakeX || 0), sy = onTitle ? 0 : (this.shakeY || 0);
+    const ui = C.UI_SCALE || 1;
+    const sx = onTitle ? 0 : (this.shakeX || 0) * ui, sy = onTitle ? 0 : (this.shakeY || 0) * ui;
+    const bw = this.world.width, bh = C.VIEW_H * WS;
     const zm = this.zoom;
     if (zm && zm.k > 0.001) {
       // 进场镜头推近：焦点从画面中心渐变到对手身上，并钳在画面内
       const z = 1 + (zm.z - 1) * zm.k, u = (C.VIEW_W / 2 + frac) + ((zm.fx - li) - (C.VIEW_W / 2 + frac)) * zm.k, v = C.VIEW_H / 2 + (zm.fy - C.VIEW_H / 2) * zm.k;
-      const W = this.world.width * S * z, H = C.VIEW_H * S * z;
-      let dx = C.SCREEN_W / 2 - u * S * z, dy = C.SCREEN_H / 2 - v * S * z;
-      dx = Math.min(-frac * S * z, Math.max(C.SCREEN_W - W + 2 * S * z - frac * S * z, dx)); dy = Math.min(0, Math.max(C.SCREEN_H - H, dy));
-      ctx.drawImage(this.world, 0, 0, this.world.width, C.VIEW_H, Math.round(dx + sx), Math.round(dy + sy), Math.round(W), Math.round(H));
-    } else ctx.drawImage(this.world, 0, 0, this.world.width, C.VIEW_H, Math.round(-frac * S + sx), Math.round(sy), this.world.width * S, C.VIEW_H * S);
+      const W = bw * z, H = bh * z;
+      let dx = C.OUT_W / 2 - u * WS * z, dy = C.OUT_H / 2 - v * WS * z;
+      dx = Math.min(-frac * WS * z, Math.max(C.OUT_W - W + 2 * WS * z - frac * WS * z, dx)); dy = Math.min(0, Math.max(C.OUT_H - H, dy));
+      ctx.drawImage(this.world, 0, 0, bw, bh, Math.round(dx + sx), Math.round(dy + sy), Math.round(W), Math.round(H));
+    } else ctx.drawImage(this.world, 0, 0, bw, bh, Math.round(-frac * WS + sx), Math.round(sy), bw, bh);
+    WF.uiTransform(ctx);
     if (this.onStreet && this.onStreet() && this.street.phase === 'fade') {
       const k = Math.min(1, (this.street.fade || 0) / Math.max(1, (WF.CFG.CAMPAIGN.RUN && WF.CFG.CAMPAIGN.RUN.FADE) || 10));
       ctx.fillStyle = `rgba(255,248,230,${k})`; ctx.fillRect(0, 0, C.SCREEN_W, C.SCREEN_H);
@@ -63,6 +69,7 @@
 
   G.render = function () {
     const C = WF.CFG;
+    WF.uiTransform(this.ctx);
     if (this.camp && this.state === 'map') return this.drawMap();
     const li = this.renderWorld();
     if (this.state === 'title') {
@@ -113,12 +120,14 @@
 
   G.drawPortrait = function (f, x, y, size) {
     const c = this.ctx, d = f.data, cell = d.anims.idle.frames[0].c;
-    const im = WF.Sprites.img[f.id].normal; if (!WF.Sprites.ok(im)) { this.box(x, y, size, size, '#1b1430', f.mv.color, 3); return; } const sx = (cell % d.cols) * d.cell, sy = Math.floor(cell / d.cols) * d.cell;
+    const im = WF.Sprites.img[f.id].normal; if (!WF.Sprites.ok(im)) { this.box(x, y, size, size, '#1b1430', f.mv.color, 3); return; }
+    const src = d.srcCell || d.cell, k = src / d.cell, sx = (cell % d.cols) * src, sy = Math.floor(cell / d.cols) * src;
     const pr = d.portrait || [14, 9, 20];
     this.box(x, y, size, size, '#1b1430', f.mv.color, 3);
     c.save(); c.beginPath(); c.rect(x + 3, y + 3, size - 6, size - 6); c.clip();
-    if (f.side === 0) c.drawImage(im, sx + pr[0], sy + pr[1], pr[2], pr[2], x, y + 2, size, size);
-    else { c.translate(x + size, y + 2); c.scale(-1, 1); c.drawImage(im, sx + pr[0], sy + pr[1], pr[2], pr[2], 0, 0, size, size); }
+    c.imageSmoothingEnabled = false;
+    if (f.side === 0) c.drawImage(im, sx + pr[0] * k, sy + pr[1] * k, pr[2] * k, pr[2] * k, x, y + 2, size, size);
+    else { c.translate(x + size, y + 2); c.scale(-1, 1); c.drawImage(im, sx + pr[0] * k, sy + pr[1] * k, pr[2] * k, pr[2] * k, 0, 0, size, size); }
     c.restore();
   };
 
@@ -136,12 +145,12 @@
     const d = window.WF_ASSETS[id], mv = WF.CFG.MOVES[id]; if (!d || !WF.Sprites.img[id]) return;
     const cell = d.anims.idle.frames[0].c, im = o.sil ? WF.Sprites.blackOf(id) : WF.Sprites.img[id].normal;
     const pr = d.portrait || [14, 9, 20];   // v1.4：闯关角色用自己的头像框
-    const sx = (cell % d.cols) * d.cell, sy = Math.floor(cell / d.cols) * d.cell, c = this.ctx;
+    const src = d.srcCell || d.cell, kk = src / d.cell, sx = (cell % d.cols) * src, sy = Math.floor(cell / d.cols) * src, c = this.ctx;
     this.box(x, y, size, size, o.sil ? '#2a2440' : '#1b1430', o.border || mv.color, 3);
     if (!(im instanceof HTMLCanvasElement) && !WF.Sprites.ok(im)) return;   // 图还没下完：先只画框
-    c.save(); c.beginPath(); c.rect(x + 3, y + 3, size - 6, size - 6); c.clip();
-    if (faceRight) c.drawImage(im, sx + pr[0], sy + pr[1], pr[2], pr[2], x, y + 2, size, size);
-    else { c.translate(x + size, y + 2); c.scale(-1, 1); c.drawImage(im, sx + pr[0], sy + pr[1], pr[2], pr[2], 0, 0, size, size); }
+    c.save(); c.imageSmoothingEnabled = false; c.beginPath(); c.rect(x + 3, y + 3, size - 6, size - 6); c.clip();
+    if (faceRight) c.drawImage(im, sx + pr[0] * kk, sy + pr[1] * kk, pr[2] * kk, pr[2] * kk, x, y + 2, size, size);
+    else { c.translate(x + size, y + 2); c.scale(-1, 1); c.drawImage(im, sx + pr[0] * kk, sy + pr[1] * kk, pr[2] * kk, pr[2] * kk, 0, 0, size, size); }
     c.restore();
   };
   // 小锁头（选角界面 / 解锁卡片）

@@ -1,8 +1,11 @@
 // 单词格斗 试玩版 —— 全部可调数值都在这里
 window.WF = window.WF || {};
 WF.CFG = {
-  // 画面：世界按原生像素画在 192×108 的小画布上，再 ×5 放大到 960×540（最近邻）
-  SCALE: 5, VIEW_W: 192, VIEW_H: 108, SCREEN_W: 960, SCREEN_H: 540,
+  // 画面：逻辑世界 192×108。HUD 坐标始终是 960×540（SCALE 把逻辑像素换到这套坐标）。
+  // 桌面内部分辨率 2880×1620：UI 在根部 ×3，世界层 ×15（= SCALE×3）。触屏默认退回 960×540（UI ×1，世界 ×5）。
+  // 见 WF.applyResolution。CSS 显示尺寸仍按 960×540 去铺，不把窗口撑大。
+  SCALE: 5, UI_SCALE: 3, WORLD_SCALE: 15, OUT_W: 2880, OUT_H: 1620,
+  VIEW_W: 192, VIEW_H: 108, SCREEN_W: 960, SCREEN_H: 540,
   STAGE_W: 320,            // 擂台总宽（原生像素），镜头跟随两人中点
   GROUND_Y: 76,            // 地面线（原生像素，脚底原点落在这里）
   WALL_MARGIN: 14,         // 人物脚底离擂台边最小距离
@@ -357,4 +360,27 @@ WF.CFG = {
 
   FONT: '"Noto Sans SC","Noto Sans CJK SC","Source Han Sans SC","PingFang SC","Microsoft YaHei","Noto Sans Mono CJK SC",sans-serif',
   FONT_TITLE: '"Noto Serif SC","Noto Serif CJK SC","Source Han Serif SC","Songti SC","STSong","SimSun",serif',
+};
+// 内部分辨率。桌面 2880×1620；触屏或 ?lo=1 退回 960×540。?hi=1 强制高分辨率。
+WF.applyResolution = function () {
+  const C = WF.CFG;
+  let q = '';
+  try { q = location.search || ''; } catch (e) {}
+  const forceLo = /[?&]lo=1(&|$)/.test(q), forceHi = /[?&]hi=1(&|$)/.test(q);
+  const hi = forceHi || (!forceLo && !WF.touch);
+  C.UI_SCALE = hi ? 3 : 1;
+  C.WORLD_SCALE = C.SCALE * C.UI_SCALE;
+  C.OUT_W = C.SCREEN_W * C.UI_SCALE;
+  C.OUT_H = C.SCREEN_H * C.UI_SCALE;
+  C.hiRes = hi;
+};
+// HUD 仍用 960×540 坐标，根部乘 UI_SCALE。曾经 setTransform(1,0,0,1) 的地方改调这个。
+WF.uiTransform = function (ctx) {
+  const s = (WF.CFG && WF.CFG.UI_SCALE) || 1;
+  ctx.setTransform(s, 0, 0, s, 0, 0);
+  ctx.imageSmoothingEnabled = false;
+};
+WF.deviceTransform = function (ctx) {
+  ctx.setTransform(1, 0, 0, 1, 0, 0);
+  ctx.imageSmoothingEnabled = false;
 };

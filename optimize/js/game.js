@@ -2,10 +2,13 @@
 WF.frameNo = 0;
 WF.Game = class {
   constructor(canvas) {
-    const C = WF.CFG;
+    if (WF.applyResolution) WF.applyResolution();
+    const C = WF.CFG, ws = C.WORLD_SCALE || C.SCALE;
     this.cv = canvas; this.ctx = canvas.getContext('2d');
-    this.world = document.createElement('canvas'); this.world.width = C.VIEW_W + 2; this.world.height = C.VIEW_H;
-    this.wctx = this.world.getContext('2d');
+    canvas.width = C.OUT_W || C.SCREEN_W; canvas.height = C.OUT_H || C.SCREEN_H;
+    this.ctx.imageSmoothingEnabled = false;
+    this.world = document.createElement('canvas'); this.world.width = (C.VIEW_W + 2) * ws; this.world.height = C.VIEW_H * ws;
+    this.wctx = this.world.getContext('2d'); this.wctx.imageSmoothingEnabled = false;
     this.t = 0; this.state = 'title'; this.paused = false; this.rnd = Math.random;
     this.banks = window.WF_BANKS || [];
     WF.Profiles.load();

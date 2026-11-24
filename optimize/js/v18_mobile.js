@@ -2,6 +2,7 @@
 // 键盘和鼠标照常可用。触屏设备（或网址加 ?touch=1）才会出现「点击开始」；?tap=1 可在电脑上强制出现。
 (function () {
   const W = window.WF = window.WF || {};
+  // CSS 显示尺寸仍按 960×540 计算（和改内部分辨率之前占的窗口一样）。画布位图像素是 OUT_W×OUT_H。
   const SW = 960, SH = 540;
   const qs = /[?&]touch=1(&|$)/.test(location.search || ''), qtap = /[?&]tap=1(&|$)/.test(location.search || '');
   W.touch = !!(qs || 'ontouchstart' in window || (navigator.maxTouchPoints || 0) > 0 || (window.matchMedia && matchMedia('(pointer:coarse)').matches));
