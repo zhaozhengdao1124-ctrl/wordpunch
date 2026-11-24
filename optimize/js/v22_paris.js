@@ -197,11 +197,11 @@
     }
     return v;
   };
-  // 强制暴击命中：玛戈的词典被打飞再接回（stunned 000–013，001 帧带 dict_fly）
+  // 强制暴击命中：播 stunned 槽。玛戈这一槽带 dict_fly；铁面人同槽不再挂书页 / 词典特效。
   const baseContact = G.contact;
   G.contact = function (A, D, f, o) {
     const q = this.q, r = baseContact.apply(this, arguments);
-    if (!r && o && o.crit && q && q.forceCrit && !q.psStunned && A.side === 0 && D === this.p[1] && D.hp > 0 && !this.ko && D.id === 'margot' && mode(this) && D.has('stunned')) {
+    if (!r && o && o.crit && q && q.forceCrit && !q.psStunned && A.side === 0 && D === this.p[1] && D.hp > 0 && !this.ko && (D.id === 'margot' || D.id === 'iron_mask') && mode(this) && D.has('stunned')) {
       q.psStunned = true; D.play('stunned', { loop: false, next: 'idle' });
       st(this).log.push({ ev: 'stunned', qn: q.n, hpPct: Math.round(D.hp / D.maxHp * 1000) / 10 });
     }

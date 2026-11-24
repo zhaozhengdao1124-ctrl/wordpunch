@@ -100,7 +100,7 @@
     const dt = this.dailyToast; if (!dt) return;
     if (this.rocket && this.rocket.ln) { dt.t0 = this.t; return; }   // v1.10：马西克发射（瞄准 + 飞行 / 失败动画）期间先不弹，演完再弹
     const age = this.t - dt.t0, L = 3 * FPS; if (age > L || age < 0) { this.dailyToast = null; return; }
-    const c = this.ctx; c.save(); c.setTransform(1, 0, 0, 1, 0, 0);
+    const c = this.ctx; c.save(); WF.uiTransform(c);
     const T = !!WF.touch, k = Math.min(1, age / 5, (L - age) / 8), w = T ? 520 : 380, h = T ? 60 : 44, x = (C.SCREEN_W - w) / 2, y = 136 - (1 - Math.min(1, age / 6)) * 20;
     c.globalAlpha = Math.max(0, k);
     this.box(x, y, w, h, 'rgba(12,8,26,0.92)', '#7dff9a', 2);

@@ -1,8 +1,11 @@
 // 单词格斗 试玩版 —— 全部可调数值都在这里
 window.WF = window.WF || {};
 WF.CFG = {
-  // 画面：世界按原生像素画在 192×108 的小画布上，再 ×5 放大到 960×540（最近邻）
-  SCALE: 5, VIEW_W: 192, VIEW_H: 108, SCREEN_W: 960, SCREEN_H: 540,
+  // 画面：逻辑世界 192×108。HUD 坐标始终是 960×540（SCALE 把逻辑像素换到这套坐标）。
+  // 桌面内部分辨率 2880×1620：UI 在根部 ×3，世界层 ×15（= SCALE×3）。触屏默认退回 960×540（UI ×1，世界 ×5）。
+  // 见 WF.applyResolution。CSS 显示尺寸仍按 960×540 去铺，不把窗口撑大。
+  SCALE: 5, UI_SCALE: 3, WORLD_SCALE: 15, OUT_W: 2880, OUT_H: 1620,
+  VIEW_W: 192, VIEW_H: 108, SCREEN_W: 960, SCREEN_H: 540,
   STAGE_W: 320,            // 擂台总宽（原生像素），镜头跟随两人中点
   GROUND_Y: 76,            // 地面线（原生像素，脚底原点落在这里）
   WALL_MARGIN: 14,         // 人物脚底离擂台边最小距离
@@ -132,7 +135,7 @@ WF.CFG = {
     huangshifu:    { name: '黄师傅', combo: [['combo_a', 'light_kick'], ['combo_b', 'dash_punch'], ['combo_c', 'heavy_kick'], ['heavy_punch', 'grab_and_beatdown', 'uppercut']], slow: ['combo_b', 'heavy_punch', 'light_kick'], late: 'combo_a',
                      ult: ['mega_charge_a', 'mega_charge_b'], ultName: '佛山无影脚', intro: 'intro', idleAlt: true, newCity: 'huang',
                      title: '佛山 Boss', city: '佛山·宝芝林', color: '#7ad0a0', catchphrase: null, blurb: '长衫雨伞的医馆师傅，慢答会被他闪开' },
-    // v2.2 巴黎关（挑战模式城市池，Codex 美术 R3–R3.2.1 已锁定）：Boss 玛戈（壮硕身 + 大词典，盾型：后仰减半、收招回胸前立书）+ 卢克 / 伊娜 / 巴斯蒂安
+    // v2.2 巴黎关（挑战模式城市池）：卢克 / 伊娜 / 巴斯蒂安。Boss 为铁面人（iron_mask）；玛戈仍是可选角色，素材和天赋不动。
     pa_newsboy:    { name: '卢克', combo: [['combo_a'], ['combo_a', 'heavy_punch'], ['heavy_punch'], ['heavy_punch']], slow: ['combo_a'], late: 'combo_a', ult: null, color: '#c9a24a', intro: null, minion: true },
     pa_sketcher:   { name: '伊娜', combo: [['combo_a'], ['combo_a', 'heavy_punch'], ['heavy_punch'], ['heavy_punch']], slow: ['combo_a'], late: 'combo_a', ult: null, color: '#d4a452', intro: null, minion: true },
     pa_porter:     { name: '巴斯蒂安', combo: [['combo_a'], ['heavy_punch'], ['heavy_punch'], ['heavy_punch']], slow: ['heavy_punch'], late: 'combo_a', ult: null, color: '#936235', intro: null, minion: true, elite: true },
@@ -141,6 +144,11 @@ WF.CFG = {
                      ult: ['mega_charge_a', 'mega_charge_b'], ultName: '终章·万页合书', intro: 'intro', idleAlt: false, newCity: 'margot',
                      moveNames: { combo_a: 'Pointe！书脊点', combo_b: 'Balayez！书面横扫', combo_c: 'Coin！书角上挑', heavy_punch: 'Presse-papier！镇纸压', uppercut: 'Dos du livre！书脊上撩', dash_punch: 'En avant！推书前冲', light_kick: 'Petit pas！裙下正蹬', heavy_kick: 'Fermez！合书', grab_and_beatdown: 'Marque-page！书签夹' },
                      title: '巴黎 Boss', city: '巴黎·塞纳河旧书摊', color: '#c86478', catchphrase: 'Fermez le livre !', catchColor: '#eee0b3', blurb: '塞纳河边旧书摊的老板娘，词典当盾也当武器' },
+    // 铁面人（英文 Iron Mask）：只替换巴黎 Boss。招式表、必杀槽、newCity 与玛戈相同，所以同词换页的规则和数值仍走 js/v22_paris.js。
+    // 不写生平、不标性别。书页招式名和「合书」口头禅不带到这个 Boss 上。idle_alt 仍只在同词换页时播（现在的画面是钉词→收链）。
+    iron_mask:     { name: '铁面人', combo: [['combo_a', 'light_kick'], ['combo_b', 'dash_punch'], ['combo_c', 'heavy_punch', 'uppercut'], ['heavy_kick', 'grab_and_beatdown']], slow: ['combo_b', 'heavy_punch', 'light_kick'], late: 'combo_a',
+                     ult: ['mega_charge_a', 'mega_charge_b'], ultName: '铁面人', intro: 'intro', idleAlt: false, newCity: 'margot',
+                     title: '巴黎 Boss', city: '巴黎', color: '#b7c0cc', catchphrase: null, blurb: '' },
   },
   P1_CHAR: 'suling', P2_CHAR: 'mrj',   // 双人对战的默认角色（v1.4 起可在选角界面换）
 
@@ -242,9 +250,9 @@ WF.CFG = {
         stage: 'foshan', normals: ['fs_lion', 'fs_coolie'], elite: 'fs_thug', opponent: 'huangshifu', poolOnly: true,
         opponentHp: 1650, cine: 'city', hpMult: 0.95, accAdj: -0.03, delayMult: 0.85, ai: { accuracy: 0.85, delay: [1.0, 4.2] },
       },
-      // v2.2 巴黎（挑战模式城市池）：玛戈血厚一点、答题略慢（盾型、出手慢）
+      // 巴黎（挑战模式城市池）：Boss 是铁面人。血量 / 答题仍是原来的数值。
       paris: {
-        stage: 'paris', normals: ['pa_newsboy', 'pa_sketcher'], elite: 'pa_porter', opponent: 'margot', poolOnly: true,
+        stage: 'paris', normals: ['pa_newsboy', 'pa_sketcher'], elite: 'pa_porter', opponent: 'iron_mask', poolOnly: true,
         opponentHp: 1700, cine: 'city', hpMult: 1.0, accAdj: -0.02, delayMult: 1.1, ai: { accuracy: 0.86, delay: [1.5, 5.6] },
       },
       rocketbase: {
@@ -352,4 +360,27 @@ WF.CFG = {
 
   FONT: '"Noto Sans SC","Noto Sans CJK SC","Source Han Sans SC","PingFang SC","Microsoft YaHei","Noto Sans Mono CJK SC",sans-serif',
   FONT_TITLE: '"Noto Serif SC","Noto Serif CJK SC","Source Han Serif SC","Songti SC","STSong","SimSun",serif',
+};
+// 内部分辨率。桌面 2880×1620；触屏或 ?lo=1 退回 960×540。?hi=1 强制高分辨率。
+WF.applyResolution = function () {
+  const C = WF.CFG;
+  let q = '';
+  try { q = location.search || ''; } catch (e) {}
+  const forceLo = /[?&]lo=1(&|$)/.test(q), forceHi = /[?&]hi=1(&|$)/.test(q);
+  const hi = forceHi || (!forceLo && !WF.touch);
+  C.UI_SCALE = hi ? 3 : 1;
+  C.WORLD_SCALE = C.SCALE * C.UI_SCALE;
+  C.OUT_W = C.SCREEN_W * C.UI_SCALE;
+  C.OUT_H = C.SCREEN_H * C.UI_SCALE;
+  C.hiRes = hi;
+};
+// HUD 仍用 960×540 坐标，根部乘 UI_SCALE。曾经 setTransform(1,0,0,1) 的地方改调这个。
+WF.uiTransform = function (ctx) {
+  const s = (WF.CFG && WF.CFG.UI_SCALE) || 1;
+  ctx.setTransform(s, 0, 0, s, 0, 0);
+  ctx.imageSmoothingEnabled = false;
+};
+WF.deviceTransform = function (ctx) {
+  ctx.setTransform(1, 0, 0, 1, 0, 0);
+  ctx.imageSmoothingEnabled = false;
 };

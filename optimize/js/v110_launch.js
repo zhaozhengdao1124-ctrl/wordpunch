@@ -350,7 +350,7 @@
         if (f.t >= 0 && pad.ts) { let acc = 0; for (fi = 0; fi < pad.n - 1; fi++) { acc += pad.ts[fi]; if (f.t < acc) break; } }
         const X = Math.round(f.padX - li), Y = WF.CFG.GROUND_Y + Math.round((1 - f.rise) * 44);
         if (I.complete && I.naturalWidth) {
-          w.save(); w.beginPath(); w.rect(0, 0, w.canvas.width, WF.CFG.GROUND_Y + 1); w.clip();
+          w.save(); w.beginPath(); w.rect(0, 0, w.canvas.width / (WF.CFG.WORLD_SCALE || 1), WF.CFG.GROUND_Y + 1); w.clip();
           if (f.dir > 0) w.drawImage(I, fi * pad.w, 0, pad.w, pad.h, X - pad.o[0], Y - pad.o[1], pad.w, pad.h);
           else { w.translate(X, 0); w.scale(-1, 1); w.drawImage(I, fi * pad.w, 0, pad.w, pad.h, -pad.o[0], Y - pad.o[1], pad.w, pad.h); }
           w.restore();

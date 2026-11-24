@@ -75,9 +75,11 @@ WF.Sprites = {
     if (!WF.Sprites.ok(im)) im = set.normal;          // 受击图还没下完：先用正常图
     if (!WF.Sprites.ok(im) && !(im instanceof HTMLCanvasElement)) return;   // 还没下完：这一帧不画
     const foot = fo || d.foot;
-    const sx = (cell % d.cols) * d.cell, sy = Math.floor(cell / d.cols) * d.cell, top = G - foot[1];
-    if (dir > 0) ctx.drawImage(im, sx, sy, d.cell, d.cell, X - foot[0], top, d.cell, d.cell);
-    else { ctx.save(); ctx.translate(X + 1, 0); ctx.scale(-1, 1); ctx.drawImage(im, sx, sy, d.cell, d.cell, -foot[0], top, d.cell, d.cell); ctx.restore(); }
+    const src = d.srcCell || d.cell, dst = d.drawCell || d.cell;
+    const sx = (cell % d.cols) * src, sy = Math.floor(cell / d.cols) * src, top = G - foot[1];
+    ctx.imageSmoothingEnabled = false;
+    if (dir > 0) ctx.drawImage(im, sx, sy, src, src, X - foot[0], top, dst, dst);
+    else { ctx.save(); ctx.translate(X + 1, 0); ctx.scale(-1, 1); ctx.drawImage(im, sx, sy, src, src, -foot[0], top, dst, dst); ctx.restore(); }
   },
 };
 
