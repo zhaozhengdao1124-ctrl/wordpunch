@@ -111,7 +111,7 @@
       "slot": "heavy_kick",
       "index": 0,
       "cell": 4,
-      "source": "tween-from-typifying"
+      "source": "copied-from-v2-unchanged"
     },
     "iron-mask-heavy_kick-001-3x.png": {
       "standing": 117,
@@ -133,7 +133,7 @@
       "slot": "heavy_kick",
       "index": 1,
       "cell": 5,
-      "source": "tween-from-typifying"
+      "source": "copied-from-v2-unchanged"
     },
     "iron-mask-heavy_kick-002-3x.png": {
       "standing": 117,
@@ -177,7 +177,7 @@
       "slot": "heavy_kick",
       "index": 3,
       "cell": 7,
-      "source": "tween-from-typifying"
+      "source": "copied-from-v2-unchanged"
     },
     "iron-mask-heavy_kick-004-3x.png": {
       "standing": 117,
@@ -199,7 +199,7 @@
       "slot": "heavy_kick",
       "index": 4,
       "cell": 8,
-      "source": "tween-from-typifying"
+      "source": "copied-from-v2-unchanged"
     },
     "iron-mask-heavy_kick-005-3x.png": {
       "standing": 117,
@@ -221,7 +221,7 @@
       "slot": "heavy_kick",
       "index": 5,
       "cell": 9,
-      "source": "tween-from-typifying"
+      "source": "copied-from-v2-unchanged"
     },
     "iron-mask-heavy_kick-006-3x.png": {
       "standing": 117,
@@ -243,13 +243,13 @@
       "slot": "heavy_kick",
       "index": 6,
       "cell": 10,
-      "source": "tween-from-typifying"
+      "source": "copied-from-v2-unchanged"
     },
     "iron-mask-walk-000-3x.png": {
-      "standing": 120,
+      "standing": 118,
       "bbox": [
-        20,
-        42,
+        19,
+        44,
         157,
         162
       ],
@@ -265,14 +265,14 @@
       "slot": "walk",
       "index": 0,
       "cell": 11,
-      "source": "gait-from-typifying"
+      "source": "v3-gait-clean"
     },
     "iron-mask-walk-001-3x.png": {
-      "standing": 120,
+      "standing": 119,
       "bbox": [
         20,
-        42,
-        155,
+        43,
+        156,
         162
       ],
       "colors": 16,
@@ -287,14 +287,14 @@
       "slot": "walk",
       "index": 1,
       "cell": 12,
-      "source": "gait-from-typifying"
+      "source": "v3-gait-clean"
     },
     "iron-mask-walk-002-3x.png": {
-      "standing": 118,
+      "standing": 119,
       "bbox": [
-        20,
-        44,
-        155,
+        22,
+        43,
+        158,
         162
       ],
       "colors": 16,
@@ -309,14 +309,14 @@
       "slot": "walk",
       "index": 2,
       "cell": 13,
-      "source": "gait-from-typifying"
+      "source": "v3-gait-clean"
     },
     "iron-mask-walk-003-3x.png": {
-      "standing": 117,
+      "standing": 118,
       "bbox": [
-        21,
-        45,
-        159,
+        23,
+        44,
+        161,
         162
       ],
       "colors": 16,
@@ -331,7 +331,7 @@
       "slot": "walk",
       "index": 3,
       "cell": 14,
-      "source": "gait-from-typifying"
+      "source": "v3-gait-clean"
     },
     "iron-mask-walk-004-3x.png": {
       "standing": 117,
@@ -356,10 +356,10 @@
       "source": "exact-copy-current-best"
     },
     "iron-mask-walk-005-3x.png": {
-      "standing": 117,
+      "standing": 118,
       "bbox": [
-        21,
-        45,
+        22,
+        44,
         169,
         162
       ],
@@ -375,14 +375,14 @@
       "slot": "walk",
       "index": 5,
       "cell": 16,
-      "source": "gait-from-typifying"
+      "source": "v3-gait-clean"
     },
     "iron-mask-walk-006-3x.png": {
-      "standing": 118,
+      "standing": 119,
       "bbox": [
-        18,
-        44,
-        171,
+        20,
+        43,
+        170,
         162
       ],
       "colors": 16,
@@ -397,14 +397,14 @@
       "slot": "walk",
       "index": 6,
       "cell": 17,
-      "source": "gait-from-typifying"
+      "source": "v3-gait-clean"
     },
     "iron-mask-walk-007-3x.png": {
-      "standing": 120,
+      "standing": 119,
       "bbox": [
-        18,
-        42,
-        171,
+        20,
+        43,
+        168,
         162
       ],
       "colors": 16,
@@ -419,14 +419,14 @@
       "slot": "walk",
       "index": 7,
       "cell": 18,
-      "source": "gait-from-typifying"
+      "source": "v3-gait-clean"
     },
     "iron-mask-walk-008-3x.png": {
-      "standing": 120,
+      "standing": 118,
       "bbox": [
-        20,
-        42,
-        167,
+        19,
+        44,
+        165,
         162
       ],
       "colors": 16,
@@ -441,14 +441,14 @@
       "slot": "walk",
       "index": 8,
       "cell": 19,
-      "source": "gait-from-typifying"
+      "source": "v3-gait-clean"
     },
     "iron-mask-walk-009-3x.png": {
-      "standing": 119,
+      "standing": 117,
       "bbox": [
-        20,
-        43,
-        162,
+        19,
+        45,
+        161,
         162
       ],
       "colors": 16,
@@ -463,14 +463,14 @@
       "slot": "walk",
       "index": 9,
       "cell": 20,
-      "source": "gait-from-typifying"
+      "source": "v3-gait-clean"
     },
     "iron-mask-run-000-3x.png": {
-      "standing": 119,
+      "standing": 117,
       "bbox": [
-        2,
-        43,
-        174,
+        3,
+        45,
+        179,
         162
       ],
       "colors": 16,
@@ -485,20 +485,20 @@
       "slot": "run",
       "index": 0,
       "cell": 21,
-      "source": "gait-from-typifying"
+      "source": "v3-gait-clean"
     },
     "iron-mask-run-001-3x.png": {
-      "standing": 122,
+      "standing": 125,
       "bbox": [
         8,
-        40,
-        174,
-        155
+        37,
+        176,
+        153
       ],
       "colors": 16,
       "extra": 0,
       "odd_alpha": 0,
-      "below_foot": -7,
+      "below_foot": -9,
       "components": 1,
       "size": [
         192,
@@ -507,20 +507,20 @@
       "slot": "run",
       "index": 1,
       "cell": 22,
-      "source": "gait-from-typifying"
+      "source": "v3-gait-clean"
     },
     "iron-mask-run-002-3x.png": {
-      "standing": 121,
+      "standing": 129,
       "bbox": [
-        8,
-        41,
-        174,
-        149
+        10,
+        33,
+        180,
+        148
       ],
       "colors": 16,
       "extra": 0,
       "odd_alpha": 0,
-      "below_foot": -13,
+      "below_foot": -14,
       "components": 1,
       "size": [
         192,
@@ -529,20 +529,20 @@
       "slot": "run",
       "index": 2,
       "cell": 23,
-      "source": "gait-from-typifying"
+      "source": "v3-gait-clean"
     },
     "iron-mask-run-003-3x.png": {
-      "standing": 120,
+      "standing": 125,
       "bbox": [
-        8,
-        42,
-        174,
-        155
+        12,
+        37,
+        177,
+        153
       ],
       "colors": 16,
       "extra": 0,
       "odd_alpha": 0,
-      "below_foot": -7,
+      "below_foot": -9,
       "components": 1,
       "size": [
         192,
@@ -551,7 +551,7 @@
       "slot": "run",
       "index": 3,
       "cell": 24,
-      "source": "gait-from-typifying"
+      "source": "v3-gait-clean"
     },
     "iron-mask-run-004-3x.png": {
       "standing": 117,
@@ -576,17 +576,17 @@
       "source": "exact-copy-current-best"
     },
     "iron-mask-run-005-3x.png": {
-      "standing": 120,
+      "standing": 125,
       "bbox": [
-        8,
-        42,
-        183,
-        155
+        12,
+        37,
+        177,
+        153
       ],
       "colors": 16,
       "extra": 0,
       "odd_alpha": 0,
-      "below_foot": -7,
+      "below_foot": -9,
       "components": 1,
       "size": [
         192,
@@ -595,20 +595,20 @@
       "slot": "run",
       "index": 5,
       "cell": 26,
-      "source": "gait-from-typifying"
+      "source": "v3-gait-clean"
     },
     "iron-mask-run-006-3x.png": {
-      "standing": 121,
+      "standing": 129,
       "bbox": [
-        8,
-        41,
-        185,
-        149
+        10,
+        33,
+        180,
+        148
       ],
       "colors": 16,
       "extra": 0,
       "odd_alpha": 0,
-      "below_foot": -13,
+      "below_foot": -14,
       "components": 1,
       "size": [
         192,
@@ -617,20 +617,20 @@
       "slot": "run",
       "index": 6,
       "cell": 27,
-      "source": "gait-from-typifying"
+      "source": "v3-gait-clean"
     },
     "iron-mask-run-007-3x.png": {
-      "standing": 122,
+      "standing": 125,
       "bbox": [
         8,
-        40,
-        179,
-        155
+        37,
+        176,
+        153
       ],
       "colors": 16,
       "extra": 0,
       "odd_alpha": 0,
-      "below_foot": -7,
+      "below_foot": -9,
       "components": 1,
       "size": [
         192,
@@ -639,7 +639,7 @@
       "slot": "run",
       "index": 7,
       "cell": 28,
-      "source": "gait-from-typifying"
+      "source": "v3-gait-clean"
     },
     "iron-mask-dodge_roll-000-3x.png": {
       "standing": 103,
@@ -749,7 +749,7 @@
       "slot": "combo_a",
       "index": 0,
       "cell": 33,
-      "source": "tween-from-typifying"
+      "source": "copied-from-v2-unchanged"
     },
     "iron-mask-combo_a-001-3x.png": {
       "standing": 117,
@@ -771,7 +771,7 @@
       "slot": "combo_a",
       "index": 1,
       "cell": 34,
-      "source": "tween-from-typifying"
+      "source": "copied-from-v2-unchanged"
     },
     "iron-mask-combo_a-002-3x.png": {
       "standing": 117,
@@ -815,7 +815,7 @@
       "slot": "combo_a",
       "index": 3,
       "cell": 36,
-      "source": "tween-from-typifying"
+      "source": "copied-from-v2-unchanged"
     },
     "iron-mask-combo_a-004-3x.png": {
       "standing": 117,
@@ -837,7 +837,7 @@
       "slot": "combo_a",
       "index": 4,
       "cell": 37,
-      "source": "tween-from-typifying"
+      "source": "copied-from-v2-unchanged"
     },
     "iron-mask-combo_b-000-3x.png": {
       "standing": 114,
@@ -859,7 +859,7 @@
       "slot": "combo_b",
       "index": 0,
       "cell": 38,
-      "source": "tween-from-typifying"
+      "source": "copied-from-v2-unchanged"
     },
     "iron-mask-combo_b-001-3x.png": {
       "standing": 117,
@@ -881,7 +881,7 @@
       "slot": "combo_b",
       "index": 1,
       "cell": 39,
-      "source": "tween-from-typifying"
+      "source": "copied-from-v2-unchanged"
     },
     "iron-mask-combo_b-002-3x.png": {
       "standing": 117,
@@ -925,7 +925,7 @@
       "slot": "combo_b",
       "index": 3,
       "cell": 41,
-      "source": "tween-from-typifying"
+      "source": "copied-from-v2-unchanged"
     },
     "iron-mask-combo_b-004-3x.png": {
       "standing": 117,
@@ -947,7 +947,7 @@
       "slot": "combo_b",
       "index": 4,
       "cell": 42,
-      "source": "tween-from-typifying"
+      "source": "copied-from-v2-unchanged"
     },
     "iron-mask-combo_b-005-3x.png": {
       "standing": 117,
@@ -969,7 +969,7 @@
       "slot": "combo_b",
       "index": 5,
       "cell": 43,
-      "source": "tween-from-typifying"
+      "source": "copied-from-v2-unchanged"
     },
     "iron-mask-combo_c-000-3x.png": {
       "standing": 114,
@@ -991,7 +991,7 @@
       "slot": "combo_c",
       "index": 0,
       "cell": 44,
-      "source": "tween-from-typifying"
+      "source": "copied-from-v2-unchanged"
     },
     "iron-mask-combo_c-001-3x.png": {
       "standing": 117,
@@ -1013,7 +1013,7 @@
       "slot": "combo_c",
       "index": 1,
       "cell": 45,
-      "source": "tween-from-typifying"
+      "source": "copied-from-v2-unchanged"
     },
     "iron-mask-combo_c-002-3x.png": {
       "standing": 117,
@@ -1057,7 +1057,7 @@
       "slot": "combo_c",
       "index": 3,
       "cell": 47,
-      "source": "tween-from-typifying"
+      "source": "copied-from-v2-unchanged"
     },
     "iron-mask-combo_c-004-3x.png": {
       "standing": 117,
@@ -1079,7 +1079,7 @@
       "slot": "combo_c",
       "index": 4,
       "cell": 48,
-      "source": "tween-from-typifying"
+      "source": "copied-from-v2-unchanged"
     },
     "iron-mask-combo_c-005-3x.png": {
       "standing": 117,
@@ -1101,7 +1101,7 @@
       "slot": "combo_c",
       "index": 5,
       "cell": 49,
-      "source": "tween-from-typifying"
+      "source": "copied-from-v2-unchanged"
     },
     "iron-mask-heavy_punch-000-3x.png": {
       "standing": 114,
@@ -1123,7 +1123,7 @@
       "slot": "heavy_punch",
       "index": 0,
       "cell": 50,
-      "source": "tween-from-typifying"
+      "source": "copied-from-v2-unchanged"
     },
     "iron-mask-heavy_punch-001-3x.png": {
       "standing": 117,
@@ -1145,7 +1145,7 @@
       "slot": "heavy_punch",
       "index": 1,
       "cell": 51,
-      "source": "tween-from-typifying"
+      "source": "copied-from-v2-unchanged"
     },
     "iron-mask-heavy_punch-002-3x.png": {
       "standing": 117,
@@ -1189,7 +1189,7 @@
       "slot": "heavy_punch",
       "index": 3,
       "cell": 53,
-      "source": "tween-from-typifying"
+      "source": "copied-from-v2-unchanged"
     },
     "iron-mask-heavy_punch-004-3x.png": {
       "standing": 117,
@@ -1211,7 +1211,7 @@
       "slot": "heavy_punch",
       "index": 4,
       "cell": 54,
-      "source": "tween-from-typifying"
+      "source": "copied-from-v2-unchanged"
     },
     "iron-mask-heavy_punch-005-3x.png": {
       "standing": 117,
@@ -1233,7 +1233,7 @@
       "slot": "heavy_punch",
       "index": 5,
       "cell": 55,
-      "source": "tween-from-typifying"
+      "source": "copied-from-v2-unchanged"
     },
     "iron-mask-heavy_punch-006-3x.png": {
       "standing": 117,
@@ -1255,7 +1255,7 @@
       "slot": "heavy_punch",
       "index": 6,
       "cell": 56,
-      "source": "tween-from-typifying"
+      "source": "copied-from-v2-unchanged"
     },
     "iron-mask-uppercut-000-3x.png": {
       "standing": 147,
@@ -1277,7 +1277,7 @@
       "slot": "uppercut",
       "index": 0,
       "cell": 57,
-      "source": "tween-from-typifying"
+      "source": "copied-from-v2-unchanged"
     },
     "iron-mask-uppercut-001-3x.png": {
       "standing": 156,
@@ -1299,7 +1299,7 @@
       "slot": "uppercut",
       "index": 1,
       "cell": 58,
-      "source": "tween-from-typifying"
+      "source": "copied-from-v2-unchanged"
     },
     "iron-mask-uppercut-002-3x.png": {
       "standing": 157,
@@ -1343,7 +1343,7 @@
       "slot": "uppercut",
       "index": 3,
       "cell": 60,
-      "source": "tween-from-typifying"
+      "source": "copied-from-v2-unchanged"
     },
     "iron-mask-uppercut-004-3x.png": {
       "standing": 150,
@@ -1365,7 +1365,7 @@
       "slot": "uppercut",
       "index": 4,
       "cell": 61,
-      "source": "tween-from-typifying"
+      "source": "copied-from-v2-unchanged"
     },
     "iron-mask-uppercut-005-3x.png": {
       "standing": 147,
@@ -1387,7 +1387,7 @@
       "slot": "uppercut",
       "index": 5,
       "cell": 62,
-      "source": "tween-from-typifying"
+      "source": "copied-from-v2-unchanged"
     },
     "iron-mask-uppercut-006-3x.png": {
       "standing": 118,
@@ -1409,7 +1409,7 @@
       "slot": "uppercut",
       "index": 6,
       "cell": 63,
-      "source": "tween-from-typifying"
+      "source": "copied-from-v2-unchanged"
     },
     "iron-mask-dash_punch-000-3x.png": {
       "standing": 114,
@@ -1431,7 +1431,7 @@
       "slot": "dash_punch",
       "index": 0,
       "cell": 64,
-      "source": "tween-from-typifying"
+      "source": "copied-from-v2-unchanged"
     },
     "iron-mask-dash_punch-001-3x.png": {
       "standing": 117,
@@ -1453,7 +1453,7 @@
       "slot": "dash_punch",
       "index": 1,
       "cell": 65,
-      "source": "tween-from-typifying"
+      "source": "copied-from-v2-unchanged"
     },
     "iron-mask-dash_punch-002-3x.png": {
       "standing": 117,
@@ -1497,7 +1497,7 @@
       "slot": "dash_punch",
       "index": 3,
       "cell": 67,
-      "source": "tween-from-typifying"
+      "source": "copied-from-v2-unchanged"
     },
     "iron-mask-light_kick-000-3x.png": {
       "standing": 114,
@@ -1519,7 +1519,7 @@
       "slot": "light_kick",
       "index": 0,
       "cell": 68,
-      "source": "tween-from-typifying"
+      "source": "copied-from-v2-unchanged"
     },
     "iron-mask-light_kick-001-3x.png": {
       "standing": 117,
@@ -1541,7 +1541,7 @@
       "slot": "light_kick",
       "index": 1,
       "cell": 69,
-      "source": "tween-from-typifying"
+      "source": "copied-from-v2-unchanged"
     },
     "iron-mask-light_kick-002-3x.png": {
       "standing": 117,
@@ -1585,7 +1585,7 @@
       "slot": "light_kick",
       "index": 3,
       "cell": 71,
-      "source": "tween-from-typifying"
+      "source": "copied-from-v2-unchanged"
     },
     "iron-mask-light_kick-004-3x.png": {
       "standing": 117,
@@ -1607,7 +1607,7 @@
       "slot": "light_kick",
       "index": 4,
       "cell": 72,
-      "source": "tween-from-typifying"
+      "source": "copied-from-v2-unchanged"
     },
     "iron-mask-mega_charge_a-000-3x.png": {
       "standing": 113,
@@ -1629,7 +1629,7 @@
       "slot": "mega_charge_a",
       "index": 0,
       "cell": 73,
-      "source": "tween-from-typifying"
+      "source": "copied-from-v2-unchanged"
     },
     "iron-mask-mega_charge_a-001-3x.png": {
       "standing": 114,
@@ -1651,7 +1651,7 @@
       "slot": "mega_charge_a",
       "index": 1,
       "cell": 74,
-      "source": "tween-from-typifying"
+      "source": "copied-from-v2-unchanged"
     },
     "iron-mask-mega_charge_a-002-3x.png": {
       "standing": 113,
@@ -1673,7 +1673,7 @@
       "slot": "mega_charge_a",
       "index": 2,
       "cell": 75,
-      "source": "tween-from-typifying"
+      "source": "copied-from-v2-unchanged"
     },
     "iron-mask-mega_charge_a-003-3x.png": {
       "standing": 113,
@@ -1695,7 +1695,7 @@
       "slot": "mega_charge_a",
       "index": 3,
       "cell": 76,
-      "source": "tween-from-typifying"
+      "source": "copied-from-v2-unchanged"
     },
     "iron-mask-mega_charge_a-004-3x.png": {
       "standing": 114,
@@ -1717,7 +1717,7 @@
       "slot": "mega_charge_a",
       "index": 4,
       "cell": 77,
-      "source": "tween-from-typifying"
+      "source": "copied-from-v2-unchanged"
     },
     "iron-mask-mega_charge_a-005-3x.png": {
       "standing": 115,
@@ -1739,7 +1739,7 @@
       "slot": "mega_charge_a",
       "index": 5,
       "cell": 78,
-      "source": "tween-from-typifying"
+      "source": "copied-from-v2-unchanged"
     },
     "iron-mask-mega_charge_a-006-3x.png": {
       "standing": 115,
@@ -1783,7 +1783,7 @@
       "slot": "mega_charge_a",
       "index": 7,
       "cell": 80,
-      "source": "tween-from-typifying"
+      "source": "copied-from-v2-unchanged"
     },
     "iron-mask-mega_charge_a-008-3x.png": {
       "standing": 116,
@@ -1805,7 +1805,7 @@
       "slot": "mega_charge_a",
       "index": 8,
       "cell": 81,
-      "source": "tween-from-typifying"
+      "source": "copied-from-v2-unchanged"
     },
     "iron-mask-mega_charge_a-009-3x.png": {
       "standing": 116,
@@ -1827,7 +1827,7 @@
       "slot": "mega_charge_a",
       "index": 9,
       "cell": 82,
-      "source": "tween-from-typifying"
+      "source": "copied-from-v2-unchanged"
     },
     "iron-mask-mega_charge_a-010-3x.png": {
       "standing": 116,
@@ -1849,7 +1849,7 @@
       "slot": "mega_charge_a",
       "index": 10,
       "cell": 83,
-      "source": "tween-from-typifying"
+      "source": "copied-from-v2-unchanged"
     },
     "iron-mask-mega_charge_a-011-3x.png": {
       "standing": 117,
@@ -1871,7 +1871,7 @@
       "slot": "mega_charge_a",
       "index": 11,
       "cell": 84,
-      "source": "tween-from-typifying"
+      "source": "copied-from-v2-unchanged"
     },
     "iron-mask-mega_charge_b-000-3x.png": {
       "standing": 120,
@@ -1893,7 +1893,7 @@
       "slot": "mega_charge_b",
       "index": 0,
       "cell": 85,
-      "source": "arc-from-typifying"
+      "source": "copied-from-v2-unchanged"
     },
     "iron-mask-mega_charge_b-001-3x.png": {
       "standing": 118,
@@ -1915,20 +1915,20 @@
       "slot": "mega_charge_b",
       "index": 1,
       "cell": 86,
-      "source": "arc-from-typifying"
+      "source": "copied-from-v2-unchanged"
     },
     "iron-mask-mega_charge_b-002-3x.png": {
-      "standing": 128,
+      "standing": 132,
       "bbox": [
-        7,
-        34,
-        171,
-        162
+        9,
+        30,
+        173,
+        158
       ],
       "colors": 16,
       "extra": 0,
       "odd_alpha": 0,
-      "below_foot": 0,
+      "below_foot": -4,
       "components": 1,
       "size": [
         192,
@@ -1937,20 +1937,20 @@
       "slot": "mega_charge_b",
       "index": 2,
       "cell": 87,
-      "source": "arc-from-typifying"
+      "source": "v3-arc-smooth"
     },
     "iron-mask-mega_charge_b-003-3x.png": {
-      "standing": 147,
+      "standing": 144,
       "bbox": [
-        7,
-        15,
-        171,
-        143
+        11,
+        18,
+        175,
+        146
       ],
       "colors": 16,
       "extra": 0,
       "odd_alpha": 0,
-      "below_foot": -19,
+      "below_foot": -16,
       "components": 1,
       "size": [
         192,
@@ -1959,7 +1959,7 @@
       "slot": "mega_charge_b",
       "index": 3,
       "cell": 88,
-      "source": "arc-from-typifying"
+      "source": "v3-arc-smooth"
     },
     "iron-mask-mega_charge_b-004-3x.png": {
       "standing": 155,
@@ -1981,7 +1981,7 @@
       "slot": "mega_charge_b",
       "index": 4,
       "cell": 89,
-      "source": "arc-from-typifying"
+      "source": "copied-from-v2-unchanged"
     },
     "iron-mask-mega_charge_b-005-3x.png": {
       "standing": 161,
@@ -2003,7 +2003,7 @@
       "slot": "mega_charge_b",
       "index": 5,
       "cell": 90,
-      "source": "arc-from-typifying"
+      "source": "copied-from-v2-unchanged"
     },
     "iron-mask-mega_charge_b-006-3x.png": {
       "standing": 155,
@@ -2025,7 +2025,7 @@
       "slot": "mega_charge_b",
       "index": 6,
       "cell": 91,
-      "source": "arc-from-typifying"
+      "source": "copied-from-v2-unchanged"
     },
     "iron-mask-mega_charge_b-007-3x.png": {
       "standing": 148,
@@ -2047,7 +2047,7 @@
       "slot": "mega_charge_b",
       "index": 7,
       "cell": 92,
-      "source": "arc-from-typifying"
+      "source": "copied-from-v2-unchanged"
     },
     "iron-mask-mega_charge_b-008-3x.png": {
       "standing": 143,
@@ -2091,7 +2091,7 @@
       "slot": "mega_charge_b",
       "index": 9,
       "cell": 94,
-      "source": "arc-from-typifying"
+      "source": "copied-from-v2-unchanged"
     },
     "iron-mask-mega_charge_b-010-3x.png": {
       "standing": 131,
@@ -2113,7 +2113,7 @@
       "slot": "mega_charge_b",
       "index": 10,
       "cell": 95,
-      "source": "arc-from-typifying"
+      "source": "copied-from-v2-unchanged"
     },
     "iron-mask-mega_charge_b-011-3x.png": {
       "standing": 127,
@@ -2135,7 +2135,7 @@
       "slot": "mega_charge_b",
       "index": 11,
       "cell": 96,
-      "source": "arc-from-typifying"
+      "source": "copied-from-v2-unchanged"
     },
     "iron-mask-mega_charge_b-012-3x.png": {
       "standing": 122,
@@ -2157,7 +2157,7 @@
       "slot": "mega_charge_b",
       "index": 12,
       "cell": 97,
-      "source": "arc-from-typifying"
+      "source": "copied-from-v2-unchanged"
     },
     "iron-mask-mega_charge_b-013-3x.png": {
       "standing": 123,
@@ -2179,7 +2179,7 @@
       "slot": "mega_charge_b",
       "index": 13,
       "cell": 98,
-      "source": "arc-from-typifying"
+      "source": "copied-from-v2-unchanged"
     },
     "iron-mask-mega_charge_b-014-3x.png": {
       "standing": 123,
@@ -2201,7 +2201,7 @@
       "slot": "mega_charge_b",
       "index": 14,
       "cell": 99,
-      "source": "arc-from-typifying"
+      "source": "copied-from-v2-unchanged"
     },
     "iron-mask-mega_charge_b-015-3x.png": {
       "standing": 123,
@@ -2223,7 +2223,7 @@
       "slot": "mega_charge_b",
       "index": 15,
       "cell": 100,
-      "source": "arc-from-typifying"
+      "source": "copied-from-v2-unchanged"
     },
     "iron-mask-mega_charge_b-016-3x.png": {
       "standing": 122,
@@ -2245,7 +2245,7 @@
       "slot": "mega_charge_b",
       "index": 16,
       "cell": 101,
-      "source": "arc-from-typifying"
+      "source": "copied-from-v2-unchanged"
     },
     "iron-mask-grab_and_beatdown-000-3x.png": {
       "standing": 115,
@@ -2267,7 +2267,7 @@
       "slot": "grab_and_beatdown",
       "index": 0,
       "cell": 102,
-      "source": "arc-from-typifying"
+      "source": "copied-from-v2-unchanged"
     },
     "iron-mask-grab_and_beatdown-001-3x.png": {
       "standing": 116,
@@ -2289,7 +2289,7 @@
       "slot": "grab_and_beatdown",
       "index": 1,
       "cell": 103,
-      "source": "arc-from-typifying"
+      "source": "copied-from-v2-unchanged"
     },
     "iron-mask-grab_and_beatdown-002-3x.png": {
       "standing": 117,
@@ -2311,14 +2311,14 @@
       "slot": "grab_and_beatdown",
       "index": 2,
       "cell": 104,
-      "source": "arc-from-typifying"
+      "source": "copied-from-v2-unchanged"
     },
     "iron-mask-grab_and_beatdown-003-3x.png": {
-      "standing": 117,
+      "standing": 122,
       "bbox": [
-        3,
-        45,
-        175,
+        1,
+        40,
+        173,
         162
       ],
       "colors": 16,
@@ -2333,7 +2333,7 @@
       "slot": "grab_and_beatdown",
       "index": 3,
       "cell": 105,
-      "source": "arc-from-typifying"
+      "source": "v3-smash-impact"
     },
     "iron-mask-grab_and_beatdown-004-3x.png": {
       "standing": 117,
@@ -2358,11 +2358,11 @@
       "source": "exact-copy-current-best"
     },
     "iron-mask-grab_and_beatdown-005-3x.png": {
-      "standing": 114,
+      "standing": 104,
       "bbox": [
         3,
-        48,
-        177,
+        58,
+        178,
         162
       ],
       "colors": 16,
@@ -2377,14 +2377,14 @@
       "slot": "grab_and_beatdown",
       "index": 5,
       "cell": 107,
-      "source": "arc-from-typifying"
+      "source": "v3-smash-impact"
     },
     "iron-mask-grab_and_beatdown-006-3x.png": {
-      "standing": 117,
+      "standing": 110,
       "bbox": [
         3,
-        45,
-        174,
+        52,
+        177,
         162
       ],
       "colors": 16,
@@ -2399,7 +2399,7 @@
       "slot": "grab_and_beatdown",
       "index": 6,
       "cell": 108,
-      "source": "arc-from-typifying"
+      "source": "v3-smash-impact"
     },
     "iron-mask-grab_and_beatdown-007-3x.png": {
       "standing": 117,
@@ -2421,7 +2421,7 @@
       "slot": "grab_and_beatdown",
       "index": 7,
       "cell": 109,
-      "source": "arc-from-typifying"
+      "source": "copied-from-v2-unchanged"
     },
     "iron-mask-grab_and_beatdown-008-3x.png": {
       "standing": 117,
@@ -2443,7 +2443,7 @@
       "slot": "grab_and_beatdown",
       "index": 8,
       "cell": 110,
-      "source": "arc-from-typifying"
+      "source": "copied-from-v2-unchanged"
     },
     "iron-mask-block-000-3x.png": {
       "standing": 116,
@@ -2465,7 +2465,7 @@
       "slot": "block",
       "index": 0,
       "cell": 111,
-      "source": "derived-from-typifying"
+      "source": "copied-from-v2-unchanged"
     },
     "iron-mask-block-001-3x.png": {
       "standing": 117,
@@ -2509,7 +2509,7 @@
       "slot": "block",
       "index": 2,
       "cell": 113,
-      "source": "derived-from-typifying"
+      "source": "copied-from-v2-unchanged"
     },
     "iron-mask-block-003-3x.png": {
       "standing": 117,
@@ -2531,7 +2531,7 @@
       "slot": "block",
       "index": 3,
       "cell": 114,
-      "source": "derived-from-typifying"
+      "source": "copied-from-v2-unchanged"
     },
     "iron-mask-block_hit-000-3x.png": {
       "standing": 115,
@@ -2597,7 +2597,7 @@
       "slot": "hit_swap",
       "index": 0,
       "cell": 117,
-      "source": "tween-from-typifying"
+      "source": "copied-from-v2-unchanged"
     },
     "iron-mask-hit_swap-001-3x.png": {
       "standing": 123,
@@ -2641,7 +2641,7 @@
       "slot": "hit_swap",
       "index": 2,
       "cell": 119,
-      "source": "tween-from-typifying"
+      "source": "copied-from-v2-unchanged"
     },
     "iron-mask-stunned-000-3x.png": {
       "standing": 116,
@@ -2663,14 +2663,14 @@
       "slot": "stunned",
       "index": 0,
       "cell": 120,
-      "source": "arc-from-typifying"
+      "source": "copied-from-v2-unchanged"
     },
     "iron-mask-stunned-001-3x.png": {
-      "standing": 115,
+      "standing": 114,
       "bbox": [
-        15,
-        47,
-        163,
+        10,
+        48,
+        154,
         162
       ],
       "colors": 16,
@@ -2685,14 +2685,14 @@
       "slot": "stunned",
       "index": 1,
       "cell": 121,
-      "source": "arc-from-typifying"
+      "source": "v3-wobble"
     },
     "iron-mask-stunned-002-3x.png": {
-      "standing": 115,
+      "standing": 114,
       "bbox": [
-        15,
-        47,
-        160,
+        10,
+        48,
+        154,
         162
       ],
       "colors": 16,
@@ -2707,9 +2707,31 @@
       "slot": "stunned",
       "index": 2,
       "cell": 122,
-      "source": "arc-from-typifying"
+      "source": "v3-wobble"
     },
     "iron-mask-stunned-003-3x.png": {
+      "standing": 113,
+      "bbox": [
+        15,
+        49,
+        158,
+        162
+      ],
+      "colors": 16,
+      "extra": 0,
+      "odd_alpha": 0,
+      "below_foot": 0,
+      "components": 1,
+      "size": [
+        192,
+        192
+      ],
+      "slot": "stunned",
+      "index": 3,
+      "cell": 123,
+      "source": "v3-wobble"
+    },
+    "iron-mask-stunned-004-3x.png": {
       "standing": 114,
       "bbox": [
         15,
@@ -2727,38 +2749,16 @@
         192
       ],
       "slot": "stunned",
-      "index": 3,
-      "cell": 123,
-      "source": "arc-from-typifying"
-    },
-    "iron-mask-stunned-004-3x.png": {
-      "standing": 114,
-      "bbox": [
-        15,
-        48,
-        157,
-        162
-      ],
-      "colors": 16,
-      "extra": 0,
-      "odd_alpha": 0,
-      "below_foot": 0,
-      "components": 1,
-      "size": [
-        192,
-        192
-      ],
-      "slot": "stunned",
       "index": 4,
       "cell": 124,
-      "source": "arc-from-typifying"
+      "source": "v3-wobble"
     },
     "iron-mask-stunned-005-3x.png": {
-      "standing": 115,
+      "standing": 113,
       "bbox": [
         13,
-        47,
-        155,
+        49,
+        156,
         162
       ],
       "colors": 16,
@@ -2773,14 +2773,14 @@
       "slot": "stunned",
       "index": 5,
       "cell": 125,
-      "source": "arc-from-typifying"
+      "source": "v3-wobble"
     },
     "iron-mask-stunned-006-3x.png": {
-      "standing": 114,
+      "standing": 115,
       "bbox": [
-        13,
-        48,
-        155,
+        8,
+        47,
+        154,
         162
       ],
       "colors": 16,
@@ -2795,7 +2795,7 @@
       "slot": "stunned",
       "index": 6,
       "cell": 126,
-      "source": "arc-from-typifying"
+      "source": "v3-wobble"
     },
     "iron-mask-stunned-007-3x.png": {
       "standing": 115,
@@ -2820,11 +2820,11 @@
       "source": "exact-copy-current-best"
     },
     "iron-mask-stunned-008-3x.png": {
-      "standing": 114,
+      "standing": 115,
       "bbox": [
         15,
-        48,
-        159,
+        47,
+        160,
         162
       ],
       "colors": 16,
@@ -2839,14 +2839,14 @@
       "slot": "stunned",
       "index": 8,
       "cell": 128,
-      "source": "arc-from-typifying"
+      "source": "v3-wobble"
     },
     "iron-mask-stunned-009-3x.png": {
-      "standing": 115,
+      "standing": 113,
       "bbox": [
         15,
-        47,
-        159,
+        49,
+        158,
         162
       ],
       "colors": 16,
@@ -2861,14 +2861,14 @@
       "slot": "stunned",
       "index": 9,
       "cell": 129,
-      "source": "arc-from-typifying"
+      "source": "v3-wobble"
     },
     "iron-mask-stunned-010-3x.png": {
       "standing": 114,
       "bbox": [
-        15,
+        9,
         48,
-        157,
+        155,
         162
       ],
       "colors": 16,
@@ -2883,14 +2883,14 @@
       "slot": "stunned",
       "index": 10,
       "cell": 130,
-      "source": "arc-from-typifying"
+      "source": "v3-wobble"
     },
     "iron-mask-stunned-011-3x.png": {
-      "standing": 116,
+      "standing": 113,
       "bbox": [
-        15,
-        46,
-        163,
+        12,
+        49,
+        156,
         162
       ],
       "colors": 16,
@@ -2905,7 +2905,7 @@
       "slot": "stunned",
       "index": 11,
       "cell": 131,
-      "source": "arc-from-typifying"
+      "source": "v3-wobble"
     },
     "iron-mask-stunned-012-3x.png": {
       "standing": 116,
@@ -2927,7 +2927,7 @@
       "slot": "stunned",
       "index": 12,
       "cell": 132,
-      "source": "arc-from-typifying"
+      "source": "copied-from-v2-unchanged"
     },
     "iron-mask-stunned-013-3x.png": {
       "standing": 117,
@@ -2949,7 +2949,7 @@
       "slot": "stunned",
       "index": 13,
       "cell": 133,
-      "source": "arc-from-typifying"
+      "source": "copied-from-v2-unchanged"
     },
     "iron-mask-knocked_down-000-3x.png": {
       "standing": 105,
@@ -3147,7 +3147,7 @@
       "slot": "back_launch_knockdown",
       "index": 0,
       "cell": 142,
-      "source": "arc-from-typifying"
+      "source": "copied-from-v2-unchanged"
     },
     "iron-mask-back_launch_knockdown-001-3x.png": {
       "standing": 123,
@@ -3169,7 +3169,7 @@
       "slot": "back_launch_knockdown",
       "index": 1,
       "cell": 143,
-      "source": "arc-from-typifying"
+      "source": "copied-from-v2-unchanged"
     },
     "iron-mask-back_launch_knockdown-002-3x.png": {
       "standing": 131,
@@ -3191,7 +3191,7 @@
       "slot": "back_launch_knockdown",
       "index": 2,
       "cell": 144,
-      "source": "arc-from-typifying"
+      "source": "copied-from-v2-unchanged"
     },
     "iron-mask-back_launch_knockdown-003-3x.png": {
       "standing": 127,
@@ -3213,7 +3213,7 @@
       "slot": "back_launch_knockdown",
       "index": 3,
       "cell": 145,
-      "source": "arc-from-typifying"
+      "source": "copied-from-v2-unchanged"
     },
     "iron-mask-back_launch_knockdown-004-3x.png": {
       "standing": 121,
@@ -3235,7 +3235,7 @@
       "slot": "back_launch_knockdown",
       "index": 4,
       "cell": 146,
-      "source": "arc-from-typifying"
+      "source": "copied-from-v2-unchanged"
     },
     "iron-mask-back_launch_knockdown-005-3x.png": {
       "standing": 117,
@@ -3279,7 +3279,7 @@
       "slot": "back_launch_knockdown",
       "index": 6,
       "cell": 148,
-      "source": "arc-from-typifying"
+      "source": "copied-from-v2-unchanged"
     },
     "iron-mask-back_launch_knockdown-007-3x.png": {
       "standing": 108,
@@ -3301,7 +3301,7 @@
       "slot": "back_launch_knockdown",
       "index": 7,
       "cell": 149,
-      "source": "arc-from-typifying"
+      "source": "copied-from-v2-unchanged"
     },
     "iron-mask-back_launch_knockdown-008-3x.png": {
       "standing": 100,
@@ -3323,7 +3323,7 @@
       "slot": "back_launch_knockdown",
       "index": 8,
       "cell": 150,
-      "source": "arc-from-typifying"
+      "source": "copied-from-v2-unchanged"
     },
     "iron-mask-back_launch_knockdown-009-3x.png": {
       "standing": 94,
@@ -3345,7 +3345,7 @@
       "slot": "back_launch_knockdown",
       "index": 9,
       "cell": 151,
-      "source": "arc-from-typifying"
+      "source": "copied-from-v2-unchanged"
     },
     "iron-mask-knocked_down_get_up-000-3x.png": {
       "standing": 77,
@@ -3367,7 +3367,7 @@
       "slot": "knocked_down_get_up",
       "index": 0,
       "cell": 152,
-      "source": "arc-from-typifying"
+      "source": "copied-from-v2-unchanged"
     },
     "iron-mask-knocked_down_get_up-001-3x.png": {
       "standing": 95,
@@ -3389,7 +3389,7 @@
       "slot": "knocked_down_get_up",
       "index": 1,
       "cell": 153,
-      "source": "arc-from-typifying"
+      "source": "copied-from-v2-unchanged"
     },
     "iron-mask-knocked_down_get_up-002-3x.png": {
       "standing": 103,
@@ -3411,7 +3411,7 @@
       "slot": "knocked_down_get_up",
       "index": 2,
       "cell": 154,
-      "source": "arc-from-typifying"
+      "source": "copied-from-v2-unchanged"
     },
     "iron-mask-knocked_down_get_up-003-3x.png": {
       "standing": 109,
@@ -3455,7 +3455,7 @@
       "slot": "knocked_down_get_up",
       "index": 4,
       "cell": 156,
-      "source": "arc-from-typifying"
+      "source": "copied-from-v2-unchanged"
     },
     "iron-mask-knocked_down_death-000-3x.png": {
       "standing": 67,
@@ -3741,7 +3741,7 @@
       "slot": "clash_impact",
       "index": 0,
       "cell": 169,
-      "source": "tween-from-typifying"
+      "source": "copied-from-v2-unchanged"
     },
     "iron-mask-clash_impact-001-3x.png": {
       "standing": 115,
@@ -3763,7 +3763,7 @@
       "slot": "clash_impact",
       "index": 1,
       "cell": 170,
-      "source": "tween-from-typifying"
+      "source": "copied-from-v2-unchanged"
     },
     "iron-mask-clash_impact-002-3x.png": {
       "standing": 115,
@@ -3807,7 +3807,7 @@
       "slot": "clash_impact",
       "index": 3,
       "cell": 172,
-      "source": "tween-from-typifying"
+      "source": "copied-from-v2-unchanged"
     },
     "iron-mask-clash_impact-004-3x.png": {
       "standing": 117,
@@ -3829,7 +3829,7 @@
       "slot": "clash_impact",
       "index": 4,
       "cell": 173,
-      "source": "tween-from-typifying"
+      "source": "copied-from-v2-unchanged"
     },
     "iron-mask-clash_lock-000-3x.png": {
       "standing": 117,
@@ -3983,7 +3983,7 @@
       "slot": "clash_win",
       "index": 0,
       "cell": 180,
-      "source": "arc-from-typifying"
+      "source": "copied-from-v2-unchanged"
     },
     "iron-mask-clash_win-001-3x.png": {
       "standing": 117,
@@ -4005,7 +4005,7 @@
       "slot": "clash_win",
       "index": 1,
       "cell": 181,
-      "source": "arc-from-typifying"
+      "source": "copied-from-v2-unchanged"
     },
     "iron-mask-clash_win-002-3x.png": {
       "standing": 117,
@@ -4049,7 +4049,7 @@
       "slot": "clash_win",
       "index": 3,
       "cell": 183,
-      "source": "arc-from-typifying"
+      "source": "copied-from-v2-unchanged"
     },
     "iron-mask-clash_win-004-3x.png": {
       "standing": 117,
@@ -4071,7 +4071,7 @@
       "slot": "clash_win",
       "index": 4,
       "cell": 184,
-      "source": "arc-from-typifying"
+      "source": "copied-from-v2-unchanged"
     },
     "iron-mask-clash_win-005-3x.png": {
       "standing": 117,
@@ -4093,7 +4093,7 @@
       "slot": "clash_win",
       "index": 5,
       "cell": 185,
-      "source": "arc-from-typifying"
+      "source": "copied-from-v2-unchanged"
     },
     "iron-mask-clash_win-006-3x.png": {
       "standing": 117,
@@ -4115,7 +4115,7 @@
       "slot": "clash_win",
       "index": 6,
       "cell": 186,
-      "source": "arc-from-typifying"
+      "source": "copied-from-v2-unchanged"
     },
     "iron-mask-clash_lose-000-3x.png": {
       "standing": 116,
@@ -4467,7 +4467,7 @@
       "slot": "intro",
       "index": 0,
       "cell": 202,
-      "source": "arc-from-typifying"
+      "source": "copied-from-v2-unchanged"
     },
     "iron-mask-intro-001-3x.png": {
       "standing": 117,
@@ -4489,7 +4489,7 @@
       "slot": "intro",
       "index": 1,
       "cell": 203,
-      "source": "arc-from-typifying"
+      "source": "copied-from-v2-unchanged"
     },
     "iron-mask-intro-002-3x.png": {
       "standing": 117,
@@ -4511,14 +4511,14 @@
       "slot": "intro",
       "index": 2,
       "cell": 204,
-      "source": "arc-from-typifying"
+      "source": "copied-from-v2-unchanged"
     },
     "iron-mask-intro-003-3x.png": {
       "standing": 117,
       "bbox": [
         7,
         45,
-        166,
+        163,
         162
       ],
       "colors": 16,
@@ -4533,14 +4533,14 @@
       "slot": "intro",
       "index": 3,
       "cell": 205,
-      "source": "arc-from-typifying"
+      "source": "v3-fist-raise"
     },
     "iron-mask-intro-004-3x.png": {
       "standing": 117,
       "bbox": [
         7,
         45,
-        165,
+        163,
         162
       ],
       "colors": 16,
@@ -4555,14 +4555,14 @@
       "slot": "intro",
       "index": 4,
       "cell": 206,
-      "source": "arc-from-typifying"
+      "source": "v3-fist-raise"
     },
     "iron-mask-intro-005-3x.png": {
       "standing": 117,
       "bbox": [
         7,
         45,
-        164,
+        163,
         162
       ],
       "colors": 16,
@@ -4577,7 +4577,7 @@
       "slot": "intro",
       "index": 5,
       "cell": 207,
-      "source": "arc-from-typifying"
+      "source": "v3-fist-raise"
     },
     "iron-mask-intro-006-3x.png": {
       "standing": 117,
@@ -4621,7 +4621,7 @@
       "slot": "intro",
       "index": 7,
       "cell": 209,
-      "source": "arc-from-typifying"
+      "source": "copied-from-v2-unchanged"
     },
     "iron-mask-intro-008-3x.png": {
       "standing": 117,
@@ -4643,7 +4643,7 @@
       "slot": "intro",
       "index": 8,
       "cell": 210,
-      "source": "arc-from-typifying"
+      "source": "copied-from-v2-unchanged"
     },
     "iron-mask-intro-009-3x.png": {
       "standing": 117,
@@ -4665,7 +4665,7 @@
       "slot": "intro",
       "index": 9,
       "cell": 211,
-      "source": "arc-from-typifying"
+      "source": "copied-from-v2-unchanged"
     },
     "iron-mask-intro-010-3x.png": {
       "standing": 117,
@@ -4687,7 +4687,7 @@
       "slot": "intro",
       "index": 10,
       "cell": 212,
-      "source": "arc-from-typifying"
+      "source": "copied-from-v2-unchanged"
     },
     "iron-mask-intro-011-3x.png": {
       "standing": 117,
@@ -4709,7 +4709,7 @@
       "slot": "intro",
       "index": 11,
       "cell": 213,
-      "source": "arc-from-typifying"
+      "source": "copied-from-v2-unchanged"
     },
     "iron-mask-celebrate-000-3x.png": {
       "standing": 117,
@@ -4731,14 +4731,14 @@
       "slot": "celebrate",
       "index": 0,
       "cell": 214,
-      "source": "arc-from-typifying"
+      "source": "copied-from-v2-unchanged"
     },
     "iron-mask-celebrate-001-3x.png": {
       "standing": 117,
       "bbox": [
-        1,
+        0,
         45,
-        174,
+        176,
         162
       ],
       "colors": 16,
@@ -4753,7 +4753,7 @@
       "slot": "celebrate",
       "index": 1,
       "cell": 215,
-      "source": "arc-from-typifying"
+      "source": "v3-cloak-rim"
     },
     "iron-mask-celebrate-002-3x.png": {
       "standing": 117,
@@ -4775,14 +4775,14 @@
       "slot": "celebrate",
       "index": 2,
       "cell": 216,
-      "source": "arc-from-typifying"
+      "source": "v3-cloak-rim"
     },
     "iron-mask-celebrate-003-3x.png": {
       "standing": 117,
       "bbox": [
         0,
         45,
-        183,
+        182,
         162
       ],
       "colors": 16,
@@ -4797,14 +4797,14 @@
       "slot": "celebrate",
       "index": 3,
       "cell": 217,
-      "source": "arc-from-typifying"
+      "source": "v3-cloak-rim"
     },
     "iron-mask-celebrate-004-3x.png": {
       "standing": 117,
       "bbox": [
         0,
         45,
-        185,
+        184,
         162
       ],
       "colors": 16,
@@ -4819,7 +4819,7 @@
       "slot": "celebrate",
       "index": 4,
       "cell": 218,
-      "source": "arc-from-typifying"
+      "source": "v3-cloak-rim"
     },
     "iron-mask-celebrate-005-3x.png": {
       "standing": 117,
@@ -4841,14 +4841,14 @@
       "slot": "celebrate",
       "index": 5,
       "cell": 219,
-      "source": "arc-from-typifying"
+      "source": "v3-cloak-rim"
     },
     "iron-mask-celebrate-006-3x.png": {
       "standing": 117,
       "bbox": [
         0,
         45,
-        177,
+        178,
         162
       ],
       "colors": 16,
@@ -4863,14 +4863,14 @@
       "slot": "celebrate",
       "index": 6,
       "cell": 220,
-      "source": "arc-from-typifying"
+      "source": "v3-cloak-rim"
     },
     "iron-mask-celebrate-007-3x.png": {
       "standing": 117,
       "bbox": [
-        1,
+        0,
         45,
-        175,
+        176,
         162
       ],
       "colors": 16,
@@ -4885,7 +4885,7 @@
       "slot": "celebrate",
       "index": 7,
       "cell": 221,
-      "source": "arc-from-typifying"
+      "source": "v3-cloak-rim"
     },
     "iron-mask-celebrate-008-3x.png": {
       "standing": 117,
@@ -4929,7 +4929,7 @@
       "slot": "celebrate",
       "index": 9,
       "cell": 223,
-      "source": "arc-from-typifying"
+      "source": "copied-from-v2-unchanged"
     },
     "iron-mask-celebrate-010-3x.png": {
       "standing": 117,
@@ -4951,7 +4951,7 @@
       "slot": "celebrate",
       "index": 10,
       "cell": 224,
-      "source": "arc-from-typifying"
+      "source": "copied-from-v2-unchanged"
     },
     "iron-mask-celebrate-011-3x.png": {
       "standing": 117,
@@ -4973,7 +4973,7 @@
       "slot": "celebrate",
       "index": 11,
       "cell": 225,
-      "source": "arc-from-typifying"
+      "source": "copied-from-v2-unchanged"
     },
     "iron-mask-celebrate-012-3x.png": {
       "standing": 117,
@@ -4995,7 +4995,7 @@
       "slot": "celebrate",
       "index": 12,
       "cell": 226,
-      "source": "arc-from-typifying"
+      "source": "copied-from-v2-unchanged"
     },
     "iron-mask-celebrate-013-3x.png": {
       "standing": 117,
@@ -5017,7 +5017,7 @@
       "slot": "celebrate",
       "index": 13,
       "cell": 227,
-      "source": "arc-from-typifying"
+      "source": "copied-from-v2-unchanged"
     },
     "iron-mask-celebrate-014-3x.png": {
       "standing": 117,
@@ -5039,7 +5039,7 @@
       "slot": "celebrate",
       "index": 14,
       "cell": 228,
-      "source": "arc-from-typifying"
+      "source": "copied-from-v2-unchanged"
     },
     "iron-mask-celebrate-015-3x.png": {
       "standing": 117,
@@ -5061,7 +5061,7 @@
       "slot": "celebrate",
       "index": 15,
       "cell": 229,
-      "source": "arc-from-typifying"
+      "source": "copied-from-v2-unchanged"
     },
     "iron-mask-celebrate-016-3x.png": {
       "standing": 117,
@@ -5083,7 +5083,7 @@
       "slot": "celebrate",
       "index": 16,
       "cell": 230,
-      "source": "arc-from-typifying"
+      "source": "copied-from-v2-unchanged"
     },
     "iron-mask-celebrate-017-3x.png": {
       "standing": 117,
@@ -5105,7 +5105,7 @@
       "slot": "celebrate",
       "index": 17,
       "cell": 231,
-      "source": "arc-from-typifying"
+      "source": "copied-from-v2-unchanged"
     },
     "iron-mask-idle_alt-000-3x.png": {
       "standing": 117,
@@ -5127,7 +5127,7 @@
       "slot": "idle_alt",
       "index": 0,
       "cell": 232,
-      "source": "derived-from-typifying-thin-arm"
+      "source": "copied-from-v2-unchanged"
     },
     "iron-mask-idle_alt-001-3x.png": {
       "standing": 117,
@@ -5149,7 +5149,7 @@
       "slot": "idle_alt",
       "index": 1,
       "cell": 233,
-      "source": "derived-from-typifying-thin-arm"
+      "source": "copied-from-v2-unchanged"
     },
     "iron-mask-idle_alt-002-3x.png": {
       "standing": 117,
@@ -5171,7 +5171,7 @@
       "slot": "idle_alt",
       "index": 2,
       "cell": 234,
-      "source": "derived-from-typifying-thin-arm"
+      "source": "copied-from-v2-unchanged"
     },
     "iron-mask-idle_alt-003-3x.png": {
       "standing": 117,
@@ -5215,7 +5215,7 @@
       "slot": "idle_alt",
       "index": 4,
       "cell": 236,
-      "source": "derived-from-typifying-thin-arm"
+      "source": "copied-from-v2-unchanged"
     },
     "iron-mask-idle_alt-005-3x.png": {
       "standing": 117,
@@ -5237,7 +5237,7 @@
       "slot": "idle_alt",
       "index": 5,
       "cell": 237,
-      "source": "derived-from-typifying-thin-arm"
+      "source": "copied-from-v2-unchanged"
     },
     "iron-mask-idle_alt-006-3x.png": {
       "standing": 117,
@@ -5281,7 +5281,7 @@
       "slot": "idle_alt",
       "index": 7,
       "cell": 239,
-      "source": "derived-from-typifying-thin-arm"
+      "source": "copied-from-v2-unchanged"
     }
   },
   "airborne_slots": [
