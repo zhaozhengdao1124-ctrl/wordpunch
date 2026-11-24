@@ -17,7 +17,9 @@
     if (opts.random == null) opts.random = this.menu.campMode === 'challenge';
     if (!opts.random) return baseRoute.call(this, opts);   // 剧情：固定路线
     const last = KC.RANDOM.LAST, n = KC.ROUTE.length - 1;
-    const pool = KC.ROUTE.filter(c => c !== last).concat((KC.POOL || []).filter(c => KC.CITIES[c] && (window.WF_CAMPAIGN_DATA || {}).stages && WF_CAMPAIGN_DATA.stages[c]));
+    // offline 的城（现在是巴黎）不进池，抽满 5 城时不会少抽一座
+    const playable = c => { const city = KC.CITIES[c]; return !!(city && !city.offline); };
+    const pool = KC.ROUTE.filter(c => c !== last && playable(c)).concat((KC.POOL || []).filter(c => playable(c) && (window.WF_CAMPAIGN_DATA || {}).stages && WF_CAMPAIGN_DATA.stages[c]));
     for (let i = pool.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [pool[i], pool[j]] = [pool[j], pool[i]]; }
     return pool.slice(0, n).concat([last]);
   };

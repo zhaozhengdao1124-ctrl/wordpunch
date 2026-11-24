@@ -205,8 +205,9 @@ WF.CFG = {
     ROUTE: ['beijing', 'seoul', 'tokyo', 'buenosaires', 'rocketbase', 'washington'],
     OPEN: ['beijing', 'seoul', 'tokyo', 'buenosaires', 'rocketbase', 'washington'],
     CITY_NAMES: { beijing: '北京', tokyo: '东京', seoul: '首尔', washington: '华盛顿', buenosaires: '布宜诺斯艾利斯', rocketbase: '火箭基地', pyramid: '金字塔', shaolin: '少林寺', foshan: '佛山', paris: '巴黎' },
-    // v1.7.2 挑战模式的随机城市池：剧情路线前 5 城 + 这三城，每局抽 5 城打乱，最后一站固定华盛顿（金霸霸）。剧情路线不变
-    POOL: ['pyramid', 'shaolin', 'foshan', 'paris'],
+    // v1.7.2 挑战模式的随机城市池：剧情路线前 5 城 + 金字塔 / 少林寺 / 佛山，每局抽 5 城打乱，最后一站固定华盛顿（金霸霸）。剧情路线不变。
+    // 巴黎暂时下线（新小兵图未就绪）：不进这个池。CITIES.paris、铁面人、玛戈和小兵素材都留着，只是 offline，选不中也匹配不进去。
+    POOL: ['pyramid', 'shaolin', 'foshan'],
     PLAYER_HP: 800,
     CITY_HEAL: 0.30,                 // 每过一个城市（飞往下一城时）回复 30%
     CITY_MULT: 1.1,                  // 每往后一城，小怪血量和伤害 ×1.1
@@ -250,9 +251,9 @@ WF.CFG = {
         stage: 'foshan', normals: ['fs_lion', 'fs_coolie'], elite: 'fs_thug', opponent: 'huangshifu', poolOnly: true,
         opponentHp: 1650, cine: 'city', hpMult: 0.95, accAdj: -0.03, delayMult: 0.85, ai: { accuracy: 0.85, delay: [1.0, 4.2] },
       },
-      // 巴黎（挑战模式城市池）：Boss 是铁面人。血量 / 答题仍是原来的数值。
+      // 巴黎暂时下线。铁面人、三个小兵、血量和答题都按原数值留着；offline 只表示这一站现在去不了。
       paris: {
-        stage: 'paris', normals: ['pa_newsboy', 'pa_sketcher'], elite: 'pa_porter', opponent: 'iron_mask', poolOnly: true,
+        stage: 'paris', normals: ['pa_newsboy', 'pa_sketcher'], elite: 'pa_porter', opponent: 'iron_mask', poolOnly: true, offline: true,
         opponentHp: 1700, cine: 'city', hpMult: 1.0, accAdj: -0.02, delayMult: 1.1, ai: { accuracy: 0.86, delay: [1.5, 5.6] },
       },
       rocketbase: {
