@@ -21,7 +21,7 @@ WF.Sprites = {
     const im = this.img[id][v.replace('_', '') || 'normal'];
     const fin = (r) => { if (this.st[k] !== 'loading') return; this.st[k] = r; this.active--; this.pump(); for (const f of this.subs.slice()) f(); };
     im.onload = () => fin('done'); im.onerror = () => fin('error');
-    im.src = 'assets/' + id + v + '.png';
+    im.src = 'assets/' + (window.WF_ASSETS[id].atlas || id) + v + '.png';
   },
   pump() { while (this.bg && this.active < this.PAR && this.q.length) { const [id, v] = this.q.shift(); if (!this.st[id + v]) this.start(id, v); } },
   settled(id, v) { const s = this.st[id + v]; return s === 'done' || s === 'error'; },

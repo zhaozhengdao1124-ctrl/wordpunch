@@ -70,11 +70,13 @@
     begin(id, length) {
       const sp = this.spec(id) || { layers: [], props: [], ground_y: 76, placeholder: true };
       this.load(id);
+      length = sp.world_width || length;
       const laid = this.layout(sp, length);
       const endP = laid.find(p => p.id === 'end');
       return {
         id, on: true, phase: 'intro', length,
-        endX: endP ? endP.x : length,
+        endX: sp.entrance_x ?? (endP ? endP.x : length),
+        fixedEntrance: sp.entrance_x != null,
         props: laid,
         pigeons: [], nextPigeon: 45,
         fade: 0, placeholder: !!sp.placeholder,
@@ -139,8 +141,11 @@
     drawLayer(ctx, cam, l) {
       const im = l.c; if (!im || !im.complete || !im.naturalWidth) return;
       const VW = WF.CFG.VIEW_W;
-      // 天空：钉在镜头上、不横向平铺。规格写了 parallax 0.1 且 repeat，整关跑下来会卷过一张 192 宽的太阳贴图。
-      if (l.id === 'sky' || l.p <= 0 || l.repeat === false) { ctx.drawImage(im, 0, 0); return; }
+      if (!l.repeat) {
+        const offset = l.id === 'sky' ? 0 : Math.floor((cam - VW / 2) * l.p);
+        ctx.drawImage(im, -offset, 0, l.w, l.h);
+        return;
+      }
       const w = l.w || im.naturalWidth;
       const ox = -mod(Math.floor((cam - 96) * l.p), w);
       for (let x = ox; x < VW; x += w) ctx.drawImage(im, x, 0);
