@@ -1,0 +1,240 @@
+{
+  "id": "washington",
+  "name": "华盛顿",
+  "scene_name": "金灯柱廊大道",
+  "time_of_day": "夜晚",
+  "viewport": [
+    192,
+    108
+  ],
+  "ground_y": 76,
+  "layers": [
+    {
+      "id": "sky",
+      "file": "run_sky.png",
+      "width": 192,
+      "height": 108,
+      "parallax": 0.1,
+      "repeat_x": true
+    },
+    {
+      "id": "far",
+      "file": "run_far.png",
+      "width": 256,
+      "height": 108,
+      "parallax": 0.3,
+      "repeat_x": true
+    },
+    {
+      "id": "mid",
+      "file": "run_mid.png",
+      "width": 384,
+      "height": 108,
+      "parallax": 0.6,
+      "repeat_x": true
+    },
+    {
+      "id": "near",
+      "file": "run_near.png",
+      "width": 384,
+      "height": 108,
+      "parallax": 0.85,
+      "repeat_x": true
+    },
+    {
+      "id": "floor",
+      "file": "run_floor.png",
+      "width": 192,
+      "height": 108,
+      "parallax": 1.0,
+      "repeat_x": true
+    }
+  ],
+  "props": [
+    {
+      "id": "gate",
+      "name": "金檐音乐亭",
+      "file": "prop_gate.png",
+      "layer": "mid",
+      "width": 92,
+      "height": 68,
+      "anchor_px": [
+        43,
+        65
+      ],
+      "anchor_y": 68,
+      "placement": {
+        "mode": "spaced_landmark",
+        "first_world_x": 260,
+        "suggested_interval_px": 900,
+        "end_clearance_px": 185
+      }
+    },
+    {
+      "id": "stall",
+      "name": "花市铜顶亭",
+      "file": "prop_stall.png",
+      "layer": "near",
+      "width": 55,
+      "height": 40,
+      "anchor_px": [
+        26,
+        37
+      ],
+      "anchor_y": 69,
+      "placement": {
+        "mode": "spaced_landmark",
+        "first_world_x": 470,
+        "suggested_interval_px": 1060,
+        "end_clearance_px": 185
+      }
+    },
+    {
+      "id": "tree",
+      "name": "广场老榆树",
+      "file": "prop_tree.png",
+      "layer": "near",
+      "width": 48,
+      "height": 72,
+      "anchor_px": [
+        21,
+        69
+      ],
+      "anchor_y": 68,
+      "placement": {
+        "mode": "spaced_landmark",
+        "first_world_x": 690,
+        "suggested_interval_px": 1290,
+        "end_clearance_px": 185
+      }
+    },
+    {
+      "id": "end",
+      "name": "圆顶金廊决战入口",
+      "file": "prop_end.png",
+      "layer": "mid",
+      "width": 160,
+      "height": 73,
+      "anchor_px": [
+        79,
+        70
+      ],
+      "anchor_y": 68,
+      "placement": {
+        "mode": "at_level_end",
+        "max_count": 1,
+        "offset_px": 0
+      }
+    },
+    {
+      "id": "extra",
+      "name": "街灯长椅",
+      "file": "prop_extra.png",
+      "layer": "near",
+      "width": 40,
+      "height": 36,
+      "anchor_px": [
+        12,
+        34
+      ],
+      "anchor_y": 69,
+      "placement": {
+        "mode": "spaced_landmark",
+        "first_world_x": 850,
+        "suggested_interval_px": 1210,
+        "end_clearance_px": 185
+      }
+    }
+  ],
+  "dynamic_elements": [
+    {
+      "id": "beacons",
+      "name": "摆动探照灯",
+      "file": "fx_beacons.png",
+      "layer": "sky",
+      "coordinate_layer": "far",
+      "space": "repeat_with_layer",
+      "repeat_world_layer_px": 256,
+      "anchor_left_px": 33,
+      "anchor_top_px": 0,
+      "cell_size": [
+        108,
+        46
+      ],
+      "frames": 24,
+      "frame_duration_ms": 160,
+      "frame_order": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+        11,
+        12,
+        13,
+        14,
+        15,
+        16,
+        17,
+        18,
+        19,
+        20,
+        21,
+        22,
+        23
+      ],
+      "sheet_layout": "horizontal",
+      "optional": true
+    }
+  ],
+  "palette_count": 31,
+  "palette": [
+    "#20283E",
+    "#282F3D",
+    "#2A334B",
+    "#303943",
+    "#333C50",
+    "#36415A",
+    "#3B484E",
+    "#414956",
+    "#43506A",
+    "#46464D",
+    "#47526A",
+    "#4D5859",
+    "#505465",
+    "#515A61",
+    "#535E73",
+    "#586781",
+    "#596276",
+    "#656F6B",
+    "#696B71",
+    "#697276",
+    "#6B7082",
+    "#6E6868",
+    "#78849A",
+    "#817967",
+    "#828887",
+    "#897F77",
+    "#9B8767",
+    "#9DA4AE",
+    "#A0927C",
+    "#BCAC8E",
+    "#E4CE9F"
+  ],
+  "placement_notes": {
+    "coordinates": "原生像素；x 向右，y 向下。",
+    "camera": "camera_x 为镜头中心世界横坐标。每层从屏幕 x = -(floor((camera_x-96) × parallax) mod width) 开始平铺。",
+    "prop": "屏幕锚点 x = 96 + floor((world_x-camera_x) × 本层视差)，左上角 = 屏幕锚点减 anchor_px；anchor_y 是屏幕锚点 y。",
+    "order": "每层先画贴片，再画本层景物与动态元素；角色在地面之后绘制。",
+    "spacing": "间隔单位是世界像素；终点前 185 px 留空。终点、门楼、摊、树、其它景物依次安排，若与已放景物中心距离小于 120 px 则跳过。",
+    "end": "入口只在本关实际终点生成一次。玩家抵达入口后切入 stages/washington。",
+    "review_speed_px_s": 60
+  },
+  "credits": "长街与景物由《我的拳》项目原创绘制。对照使用项目已验收的当地擂台。审片角色为苏绫和西装保镖，基础角色素材 JKLLIN（Mr.J）。"
+}

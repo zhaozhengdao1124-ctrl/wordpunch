@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="robots" content="noindex,nofollow">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#05030c">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icons/icon-192.png">
+<link rel="icon" href="data:,">
+<title>单词格斗 · 试玩版</title>
+<style>
+  html, body { margin: 0; height: 100%; background: #05030c; overflow: hidden; }
+  body { display: flex; align-items: center; justify-content: center; }
+  #game { width: min(100vw, calc(100vh * 16 / 9)); height: auto; aspect-ratio: 16 / 9; image-rendering: pixelated; image-rendering: crisp-edges; display: block; }
+  /* 2026-11-21 启动进度条（像素风）：代替原来的黑屏，进菜单后自动消失 */
+  #wf-boot { position: fixed; left: 50%; bottom: 11vh; transform: translateX(-50%); width: min(62vw, 480px); z-index: 95; pointer-events: none; text-align: center; font: 700 14px/1.4 "Courier New", monospace; color: #ffd23c; transition: opacity .3s; }
+  #wf-boot b { display: block; letter-spacing: .35em; font-size: 18px; margin-bottom: 8px; text-shadow: 2px 2px 0 #7a1414; }
+  #wf-boot .bar { height: 16px; padding: 3px; background: #1b1230; border: 4px solid #ffd23c; box-shadow: 0 0 0 4px #05030c, 0 0 0 8px #7a5a10; image-rendering: pixelated; }
+  #wf-boot .bar i { display: block; height: 100%; width: 0; background: repeating-linear-gradient(90deg, #ffd23c 0 10px, #e09a00 10px 12px, transparent 12px 14px); }
+  #wf-boot small { display: block; margin-top: 10px; color: #bfb3d6; font-size: 12px; }
+</style>
+</head>
+<body>
+<canvas id="game" width="2880" height="1620"></canvas>
+<div id="wf-boot" data-n="74"><b>LOADING</b><div class="bar"><i></i></div><small>载入程序…</small></div>
+<script>
+// 启动进度：前 60% 按已载入的脚本数，后 40% 按菜单要用的角色图（js/main.js 调 WF_BOOT.sprites / done）。data-n = 页面里 <script src> 的个数（test/memory.test.js 会核对）
+(function () {
+  var el = document.getElementById('wf-boot'), bar = el.querySelector('i'), tx = el.querySelector('small'), N = +el.getAttribute('data-n') || 60, p = 0, sp = 0;
+  function show(v, msg) { p = Math.max(p, Math.min(1, v)); bar.style.width = Math.round(p * 20) * 5 + '%'; if (msg) tx.textContent = msg; }
+  var timer = setInterval(function () { if (sp) return; var k = Math.min(1, document.querySelectorAll('script[src]').length / N); show(0.6 * k, '载入程序 ' + Math.round(k * 100) + '%'); }, 120);
+  window.WF_BOOT = {
+    sprites: function (a, b) { sp = 1; show(0.6 + 0.4 * (b ? a / b : 1), '载入角色 ' + a + ' / ' + b); },
+    done: function () { clearInterval(timer); show(1, '完成'); el.style.opacity = '0'; setTimeout(function () { el.style.display = 'none'; }, 350); }
+  };
+})();
+</script>
+<script src="assets/assets.js"></script>
+<script src="assets/campaign.js"></script>
+<script src="assets/runs.js"></script>
+<script src="assets/paris.js"></script>
+<script src="assets/skins.js"></script>
+<script src="data/banks_index.js"></script>
+<script src="js/config.js"></script>
+<script src="js/v19_config.js"></script>
+<script src="js/v19_rules.js"></script>
+<script src="data/art_manifest.js"></script>
+<script src="data/shopkeeper.js"></script>
+<script src="js/haptics.js"></script>
+<script src="js/audio.js"></script>
+<script src="js/speech.js"></script>
+<script src="js/render.js"></script>
+<script src="js/run.js"></script>
+<script src="js/fighter.js"></script>
+<script src="js/quiz.js"></script>
+<script src="data/phrases.js"></script>
+<script src="js/v2_phrase.js"></script>
+<script src="js/source.js"></script>
+<script src="js/profiles.js"></script>
+<script src="js/unlocks.js"></script>
+<script src="js/game.js"></script>
+<script src="js/buttons.js"></script>
+<script src="js/guide.js"></script>
+<script src="js/hud.js"></script>
+<script src="js/standoff.js"></script>
+<script src="js/campaign.js"></script>
+<script src="js/campaign_ui.js"></script>
+<script src="js/v17.js"></script>
+<script src="js/v17_sys.js"></script>
+<script src="js/v17_fx.js"></script>
+<script src="js/v171_ach.js"></script>
+<script src="js/v171_grow.js"></script>
+<script src="js/v171_daily.js"></script>
+<script src="js/v171_ach2.js"></script>
+<script src="js/v171_diff.js"></script>
+<script src="js/v172_cities.js"></script>
+<script src="data/codex.js"></script>
+<script src="js/v18_codex.js"></script>
+<script src="js/bookui.js"></script>
+<script src="js/v18_mobile.js"></script>
+<script src="js/v18_skins.js"></script>
+<script src="js/v18_banks.js"></script>
+<script src="js/v19_core.js"></script>
+<script src="js/loot_reels.js"></script>
+<script src="js/loot_symbols.js"></script>
+<script src="js/loot_review.js"></script>
+<script src="js/v19_flip.js"></script>
+<script src="js/v19_rest.js"></script>
+<script src="js/v19_shop.js"></script>
+<script src="js/v19_debuff.js"></script>
+<script src="js/v19_newitems.js"></script>
+<script src="js/v19_ban.js"></script>
+<script src="js/v19_ach.js"></script>
+<script src="js/v19_touch.js"></script>
+<script src="data/word_levels.js"></script>
+<script src="js/v20_wordlevel.js"></script>
+<script src="js/v110_launch.js"></script>
+<script src="js/netrules.js"></script>
+<script src="js/netclient.js"></script>
+<script src="js/v21_load.js"></script>
+<script src="js/v21_memory.js"></script>
+<script src="js/v21_save.js"></script>
+<script src="js/v21_kick.js"></script>
+<script src="js/v21_qtypes.js"></script>
+<script src="js/v21_flow.js"></script>
+<script src="data/paris_pairs.js"></script>
+<script src="js/v22_paris.js"></script>
+<script src="js/v23_vapeur.js"></script>
+<script src="js/v24_iron_mask.js"></script>
+<script src="js/v26_suling_hd.js"></script>
+<script src="js/main.js"></script>
+</body>
+</html>

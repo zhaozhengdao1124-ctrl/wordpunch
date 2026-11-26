@@ -1,0 +1,309 @@
+{
+  "id": "shaolin",
+  "name": "河南·少林",
+  "scene_name": "山门前石径",
+  "time_of_day": "清晨",
+  "viewport": [
+    192,
+    108
+  ],
+  "ground_y": 76,
+  "layers": [
+    {
+      "id": "sky",
+      "file": "run_sky.png",
+      "width": 192,
+      "height": 108,
+      "parallax": 0.1,
+      "repeat_x": true
+    },
+    {
+      "id": "far",
+      "file": "run_far.png",
+      "width": 256,
+      "height": 108,
+      "parallax": 0.3,
+      "repeat_x": true
+    },
+    {
+      "id": "mid",
+      "file": "run_mid.png",
+      "width": 384,
+      "height": 108,
+      "parallax": 0.6,
+      "repeat_x": true
+    },
+    {
+      "id": "near",
+      "file": "run_near.png",
+      "width": 384,
+      "height": 108,
+      "parallax": 0.85,
+      "repeat_x": true
+    },
+    {
+      "id": "floor",
+      "file": "run_floor.png",
+      "width": 192,
+      "height": 108,
+      "parallax": 1.0,
+      "repeat_x": true
+    }
+  ],
+  "props": [
+    {
+      "id": "gate",
+      "file": "prop_gate.png",
+      "name": "无字山门",
+      "layer": "mid",
+      "width": 84,
+      "height": 52,
+      "anchor_px": [
+        42,
+        51
+      ],
+      "anchor_y": 66,
+      "placement": {
+        "mode": "spaced_landmark",
+        "first_world_x": 260,
+        "suggested_interval_px": 900,
+        "end_clearance_px": 185
+      }
+    },
+    {
+      "id": "stall",
+      "file": "prop_stall.png",
+      "name": "矮香炉",
+      "layer": "near",
+      "width": 40,
+      "height": 29,
+      "anchor_px": [
+        20,
+        28
+      ],
+      "anchor_y": 69,
+      "placement": {
+        "mode": "spaced_landmark",
+        "first_world_x": 415,
+        "suggested_interval_px": 840,
+        "end_clearance_px": 185
+      }
+    },
+    {
+      "id": "tree",
+      "file": "prop_tree.png",
+      "name": "松树",
+      "layer": "near",
+      "width": 48,
+      "height": 57,
+      "anchor_px": [
+        24,
+        56
+      ],
+      "anchor_y": 69,
+      "placement": {
+        "mode": "spaced_landmark",
+        "first_world_x": 640,
+        "suggested_interval_px": 1250,
+        "end_clearance_px": 185
+      }
+    },
+    {
+      "id": "extra",
+      "file": "prop_extra.png",
+      "name": "石狮",
+      "layer": "near",
+      "width": 32,
+      "height": 28,
+      "anchor_px": [
+        16,
+        27
+      ],
+      "anchor_y": 69,
+      "placement": {
+        "mode": "spaced_landmark",
+        "first_world_x": 830,
+        "suggested_interval_px": 1040,
+        "end_clearance_px": 185
+      }
+    },
+    {
+      "id": "end",
+      "file": "prop_end.png",
+      "name": "通向青石广场的山门",
+      "layer": "mid",
+      "width": 132,
+      "height": 65,
+      "anchor_px": [
+        66,
+        64
+      ],
+      "anchor_y": 66,
+      "placement": {
+        "mode": "at_level_end",
+        "max_count": 1,
+        "offset_px": 0
+      }
+    }
+  ],
+  "dynamic_elements": [
+    {
+      "id": "incense_smoke",
+      "name": "香炉烟",
+      "file": "fx_incense_smoke.png",
+      "frame_w": 16,
+      "frame_h": 24,
+      "cell_size": [
+        16,
+        24
+      ],
+      "frames": 6,
+      "frame_count": 6,
+      "ticks_per_frame": 3,
+      "frame_duration_ms": 100,
+      "frame_order": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5
+      ],
+      "sheet_layout": "horizontal",
+      "space": "repeat_with_layer",
+      "coordinate_layer": "near",
+      "repeat_world_layer_px": 384,
+      "anchor_left_px": 139,
+      "anchor_top_px": 30,
+      "layer": "near",
+      "anchor_y": 54,
+      "loop": true,
+      "optional": true
+    }
+  ],
+  "palette_count": 24,
+  "palette": [
+    [
+      42,
+      52,
+      62
+    ],
+    [
+      53,
+      68,
+      75
+    ],
+    [
+      60,
+      74,
+      78
+    ],
+    [
+      63,
+      80,
+      76
+    ],
+    [
+      68,
+      84,
+      91
+    ],
+    [
+      74,
+      65,
+      68
+    ],
+    [
+      75,
+      89,
+      87
+    ],
+    [
+      81,
+      100,
+      86
+    ],
+    [
+      83,
+      103,
+      108
+    ],
+    [
+      91,
+      104,
+      96
+    ],
+    [
+      92,
+      75,
+      72
+    ],
+    [
+      101,
+      125,
+      128
+    ],
+    [
+      110,
+      89,
+      81
+    ],
+    [
+      118,
+      129,
+      116
+    ],
+    [
+      126,
+      155,
+      158
+    ],
+    [
+      128,
+      107,
+      94
+    ],
+    [
+      135,
+      144,
+      128
+    ],
+    [
+      152,
+      134,
+      117
+    ],
+    [
+      153,
+      176,
+      170
+    ],
+    [
+      159,
+      166,
+      143
+    ],
+    [
+      180,
+      194,
+      173
+    ],
+    [
+      205,
+      208,
+      179
+    ],
+    [
+      224,
+      214,
+      175
+    ],
+    [
+      240,
+      223,
+      178
+    ]
+  ],
+  "placement_notes": "灰绿青石径连接山门广场；道具不写真实字号；终点门后接平整擂台。",
+  "credits": "《我的拳》原创像素场景"
+}

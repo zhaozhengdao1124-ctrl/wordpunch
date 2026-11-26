@@ -1,0 +1,67 @@
+{
+  "id": "paris",
+  "name": "巴黎",
+  "scene_name": "塞纳河桥与夜市",
+  "time_of_day": "入夜",
+  "viewport": [
+    192,
+    108
+  ],
+  "ground_y": 76,
+  "layers": [
+    {
+      "id": "sky",
+      "file": "paris-unified-sky-3x.png",
+      "width": 192,
+      "height": 108,
+      "parallax": 0,
+      "repeat_x": false
+    },
+    {
+      "id": "far",
+      "file": "paris-unified-far-3x.png",
+      "width": 651,
+      "height": 108,
+      "parallax": 0.3,
+      "repeat_x": false
+    },
+    {
+      "id": "mid",
+      "file": "paris-unified-mid-3x.png",
+      "width": 1109,
+      "height": 108,
+      "parallax": 0.6,
+      "repeat_x": false
+    },
+    {
+      "id": "floor",
+      "file": "paris-unified-floor-3x.png",
+      "width": 1720,
+      "height": 108,
+      "parallax": 1,
+      "repeat_x": false
+    },
+    {
+      "id": "street",
+      "file": "paris-unified-street-3x.png",
+      "width": 1720,
+      "height": 108,
+      "parallax": 1,
+      "repeat_x": false
+    },
+    {
+      "id": "near",
+      "file": "paris-unified-near-3x.png",
+      "width": 1491,
+      "height": 108,
+      "parallax": 0.85,
+      "repeat_x": false
+    }
+  ],
+  "props": [],
+  "dynamic_elements": [],
+  "credits": "Word Punch 巴黎关原创像素场景",
+  "placeholder": false,
+  "world_width": 1720,
+  "entrance_x": 1396
+}
