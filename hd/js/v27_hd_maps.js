@@ -28,7 +28,13 @@
   const has = id => STAGES.indexOf(id) >= 0;
 
   const cache = Object.create(null);
-  function img(src) { const im = new Image(); im.decoding = 'async'; im.src = src; return im; }
+  // 只有下载并解码完成才算可画，避免第一帧拿到未解码的图
+  function img(src, pri) {
+    const im = new Image(); im.decoding = 'async'; if (pri) im.fetchPriority = pri;
+    im.onload = () => { if (im.decode) im.decode().then(() => { im._hdOk = true; }, () => { im._hdOk = true; }); else im._hdOk = true; };
+    im.onerror = () => { im._hdFail = true; };
+    im.src = src; return im;
+  }
   function pack(stage, v) {
     const k = stage + '/' + v;
     if (!cache[k]) {
@@ -39,11 +45,20 @@
   }
   function want(stage, v, which) {
     const p = pack(stage, v);
-    if (which === 'street' || which === 'all') p.street = p.street || img(p.base + 'street.webp');
-    if (which === 'arena' || which === 'all') { p.bg = p.bg || img(p.base + 'bg.webp'); p.deck = p.deck || img(p.base + 'deck.webp'); }
+    if (which === 'street' || which === 'all') p.street = p.street || img(p.base + 'street.webp', 'high');
+    const arena = () => { p.bg = p.bg || img(p.base + 'bg.webp', 'low'); p.deck = p.deck || img(p.base + 'deck.webp', 'low'); };
+    if (which === 'arena') arena();
+    else if (which === 'all' && !p.bg) {
+      // 街道优先：街道载完（或失败）再载擂台，不抢开局带宽
+      const st = p.street;
+      if (st._hdOk || st._hdFail) arena();
+      else { const go = () => arena(); st.addEventListener('load', go, { once: true }); st.addEventListener('error', go, { once: true }); }
+    }
     return p;
   }
-  const ok = im => !!(im && im.complete && im.naturalWidth);
+  const ok = im => !!(im && im._hdOk && im.complete && im.naturalWidth);
+  const NEUTRAL = '#05030c';
+  function neutral(ctx) { ctx.save(); ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.fillStyle = NEUTRAL; ctx.fillRect(0, 0, ctx.canvas.width, ctx.canvas.height); ctx.restore(); }
 
   function pick(stage) { return forcedCity[stage] || forcedAll || VARS[Math.floor(Math.random() * VARS.length)]; }
   // 每局（camp 对象）每城只抽一次；street 状态上也记一份，街尾和擂台必然同一套
@@ -65,7 +80,7 @@
       if (!on() || !st || !has(st.id)) return baseDraw(ctx, cam, t, st);
       const v = st.hdVar || (st.hdVar = variantFor(WF.game, st.id));
       const p = want(st.id, v, 'street');
-      if (!ok(p.street)) return baseDraw(ctx, cam, t, st);
+      if (!ok(p.street)) return neutral(ctx);   // hd 版不再画旧跑街：没载好就是纯底色
       const C = WF.CFG, WS = C.WORLD_SCALE || C.SCALE, im = p.street;
       const logW = im.naturalWidth / STREET_SRC, VW = C.VIEW_W + 2;
       let left = cam - C.VIEW_W / 2;
@@ -91,7 +106,7 @@
       if (!has(stage)) return baseDraw(ctx, cam, t, excite);
       const v = variantFor(g, stage);
       const p = want(stage, v, 'arena');
-      if (!ok(p.bg) || !ok(p.deck)) return baseDraw(ctx, cam, t, excite);
+      if (!ok(p.bg) || !ok(p.deck)) return neutral(ctx);   // hd 版不再画旧擂台
       const C = WF.CFG, WS = C.WORLD_SCALE || C.SCALE, k = WS / ARENA_SRC;
       const left = cam - C.VIEW_W / 2;
       const span = Math.max(1, C.STAGE_W - C.VIEW_W);
@@ -135,6 +150,80 @@
     G._hdMapHooked = true;
   }
 
+  // hd 版：十城的旧跑街 / 旧擂台图不再下载（只留 runs.js 里的数据，关长、入口等逻辑照旧），省带宽给高清图
+  function hookOldLoaders() {
+    const R = WF.Run, St = WF.Stage;
+    if (R && !R._hdSkipOld) {
+      const baseLoad = R.load.bind(R);
+      R.load = function (id, done) {
+        if (!on() || !has(id)) return baseLoad(id, done);
+        if (!this.cache[id]) this.cache[id] = { layers: [], props: [], dyn: {}, sp: this.spec(id) || {} };
+        if (done) done(true);
+      };
+      R._hdSkipOld = true;
+    }
+    if (St && !St._hdSkipOld) {
+      const baseCity = St.loadCity.bind(St);
+      St.loadCity = function (id, done) {
+        if (!on() || !has(id)) return baseCity(id, done);
+        if (!this.imgCache[id]) this.imgCache[id] = [];
+        if (done) done(true);
+      };
+      St._hdSkipOld = true;
+    }
+  }
+  // 起飞时就定下这一城的套并预载街道 + 擂台；飞机落地后若街道还没载完，停在地图上等（最多 HOLD_MAX_MS），不先进城
+  const HOLD_MAX_MS = 30000;
+  function preloadCity(g) {
+    const stage = curStage(g);
+    if (!on() || !has(stage)) return null;
+    const v = variantFor(g, stage);
+    want(stage, v, 'all');
+    return { stage, v };
+  }
+  function hookPreload() {
+    const G = WF.Game && WF.Game.prototype;
+    if (!G || G._hdPreHooked) return;
+    const baseMap = G.campMapStart;
+    if (baseMap) G.campMapStart = function () {
+      const r = baseMap.apply(this, arguments);
+      const pc = preloadCity(this);
+      if (pc && this.camp) this.camp._hdWait = { stage: pc.stage, v: pc.v, t0: Date.now() };
+      return r;
+    };
+    const baseEnter = G.campEnterCity;
+    if (baseEnter) G.campEnterCity = function () {
+      const cp = this.camp, w = cp && cp._hdWait;
+      if (on() && cp && !cp.entered) {
+        const pc = preloadCity(this);
+        if (pc && !ok(pack(pc.stage, pc.v).street)) {   // 等街道就够：擂台在跑街的几分钟里接着载，载完前也只画底色
+          const t0 = (w && w.stage === pc.stage) ? w.t0 : (cp._hdWait = { stage: pc.stage, v: pc.v, t0: Date.now() }).t0;
+          const p = pack(pc.stage, pc.v);
+          const failed = !!(p.street && p.street._hdFail);
+          if (!failed && Date.now() - t0 < HOLD_MAX_MS) { this._hdLoading = true; return; }
+        }
+      }
+      this._hdLoading = false;
+      if (cp) cp._hdWait = null;
+      return baseEnter.apply(this, arguments);
+    };
+    // 等待时在地图画面右下角提示一下
+    const baseRender = G.render;
+    if (baseRender) G.render = function () {
+      const r = baseRender.apply(this, arguments);
+      if (this._hdLoading && this.state === 'map' && this.ctx) {
+        const C = WF.CFG, c = this.ctx;
+        c.save(); WF.uiTransform(c);
+        c.fillStyle = 'rgba(5,3,12,0.72)'; c.fillRect(C.SCREEN_W - 210, C.SCREEN_H - 44, 196, 30);
+        c.fillStyle = '#ffd23c'; c.font = '700 14px ' + C.FONT; c.textAlign = 'center'; c.textBaseline = 'middle';
+        c.fillText('载入高清地图…', C.SCREEN_W - 112, C.SCREEN_H - 29);
+        c.restore();
+      }
+      return r;
+    };
+    G._hdPreHooked = true;
+  }
+
   // 标题画面默认巴黎 A（或 ?hdmap 指定）
   if (on()) want('paris', forcedCity.paris || forcedAll || 'A', 'arena');
 
@@ -146,7 +235,9 @@
     current() { const g = WF.game, s = curStage(g); return { stage: s, variant: s ? variantFor(g, s) : null, street: g && g.street && g.street.hdVar }; },
   };
 
+  hookOldLoaders();
   hookRun();
   hookStage();
   hookCampaign();
+  hookPreload();
 })();

@@ -57,6 +57,7 @@
     const fin = () => { animLeft[name]--; if (core) { pending--; settle(); } };
     im.onload = fin;
     im.onerror = () => { rec.failed = true; fin(); };
+    if (!core) im.fetchPriority = 'low';   // 后台动作帧不抢地图和开局带宽
     im.src = 'assets/suling_hd/frames/' + path + '.webp';
   }
   // 先载跑街与开场要用的核心动作（挡住开局），其余动作后台载入，载完前该动作仍用原 50 像素图
