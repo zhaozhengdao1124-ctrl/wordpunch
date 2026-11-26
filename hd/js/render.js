@@ -265,6 +265,20 @@ WF.FX = {
     for (let i = 0; i < n; i++)
       this.list.push({ type: 'dust', x: x + (Math.random() - 0.5) * 6, y: y - 1, vx: -dir * (0.2 + Math.random() * 0.6), vy: -0.15 - Math.random() * 0.25, t: 0, life: 14 + Math.floor(Math.random() * 8), r: 1 + Math.random() * 1.6 });
   },
+  // 倒地淡出时用的一小团软烟（灰蓝、上升、半透明），不替代角色本身
+  smoke(x, y, n = 6) {
+    for (let i = 0; i < n; i++)
+      this.list.push({
+        type: 'smoke',
+        x: x + (Math.random() - 0.5) * 10,
+        y: y - 2 - Math.random() * 6,
+        vx: (Math.random() - 0.5) * 0.4,
+        vy: -0.28 - Math.random() * 0.35,
+        t: 0,
+        life: 16 + Math.floor(Math.random() * 10),
+        r: 1.2 + Math.random() * 2.0,
+      });
+  },
   // v1.3 角色自带的序列帧特效（金霸霸 gold_shockwave 等）：fx = WF_ASSETS[id].fx[name]
   img(src) { const C = this._img || (this._img = {}); if (!C[src]) { C[src] = new Image(); C[src].src = src; } return C[src]; },
   sprite(fx, x, y, dir, ang) { this.img(fx.src); const e = { type: 'sprite', fx, x, y, dir, ang: ang || 0, t: 0, life: fx.n * fx.t }; this.list.push(e); return e; },
@@ -286,6 +300,7 @@ WF.FX = {
       e.t++;
       if (e.parts) for (const p of e.parts) { p.x += p.vx; p.y += p.vy; p.vy += 0.18; p.vx *= 0.92; p.life--; }
       if (e.type === 'dust') { e.x += e.vx; e.y += e.vy; e.r += 0.08; }
+      if (e.type === 'smoke') { e.x += e.vx; e.y += e.vy; e.vy -= 0.012; e.vx *= 0.96; e.r += 0.11; }
     }
     this.list = this.list.filter(e => e.t < e.life || (e.parts && e.parts.some(p => p.life > 0)));
   },
@@ -298,6 +313,13 @@ WF.FX = {
         const a = 1 - e.t / e.life; if (a <= 0) continue;
         ctx.globalAlpha = a * 0.8; const r = Math.round(e.r);
         px(e.x - r, e.y - r, '#c8a77a', r * 2, r * 2); px(e.x - r + 1, e.y - r, '#e2c9a0', Math.max(1, r * 2 - 2), 1);
+        ctx.globalAlpha = 1; continue;
+      }
+      if (e.type === 'smoke') {
+        const a = 1 - e.t / e.life; if (a <= 0) continue;
+        ctx.globalAlpha = a * 0.42; const r = Math.max(1, Math.round(e.r));
+        px(e.x - r, e.y - r, '#b4c0c8', r * 2, r * 2);
+        px(e.x - r + 1, e.y - r + 1, '#d5dee4', Math.max(1, r * 2 - 2), Math.max(1, r * 2 - 2));
         ctx.globalAlpha = 1; continue;
       }
       if (e.type === 'ring') {

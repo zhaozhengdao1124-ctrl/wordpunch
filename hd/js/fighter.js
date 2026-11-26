@@ -40,8 +40,15 @@ WF.Fighter = class {
       this.home = null; this.ox = 0;
       this.x += this.fly.vx;
       this.y = (this.y || 0) + this.fly.vy;
-      this.fly.vy -= this.fly.g;
-      if (this.y < 0) { this.y = 0; this.fly.vy *= -0.22; if (Math.abs(this.fly.vy) < 0.45) this.fly.vy = 0; }
+      // 已贴地且没有向上速度时不再加重力，避免 vy=0 下一帧又被 g 拉进地面抖动
+      if (this.y > 0 || this.fly.vy > 0) this.fly.vy -= this.fly.g;
+      if (this.y <= 0) {
+        this.y = 0;
+        if (this.fly.vy < 0) {
+          this.fly.vy *= -0.22;
+          if (this.fly.vy < 0.45) this.fly.vy = 0;
+        }
+      }
     } else if (this.tween) {
       const tw = this.tween; tw.t++;
       const k = Math.min(1, tw.t / tw.d), e = tw.ease === 'in' ? k * k : tw.ease === 'lin' ? k : 1 - Math.pow(1 - k, 3);

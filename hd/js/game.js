@@ -614,7 +614,14 @@ WF.Game = class {
     const C = WF.CFG;
     if (this.camp && this.campIsMinion(L)) { this.campMinionKO(W, L); return; }
     this.ko = { winner: W, loser: L }; this.matchEnd = this.t;
-    L.play('knocked_down_death', { hold: true }); this.push(L, W, C.KNOCK.ko, 26, true);
+    if (this.camp && this.campDeathAnim) {
+      // 闯关城市对手：倒地停留再淡出，不立刻播会化成残烟的 knocked_down_death
+      L.play(this.campDeathAnim(L), { hold: true });
+      this.push(L, W, C.KNOCK.ko, 26, true);
+      if (this.campStartGroundDeath) this.campStartGroundDeath(L);
+    } else {
+      L.play('knocked_down_death', { hold: true }); this.push(L, W, C.KNOCK.ko, 26, true);
+    }
     this.slow = 70; this.koText = 1; this.darkenTarget = 0; this.rumble = 0;
     WF.Haptics.ko();
     const tot = this.stats[0].correct + this.stats[1].correct;

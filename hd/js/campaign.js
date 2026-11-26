@@ -580,13 +580,45 @@
     if (E) { E.dir = -1; this.p[1] = E; }
     if (P) { P.dir = 1; if (P.anim === 'walk' || P.anim === 'run' || P._home) { P._home = false; P.play('idle'); } }
   };
+  G.campDeathAnim = function (L) {
+    // 小怪没有 back_launch_knockdown：用 knocked_down（倒地）而不是 knocked_down_death（末帧是一缕残烟）
+    if (L.has('back_launch_knockdown')) return 'back_launch_knockdown';
+    if (L.has('knocked_down')) return 'knocked_down';
+    return 'knocked_down_death';
+  };
+  G.campDeathLie = function (L) {
+    const name = L.has('knocked_down') ? 'knocked_down' : (L.anim || 'knocked_down_death');
+    const a = L.data && L.data.anims && L.data.anims[name];
+    if (!a || !a.frames || !a.frames.length) return;
+    const last = a.frames.length - 1;
+    if (L.anim === name && L.fi === last && L.o && L.o.hold) return;
+    L.play(name, { from: last, hold: true });
+  };
+  G.campDeathSmoke = function (L, n) {
+    const C = WF.CFG;
+    const x = L.worldX ? L.worldX() : L.x;
+    const y = C.GROUND_Y - 4 - (L.y || 0) * 0.15;
+    if (WF.FX.smoke) WF.FX.smoke(x, y, n == null ? 6 : n);
+  };
+  G.campDeathHoldN = function () { const F = (WF.CFG.FEEL || {}); return F.DEATH_HOLD != null ? F.DEATH_HOLD : 18; };
+  G.campDeathFadeN = function () { const F = (WF.CFG.FEEL || {}); return F.DEATH_FADE != null ? F.DEATH_FADE : 16; };
   G.campLaunch = function (L, W) {
-    const F = WF.CFG.FEEL || {};
-    L.play(L.has('back_launch_knockdown') ? 'back_launch_knockdown' : 'knocked_down_death', { hold: true });
+    const F = WF.CFG.FEEL || {}, C = WF.CFG;
+    L.play(this.campDeathAnim(L), { hold: true });
     L.tween = null; if (L.clearHome) L.clearHome();
     const dir = (W && L.x < W.x) ? -1 : 1;
-    L.fly = { vx: (F.FLY_VX || 5.4) * dir, vy: F.FLY_VY || 3.6, g: F.FLY_G || 0.38 };
+    const vx = (F.DEATH_FLY_VX != null ? F.DEATH_FLY_VX : 3.8) * dir;
+    // 把落点钳在击飞当时的镜头内，后续镜头前移时尸体会自然滚出画面
+    const margin = 12;
+    const cam = this.camLock != null ? this.camLock : this.cam;
+    L.fly = {
+      vx, vy: F.FLY_VY || 3.6, g: F.FLY_G || 0.38,
+      phase: 'air', t: 0, landed: 0, wasAir: false, holdT: 0, fadeT: 0,
+      xMin: cam - C.VIEW_W / 2 + margin, xMax: cam + C.VIEW_W / 2 - margin,
+    };
     L._down = true;
+    L.alpha = 1;
+    L.deathFx = null;
   };
   G.campMinionKO = function (W, L) {
     if (!this.ko || !this.ko.minion) this.ko = { winner: W, loser: L, minion: true };
@@ -598,16 +630,88 @@
   G.campFlyTick = function () {
     const C = WF.CFG, F = C.FEEL || {}, cp = this.camp;
     if (!cp || !cp.mobs) return;
-    const camR = this.cam + C.VIEW_W / 2 + 28, camL = this.cam - C.VIEW_W / 2 - 28;
+    const HOLD = this.campDeathHoldN(), FADE = this.campDeathFadeN(), BLINK = F.DEATH_BLINK != null ? F.DEATH_BLINK : 8;
     for (const E of cp.mobs) {
-      if (!E.fly) continue;
-      if (E.x > camR || E.x < camL) {
-        const fade = (E.x > camR ? E.x - camR : camL - E.x) / 24;
-        E.alpha = Math.max(0, 1 - fade);
-        if (E.alpha <= 0) { E.fly = null; E.alpha = 0; }
-      }
+      if (E.fly) this.campDeathTickFly(E, HOLD, FADE, BLINK);
+      else if (E.deathFx) this.campDeathTickGround(E, HOLD, FADE, BLINK);
     }
     if (cp.mobs && this.p[1]) cp.mobs = cp.mobs.filter(m => m === this.p[1] || m.alpha > 0);
+  };
+  G.campDeathTickFly = function (E, HOLD, FADE, BLINK) {
+    const fl = E.fly;
+    fl.t = (fl.t || 0) + 1;
+    if (fl.xMin != null && E.x < fl.xMin) { E.x = fl.xMin; if (fl.vx < 0) fl.vx = 0; }
+    if (fl.xMax != null && E.x > fl.xMax) { E.x = fl.xMax; if (fl.vx > 0) fl.vx = 0; }
+    if (fl.phase === 'air' || !fl.phase) {
+      fl.phase = 'air';
+      if ((E.y || 0) > 0) fl.wasAir = true;
+      if (fl.wasAir && (E.y || 0) === 0) {
+        fl.landed = (fl.landed || 0) + 1;
+        const dir = fl.vx >= 0 ? 1 : -1;
+        WF.FX.dust(E.worldX ? E.worldX() : E.x, WF.CFG.GROUND_Y, dir, fl.landed === 1 ? 5 : 2);
+        if (fl.landed === 1) this.shakeAdd(2);
+        fl.vx *= 0.55;
+        if (Math.abs(fl.vy) < 0.45) {
+          fl.vy = 0; fl.vx = 0; fl.g = 0;
+          fl.phase = 'hold'; fl.holdT = 0;
+          this.campDeathLie(E);
+        }
+      }
+      if (fl.t > 90 && fl.phase === 'air') { // 安全网：异常滞空则强制倒地
+        E.y = 0; fl.vy = 0; fl.vx = 0; fl.g = 0;
+        fl.phase = 'hold'; fl.holdT = 0; this.campDeathLie(E);
+      }
+      return;
+    }
+    if (fl.phase === 'hold') {
+      E.y = 0; fl.vx = 0; fl.vy = 0; fl.g = 0;
+      fl.holdT++;
+      if (fl.holdT <= BLINK && fl.holdT % 2 === 0) { E.flash = 1; E.flashSeq = ['white']; }
+      if (fl.holdT >= HOLD) {
+        fl.phase = 'fade'; fl.fadeT = 0;
+        this.campDeathSmoke(E, 7);
+      }
+      return;
+    }
+    if (fl.phase === 'fade') {
+      E.y = 0; fl.vx = 0; fl.vy = 0; fl.g = 0;
+      fl.fadeT++;
+      E.alpha = Math.max(0, 1 - fl.fadeT / FADE);
+      if (fl.fadeT === Math.max(1, Math.floor(FADE / 3))) this.campDeathSmoke(E, 4);
+      if (E.alpha <= 0) { E.fly = null; E.alpha = 0; }
+    }
+  };
+  G.campStartGroundDeath = function (L) {
+    L.deathFx = { phase: 'wait', t: 0, holdT: 0, fadeT: 0 };
+    L._down = true;
+    L.alpha = 1;
+  };
+  G.campDeathTickGround = function (E, HOLD, FADE, BLINK) {
+    const d = E.deathFx; if (!d) return;
+    d.t = (d.t || 0) + 1;
+    const settled = !E.tween && (E.done || (E.o && E.o.hold && E.fi === (E.to != null ? E.to : ((E.a && E.a.frames.length - 1) || 0))));
+    if (d.phase === 'wait') {
+      if (settled || d.t > 40) {
+        this.campDeathLie(E);
+        d.phase = 'hold'; d.holdT = 0;
+      }
+      return;
+    }
+    if (d.phase === 'hold') {
+      d.holdT++;
+      if (d.holdT <= BLINK && d.holdT % 2 === 0) { E.flash = 1; E.flashSeq = ['white']; }
+      if (d.holdT >= HOLD) {
+        d.phase = 'fade'; d.fadeT = 0;
+        this.campDeathSmoke(E, 7);
+      }
+      return;
+    }
+    if (d.phase === 'fade') {
+      d.fadeT++;
+      E.alpha = Math.max(0, 1 - d.fadeT / FADE);
+      if (d.fadeT === Math.max(1, Math.floor(FADE / 3))) this.campDeathSmoke(E, 4);
+      if (E.alpha <= 0) { E.deathFx = null; E.alpha = 0; }
+    }
   };
   // 击倒后立刻接着跑，下一只约 1 秒内从右边跑来；评价只在半程休息和街尾出现
   G.campMinionOutSeq = function* () {
