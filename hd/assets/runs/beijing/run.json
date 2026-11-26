@@ -1,0 +1,208 @@
+{
+  "id": "beijing",
+  "name": "北京",
+  "scene_name": "傍晚胡同长街",
+  "time_of_day": "傍晚",
+  "viewport": [
+    192,
+    108
+  ],
+  "ground_y": 76,
+  "layers": [
+    {
+      "id": "sky",
+      "file": "run_sky.png",
+      "width": 192,
+      "height": 108,
+      "parallax": 0.1,
+      "repeat_x": true
+    },
+    {
+      "id": "far",
+      "file": "run_far.png",
+      "width": 256,
+      "height": 108,
+      "parallax": 0.3,
+      "repeat_x": true
+    },
+    {
+      "id": "mid",
+      "file": "run_mid.png",
+      "width": 384,
+      "height": 108,
+      "parallax": 0.6,
+      "repeat_x": true
+    },
+    {
+      "id": "near",
+      "file": "run_near.png",
+      "width": 384,
+      "height": 108,
+      "parallax": 0.85,
+      "repeat_x": true
+    },
+    {
+      "id": "floor",
+      "file": "run_floor.png",
+      "width": 192,
+      "height": 108,
+      "parallax": 1.0,
+      "repeat_x": true
+    }
+  ],
+  "props": [
+    {
+      "id": "gate",
+      "name": "胡同牌楼",
+      "file": "prop_gate.png",
+      "layer": "mid",
+      "width": 88,
+      "height": 66,
+      "anchor_px": [
+        44,
+        65
+      ],
+      "anchor_y": 68,
+      "placement": {
+        "mode": "spaced_landmark",
+        "first_world_x": 220,
+        "suggested_interval_px": 800,
+        "end_clearance_px": 170
+      }
+    },
+    {
+      "id": "stall",
+      "name": "早点摊",
+      "file": "prop_stall.png",
+      "layer": "near",
+      "width": 56,
+      "height": 39,
+      "anchor_px": [
+        28,
+        38
+      ],
+      "anchor_y": 69,
+      "placement": {
+        "mode": "spaced_landmark",
+        "first_world_x": 435,
+        "suggested_interval_px": 920,
+        "end_clearance_px": 170
+      }
+    },
+    {
+      "id": "tree",
+      "name": "老槐树",
+      "file": "prop_tree.png",
+      "layer": "near",
+      "width": 48,
+      "height": 72,
+      "anchor_px": [
+        23,
+        70
+      ],
+      "anchor_y": 68,
+      "placement": {
+        "mode": "spaced_landmark",
+        "first_world_x": 660,
+        "suggested_interval_px": 1070,
+        "end_clearance_px": 170
+      }
+    },
+    {
+      "id": "end",
+      "name": "擂台入口",
+      "file": "prop_end.png",
+      "layer": "mid",
+      "width": 152,
+      "height": 73,
+      "anchor_px": [
+        76,
+        71
+      ],
+      "anchor_y": 68,
+      "placement": {
+        "mode": "at_level_end",
+        "offset_px": 0,
+        "max_count": 1
+      }
+    }
+  ],
+  "dynamic_elements": [
+    {
+      "id": "pigeon",
+      "name": "归巢鸽",
+      "file": "pigeon.png",
+      "layer": "far",
+      "cell_size": [
+        12,
+        7
+      ],
+      "frames": 3,
+      "frame_order": [
+        0,
+        1,
+        2,
+        1
+      ],
+      "frame_duration_ms": 125,
+      "sheet_layout": "horizontal",
+      "optional": true,
+      "spawn_interval_s": 10,
+      "count_per_flock": 2,
+      "spacing_px": [
+        14,
+        3
+      ],
+      "screen_vx_px_s": -22,
+      "spawn_y_range": [
+        5,
+        11
+      ]
+    }
+  ],
+  "palette_count": 32,
+  "palette": [
+    "#38373F",
+    "#41494A",
+    "#484953",
+    "#484E55",
+    "#493D40",
+    "#535B57",
+    "#555B62",
+    "#56565D",
+    "#566378",
+    "#575963",
+    "#5D4A48",
+    "#626165",
+    "#62676B",
+    "#686E62",
+    "#6C696B",
+    "#706976",
+    "#737378",
+    "#737674",
+    "#777A89",
+    "#793F42",
+    "#79605A",
+    "#827886",
+    "#85817D",
+    "#967F70",
+    "#978592",
+    "#A68B8E",
+    "#AA8967",
+    "#AC524A",
+    "#CD9F8B",
+    "#D18358",
+    "#E7B799",
+    "#F6D99F"
+  ],
+  "placement_notes": {
+    "coordinates": "原生像素。x 向右，y 向下，origin 是支撑点或底部中心。",
+    "camera": "camera_x 为镜头中心的世界横坐标。贴片起始位置 = -floor((camera_x-96) × parallax) mod width。",
+    "prop": "景物锚点屏幕 x = 96 + floor((world_x-camera_x) × 本层视差)。图片左上角 = 屏幕锚点减 anchor_px。",
+    "order": "从远到近画层，每个景物在本层贴片之后绘制；人物在地面之后绘制。",
+    "spacing": "间隔以地面世界像素计。保留终点前 170 px 净空；若两个标记因关长排得过近，优先保留擂台入口，再保留牌楼，近景摊树错开。",
+    "end": "prop_end 的世界坐标取实际关卡终点，主角世界 x 抵达该点时切入擂台。",
+    "review_speed_px_s": 60
+  },
+  "credits": "街景、独立景物及鸽子均为本次原创像素绘制。预览人物使用项目既有苏绫、胡同混混动画，基础体型署名 JKLLIN（Mr.J）。"
+}
