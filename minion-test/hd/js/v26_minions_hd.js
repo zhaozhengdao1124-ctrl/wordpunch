@@ -219,8 +219,38 @@
     E.play(anim, { from: fi, to: fi, hold: true, loop: false });
     if (g.p[0] && g.p[0].anim !== 'idle') g.p[0].play('idle');
     lab.anim = anim; lab.fi = fi; lab.id = id;
+    labTip();
     if (g.render) g.render();
     return true;
+  }
+
+  // 姿势台冻结：街战的出题/超时/攻防不再跑（数字键 1-9 原来会同时答题，答完就进了普通街战）。
+  function freezeLab(g) {
+    if (g._minionLabFrozen) return;
+    g._minionLabFrozen = true;
+    g.state = 'lab';
+    g.q = null;
+    g.pendingAttack = null;
+    g.paused = false;
+    g.newQuestion = function () {};   // 迟到的出题（剧情/入场回调）也不再起题
+    g.update = function () {
+      if (this.state !== 'lab' || this.q) { this.state = 'lab'; this.q = null; this.pendingAttack = null; }
+      this.t++; WF.frameNo++;
+      if (WF.FX && WF.FX.update) WF.FX.update();
+      this.decay();
+    };
+    if (typeof document !== 'undefined' && document.body && !document.getElementById('minionLabTip')) {
+      const d = document.createElement('div');
+      d.id = 'minionLabTip';
+      d.style.cssText = 'position:fixed;left:8px;bottom:8px;z-index:99999;padding:6px 10px;background:rgba(0,0,0,.72);color:#9f9;font:12px/1.5 monospace;border-radius:4px;pointer-events:none;white-space:pre';
+      document.body.appendChild(d);
+      lab.tip = d;
+    }
+  }
+  function labTip() {
+    if (!lab.tip) return;
+    lab.tip.textContent = '姿势台 ' + (lab.id || '') + '  ' + lab.anim + '/' + String(lab.fi).padStart(3, '0') +
+      '\n1待机 2走 3连击 4重击 5出场 6防御 7受击 8倒地 9消散  [ ] 步进  G 地面线';
   }
 
   function drawGroundLine(g) {
@@ -262,6 +292,7 @@
     const base = G.render;
     if (!base) return;
     G.render = function () {
+      if (WF.minionLab && this._minionLabFrozen && (this.q || this.state !== 'lab')) { this.q = null; this.state = 'lab'; }
       const r = base.apply(this, arguments);
       if (WF.minionLab && lab.ground) drawGroundLine(this);
       return r;
@@ -387,6 +418,7 @@
         if (WF.minionLab) {
           const wait = () => {
             if (g.p && g.p[1] && g.street) {
+              freezeLab(g);
               applyPose({ anim: 'idle', fi: 0 });
               lab.ready = true;
               hookLabInput();
