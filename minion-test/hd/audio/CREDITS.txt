@@ -1,0 +1,28 @@
+单词格斗 试玩版 · 背景音乐署名与授权
+
+1. Vigour (decisive chiptune theme, 8bit)
+   文件: vigour.ogg
+   作者: wyver9
+   授权: CC BY 4.0
+   来源: https://opengameart.org/content/vigour-decisive-chiptune-theme-8bit
+
+2. Boss Fight（首领战）
+   文件: boss_fight.ogg
+   专辑: Chiptune Adventures
+   作者: Juhani Junkala（juhanijunkala.com）
+   授权: CC0 1.0
+   来源: https://opengameart.org/content/4-chiptunes-adventure
+
+3. Level 3（激斗）
+   文件: action_level3.ogg
+   专辑: 5 Chiptunes (Action)
+   作者: Juhani Junkala（juhanijunkala.com）
+   授权: CC0 1.0
+   来源: https://opengameart.org/content/5-chiptunes-action
+
+本目录这些音频仅随游戏试玩版分发，授权条款以作者在来源页公布的为准。
+
+4. 马西克 · 发射倒计时（v1.7 火箭基地 Boss 战占位曲）
+   文件: maxike_bgm_v1.ogg
+   作者: 《我的拳》项目原创（Grok Bot 用代码合成，144 BPM，A 小调，可无缝循环）
+   授权: 项目自有
