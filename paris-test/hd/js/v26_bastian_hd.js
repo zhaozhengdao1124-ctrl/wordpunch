@@ -1,6 +1,6 @@
 // v26（仅临时测试街 paris-test）：巴斯蒂安（槽位 pa_porter）960 已通过帧接到现有绘制管线。不画 celebrate，包内也不含庆祝帧。
 // 钩 WF.Sprites.draw。SRC=960 DST=64，再 × WORLD_SCALE=15。现版 64 格默认脚点是 (32, 54)，高清名义 (480, 810)，但绘制用各帧自身脚点。
-// 脚点用各帧自身（官方 selfcheck：末 6 行 alpha>8 均值 x；着地 y 用画布 clear_from），不写死 (480,810)。
+// 【固定脚位 v1.20】绘制用角色/帧自带 foot[0]（同卢克），不再按每帧质心居中；着地 y 用画布 clear_from（旧：每帧末 6 行均值 x 会左右跳），不写死 (480,810)。
 // 朝左仍是 translate(X+1) 再 scale(-1,1)。受击白/红闪用运行时 source-in。
 // 查询参数：
 //   默认开启高清帧。
@@ -86,7 +86,16 @@
     return c;
   }
 
-  // 官方 selfcheck：末 6 行（last_row-5..last_row）alpha>8 像素的平均 x。y 用画布着地线，不把离地帧拉回地面。
+
+  // 固定脚位（与 v26_luke_hd.js 同一套）：x 用帧自带 fo 或角色默认 foot[0]，不按每帧质心/脚位重新居中；
+  // y 仍用本角色着地线 GROUND_SRC/SCALE（Bastian 810 / 铁面人 815 / Ina 600，末行 809 / 814 / 599 不变）。
+  function footOf(fo) {
+    const d = window.WF_ASSETS && window.WF_ASSETS[CHAR_ID];
+    const fx = (fo && fo[0] != null) ? fo[0] : (d && d.foot && d.foot[0] != null ? d.foot[0] : DEFAULT_FX / SCALE);
+    return [fx, GROUND_SRC / SCALE];
+  }
+
+  // （仅诊断用，不再参与绘制）// 官方 selfcheck：末 6 行（last_row-5..last_row）alpha>8 像素的平均 x。y 用画布着地线，不把离地帧拉回地面。
   function srcFootX(rec) {
     if (rec.fx != null) return rec.fx;
     const src = rec.normal;
@@ -143,8 +152,7 @@
       const rec = frames[cell];
       let im = tintOf(rec, variant || 'normal');
       if (!ok(im)) return baseDraw(ctx, id, cell, X, G, dir, variant, fo);
-      const fx = srcFootX(rec);
-      const foot = [fx / SCALE, GROUND_SRC / SCALE];
+      const foot = footOf(fo);
       const top = G - foot[1];
       const prevSm = ctx.imageSmoothingEnabled;
       ctx.imageSmoothingEnabled = (WF.CFG.WORLD_SCALE || WF.CFG.SCALE) < 15;
@@ -333,7 +341,8 @@
       const rec = fr && frames[fr.c];
       const loaded = Object.keys(frames).filter(k => ok(frames[k].normal) && !frames[k].failed).length;
       const failed = Object.keys(frames).filter(k => frames[k].failed).length;
-      const fx = rec && !rec.failed ? srcFootX(rec) : DEFAULT_FX;
+      const mfx = rec && !rec.failed ? srcFootX(rec) : DEFAULT_FX;   // 本帧测得的脚位（仅诊断）
+      const ft = footOf(fr && fr.fo);
       const hdW = rec && rec.normal && rec.normal.naturalWidth;
       return {
         hdChar: !!WF.hdChar,
@@ -348,8 +357,9 @@
         cell: fr && fr.c,
         char: f && f.id,
         tick: fr && fr.t,
-        foot: [fx / SCALE, GROUND_SRC / SCALE],
-        footSrc: [fx, GROUND_SRC],
+        foot: ft,
+        footSrc: [ft[0] * SCALE, GROUND_SRC],
+        measuredFootSrcX: mfx,
         lastRow: rec && rec.lastRow,
         x: f && f.x,
         cam: g && g.cam,
@@ -366,6 +376,113 @@
     },
   };
 
+
+  // ---- 火花/冲击环贴边（沿用卢克 hookFxSpark 思路，改为只作用于「被打的一方」，并拉到剪影前沿）----
+  // 轮廓行范围用整张 SRC 回读（不是 64 格最近邻），再按逻辑行取最左/最右。
+  const SPARK_MARGIN = 1.5;   // 火花中心落在剪影前沿外 1.5 逻辑像素
+  const SPARK_REACH = 14;     // 原落点离剪影超过这个距离就不动
+  const SPARK_ALPHA = 32;
+  const SPARK_SKIP = { clash: 1, miss: 1 };
+  function visFrame(f) {
+    const v = f.vis;
+    if (v && v.anim) return v.a.frames[v.fi];
+    return f.frame();
+  }
+  function drawX(f) {
+    let X = Math.round(f.worldX());
+    if (f.jitter > 0 && WF.game) X += (WF.game.t % 2 ? 1 : -1);
+    if (f.vis && f.vis.dx) X += Math.round(f.vis.dx);
+    return X;
+  }
+  function maskOf(cell) {
+    const rec = frames[cell];
+    if (!rec || rec.failed || !ok(rec.normal)) return null;
+    if (rec.sparkMask) return rec.sparkMask;
+    const c = document.createElement('canvas');
+    c.width = SRC; c.height = SRC;
+    const g = c.getContext('2d', { willReadFrequently: true });
+    g.drawImage(rec.normal, 0, 0);
+    const data = g.getImageData(0, 0, SRC, SRC).data;
+    const rows = new Array(DST);
+    for (let ly = 0; ly < DST; ly++) {
+      let l = null, r = null;
+      for (let sy = ly * SCALE; sy < (ly + 1) * SCALE; sy++) {
+        const o = sy * SRC * 4 + 3;
+        for (let x = 0; x < SRC; x++) {
+          if (data[o + x * 4] >= SPARK_ALPHA) {
+            if (l == null || x < l) l = x;
+            if (r == null || x > r) r = x;
+          }
+        }
+      }
+      rows[ly] = l == null ? { l: null, r: null } : { l: l / SCALE, r: (r + 1) / SCALE };
+    }
+    rec.sparkMask = rows;
+    return rows;
+  }
+  function rowAt(mask, ly) {
+    const y0 = Math.max(0, Math.min(DST - 1, Math.floor(ly)));
+    if (mask[y0] && mask[y0].l != null) return mask[y0];
+    for (let d = 1; d <= 3; d++) {
+      for (const y of [y0 - d, y0 + d]) {
+        if (y >= 0 && y < DST && mask[y] && mask[y].l != null) return mask[y];
+      }
+    }
+    return null;
+  }
+  function localToWorldX(f, localX, X, foot) {
+    return f.dir > 0 ? X - foot[0] + localX : X + 1 + foot[0] - localX;
+  }
+  function pushToEdge(f, x, y, dir) {
+    if (WF._skipSparkPush) return null;
+    if (!f || f.id !== CHAR_ID || !WF.hdBastian || !WF.hdChar) return null;
+    if (dir !== 0 && f.dir === dir) return null;          // 这是出手的一方，不是被打的一方
+    const fr = visFrame(f);
+    if (!fr || !canUseHd(CHAR_ID, fr.c, S_img())) return null;
+    const mask = maskOf(fr.c);
+    if (!mask) return null;
+    const foot = footOf(fr.fo);
+    const X = drawX(f);
+    const yOff = Math.round(f.y || 0);
+    const localY = y - ((WF.CFG.GROUND_Y || 76) - yOff - foot[1]);
+    const row = rowAt(mask, localY);
+    if (!row) return null;
+    const wL = localToWorldX(f, row.l, X, foot);
+    const wR = localToWorldX(f, row.r, X, foot);
+    const worldLeft = Math.min(wL, wR);
+    const worldRight = Math.max(wL, wR);
+    if (x < worldLeft - SPARK_REACH || x > worldRight + SPARK_REACH) return null;
+    let side;
+    if (dir > 0) side = 'left';
+    else if (dir < 0) side = 'right';
+    else side = x <= (worldLeft + worldRight) / 2 ? 'left' : 'right';
+    const nx = side === 'left' ? worldLeft - SPARK_MARGIN : worldRight + SPARK_MARGIN;
+    return { x: nx, y: y, dir: dir, outDir: side === 'left' ? -1 : 1 };
+  }
+  function S_img() { return WF.Sprites && WF.Sprites.img && WF.Sprites.img[CHAR_ID]; }
+  function hookFxSpark() {
+    const fx = WF.FX;
+    if (!fx || fx._bastianSparkHooked) return;
+    const spark0 = fx.spark.bind(fx);
+    const ring0 = fx.ring.bind(fx);
+    let last = null;
+    const self = () => { const g = WF.game; return g && g.p && g.p.find(p => p && p.id === CHAR_ID); };
+    fx.spark = function (x, y, dir, kind, size) {
+      const f = self();
+      const a = (f && !SPARK_SKIP[kind || 'hit']) ? pushToEdge(f, x, y, dir) : null;
+      last = a ? { x0: x, y0: y, x1: a.x, y1: a.y } : null;
+      if (!a) return spark0(x, y, dir, kind, size);
+      const d = (kind === 'block' && a.outDir != null) ? a.outDir : dir;
+      return spark0(a.x, a.y, d, kind, size);
+    };
+    fx.ring = function (x, y, color, maxR, life) {
+      if (last && last.x0 === x && last.y0 === y) return ring0(last.x1, last.y1, color, maxR, life);
+      return ring0(x, y, color, maxR, life);
+    };
+    fx._bastianSparkHooked = true;
+  }
+
   hookSprites();
+  hookFxSpark();
   startWhenReady();
 })();
