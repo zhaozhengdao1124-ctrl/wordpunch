@@ -220,17 +220,17 @@ WF.CFG = {
     // 北京：20 只小怪沿街依次上场（血量减半，一题大约一只）+ 城市对手
     CITIES: {
       beijing: {
-        stage: 'beijing', normals: ['bj_hunhun', 'bj_xuetu'], elite: 'bj_dashixiong', opponent: 'bj_dashixiong',
+        stage: 'beijing', normals: ['bj_hunhun', 'bj_xuetu'], elite: 'bj_dashixiong', opponent: 'chenbanshan',
         opponentHp: 800, cine: 'city',
       },
       // stage：incoming/stages/<city>/ 的 5 层 PNG（四城都已到位）；tint 只在 PNG 缺失时给程序擂台染色兜底
       // ai：城市对手答题（accuracy 正确率，delay 作答秒数区间）；不写则用 CPU 默认
       seoul: {
-        stage: 'seoul', normals: ['sl_dancer', 'sl_yellowbelt'], elite: 'sl_bouncer', opponent: 'sl_bouncer',
+        stage: 'seoul', normals: ['sl_dancer', 'sl_yellowbelt'], elite: 'sl_bouncer', opponent: 'handawei',
         opponentHp: 950, cine: 'city', tint: { c: '#6a3cff', a: 0.26 }, ai: { accuracy: 0.76, delay: [1.5, 8.0] },
       },
       tokyo: {
-        stage: 'tokyo', normals: ['ty_badboy', 'ty_kendo'], elite: 'ty_sumo', opponent: 'ty_sumo',
+        stage: 'tokyo', normals: ['ty_badboy', 'ty_kendo'], elite: 'ty_sumo', opponent: 'yukino',
         opponentHp: 1100, cine: 'city', tint: { c: '#ff5a8a', a: 0.22 }, ai: { accuracy: 0.8, delay: [1.4, 7.0] },
       },
       // 金霸霸：v1.7 回到最终 Boss（第 6 站）。每站难度曲线不变：第 4 站 1800/0.88、第 5 站 1950/0.89、第 6 站 2100/0.90

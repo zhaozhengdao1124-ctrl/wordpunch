@@ -1,14 +1,22 @@
 // v26（仅临时测试街 minion-test）：已锁定的九只小怪全套接到现有绘制管线。
 // 胡同混混 / 练功学徒 / 不良少年 / 剑道部女生 / 街头舞者 / 跆拳道黄带：SRC=750 DST=50，固定脚位 fo || d.foot || [24,40]，着地末行 599。
 // 武馆大师兄 / 相扑力士 / 夜店保镖：SRC=960 DST=64，固定脚位 fo || d.foot || [32,54]，着地末行 809。
-// 挂钩方式同卢克：不按每帧测到的 fx 重新居中。包内不含庆祝帧，也不画庆祝。
+// 挂钩方式同卢克：不按每帧测到的 fx 重新居中。小怪包内不含庆祝帧，也不画庆祝。
+// v26 city3：城市对手 陈半山（北京）/ 韩多蔚（首尔）/ 雪乃（东京）高清全套 31 动作 236 帧（含庆祝）：
+//   SRC=750 DST=50，固定脚位 fo || d.foot || [24,40]，着地末行 599；按需加载（进对应城市 / 姿势台 / 直打入口 / 首次绘制时才拉）。
 // 查询参数：
-//   ?beijing=1  跳过地图，进北京街（混混、学徒交替，大师兄做精英和第 21 场街尾）
-//   ?tokyo=1    跳过地图，进东京街（不良少年与剑道部女生交替；相扑做精英和街尾。不再打雪乃）
-//   ?seoul=1    跳过地图，进首尔街（舞者与黄带交替；夜店保镖做精英和街尾。不再打韩多蔚）
+//   ?beijing=1  跳过地图，进北京街（混混、学徒交替，大师兄做精英；街尾照正式版打陈半山）
+//   ?tokyo=1    跳过地图，进东京街（不良少年与剑道部女生交替；相扑做精英；街尾照正式版打雪乃）
+//   ?seoul=1    跳过地图，进首尔街（舞者与黄带交替；夜店保镖做精英；街尾照正式版打韩多蔚）
 //   ?hunhunlab=1 / ?xuetulab=1 / ?dashixionglab=1 / ?badboylab=1 / ?sumolab=1
 //   ?kendolab=1 / ?dancerlab=1 / ?yellowbeltlab=1 / ?bouncerlab=1
 //                 姿势台（1 待机 2 走 3 连击 4 重击 5 出场 6 防御 7 受击 8 倒地 9 倒地消散；[ ] 步进；G 地面线）
+//   ?chenbanshanlab=1 / ?handaweilab=1 / ?yukinolab=1
+//                 城市对手姿势台（1 待机 2 走 3 跑 4 出场 5 连击A 6 重拳 7 受击 8 倒地 9 庆祝 0 超必杀；
+//                 , . 切换上/下一个动作（31 个全覆盖）；[ ] 步进；P 连播当前动作；G 地面线）
+//   ?chenbanshanfight=1 / ?handaweifight=1 / ?yukinofight=1
+//                 直接进入与该对手对打：进城后清掉第一只小怪，跑到街尾，走正式的城市对手登场镜头
+//   ?hdchenbanshan=0 / ?hdhandawei=0 / ?hdyukino=0  单独退回原版图集
 //   ?hdchar=0   同时退回原版图集（对照用）
 //   ?hdminion=0 只退回这九只的原版图集
 (function () {
@@ -33,10 +41,21 @@
     sl_dancer:      { src: 750, dst: 50, foot: [24, 40], lab: 'dancerlab', city: 'seoul' },
     sl_yellowbelt:  { src: 750, dst: 50, foot: [24, 40], lab: 'yellowbeltlab', city: 'seoul' },
     sl_bouncer:     { src: 960, dst: 64, foot: [32, 54], lab: 'bouncerlab', city: 'seoul' },
+    chenbanshan:    { src: 750, dst: 50, foot: [24, 40], lab: 'chenbanshanlab', fight: 'chenbanshanfight', city: 'beijing', opp: true },
+    handawei:       { src: 750, dst: 50, foot: [24, 40], lab: 'handaweilab', fight: 'handaweifight', city: 'seoul', opp: true },
+    yukino:         { src: 750, dst: 50, foot: [24, 40], lab: 'yukinolab', fight: 'yukinofight', city: 'tokyo', opp: true },
   };
   const HD_ANIMS = ['idle', 'walk', 'combo_a', 'heavy_punch', 'block', 'hit_swap',
     'knocked_down', 'knocked_down_death', 'intro'];
   const CORE = { idle: 1, walk: 1, combo_a: 1 };
+  // 城市对手：游戏里实际播放的 31 个动作（roster.md / MANIFEST.csv 的 236 帧），按这个顺序排姿势台。
+  const OPP_ANIMS = ['idle', 'walk', 'run', 'intro', 'combo_a', 'combo_b', 'combo_c', 'heavy_punch', 'light_kick',
+    'heavy_kick', 'uppercut', 'dash_punch', 'hyper_combo', 'mega_charge_a', 'mega_charge_b', 'block', 'block_hit',
+    'block_recover', 'hit_swap', 'stunned', 'burned', 'back_launch_knockdown', 'knocked_down', 'knocked_down_get_up',
+    'knocked_down_death', 'dodge_roll', 'clash_lock', 'clash_impact', 'clash_win', 'clash_lose', 'celebrate'];
+  const OPP_FIRST = { idle: 1, walk: 1, run: 1, intro: 1 };
+  const OPP_LAB_KEYS = { Digit1: 'idle', Digit2: 'walk', Digit3: 'run', Digit4: 'intro', Digit5: 'combo_a',
+    Digit6: 'heavy_punch', Digit7: 'hit_swap', Digit8: 'knocked_down', Digit9: 'celebrate', Digit0: 'hyper_combo' };
   const TINT = { white: '#f4f0ff', red: '#ff3a48', black: '#07040e' };
   const LAB_KEYS = { Digit1: 'idle', Digit2: 'walk', Digit3: 'combo_a', Digit4: 'heavy_punch',
     Digit5: 'intro', Digit6: 'block', Digit7: 'hit_swap', Digit8: 'knocked_down', Digit9: 'knocked_down_death' };
@@ -55,30 +74,51 @@
     const conf = CHARS[id];
     const cells = {}, animOf = {}, frames = Object.create(null), animLeft = Object.create(null);
     const A = window.WF_ASSETS && window.WF_ASSETS[id] && window.WF_ASSETS[id].anims;
+    const list = conf.opp ? OPP_ANIMS : HD_ANIMS;
     if (A) {
-      HD_ANIMS.forEach(name => {
+      list.forEach(name => {
         const an = A[name]; if (!an) return;
         an.frames.forEach((f, i) => { cells[f.c] = name + '/' + String(i).padStart(3, '0'); animOf[f.c] = name; });
       });
     }
+    let left = 0, oneDone = null;
+    const whenAll = new Promise(res => { oneDone = res; });
     function loadOne(key, path, core) {
       if (core) pending++;
+      left++;
       const name = animOf[key];
       animLeft[name] = (animLeft[name] || 0) + 1;
       const im = new Image();
       const rec = frames[key] = { normal: im, white: null, red: null, black: null, anim: name };
-      const fin = () => { animLeft[name]--; if (core) { pending--; settle(); } };
+      const fin = () => { animLeft[name]--; if (core) { pending--; settle(); } if (--left === 0) oneDone(); };
       im.onload = fin;
       im.onerror = () => { rec.failed = true; fin(); };
       if (!core) im.fetchPriority = 'low';
       im.src = 'assets/' + id + '_hd/frames/' + path + '.webp';
     }
-    Object.keys(cells).filter(c => CORE[animOf[c]]).forEach(c => loadOne(+c, cells[c], true));
-    setTimeout(() => Object.keys(cells).filter(c => !CORE[animOf[c]]).forEach(c => loadOne(+c, cells[c], false)), 0);
-    bag[id] = { conf: conf, cells: cells, animOf: animOf, frames: frames, animLeft: animLeft };
+    // 还没开始拉的格子 frames[c] 为空，canUseHd 直接退回原版图集；同一动作的格子同批入队，不会半套高清半套像素。
+    let started = false;
+    function startLoad() {
+      if (started) return whenAll;
+      started = true;
+      if (!Object.keys(cells).length) { oneDone(); return whenAll; }
+      if (conf.opp) {
+        // 城市对手不挡开机：先拉待机/走/跑/出场，其余低优先级
+        Object.keys(cells).filter(c => OPP_FIRST[animOf[c]]).forEach(c => loadOne(+c, cells[c], false));
+        setTimeout(() => Object.keys(cells).filter(c => !OPP_FIRST[animOf[c]]).forEach(c => loadOne(+c, cells[c], false)), 0);
+      } else {
+        Object.keys(cells).filter(c => CORE[animOf[c]]).forEach(c => loadOne(+c, cells[c], true));
+        setTimeout(() => Object.keys(cells).filter(c => !CORE[animOf[c]]).forEach(c => loadOne(+c, cells[c], false)), 0);
+      }
+      return whenAll;
+    }
+    if (!conf.opp) startLoad();
+    bag[id] = { conf: conf, cells: cells, animOf: animOf, frames: frames, animLeft: animLeft, anims: list,
+      load: startLoad, started: () => started, loaded: whenAll };
     conf.enabledFlag = 'hd_' + id;
     WF[conf.enabledFlag] = flag('hd' + id.replace(/^(bj_|ty_|sl_)/, ''), WF.hdMinion);
     if (flag(conf.lab, false)) WF.minionLab = id;
+    if (conf.fight && flag(conf.fight, false)) WF.oppFight = id;
   });
   if (pending === 0) allDone = true;
   const ready = new Promise(res => { if (allDone) res(); else waiters.push(res); });
@@ -88,6 +128,14 @@
   if (flag('tokyo', false)) WF.minionCity = 'tokyo';
   if (flag('seoul', false)) WF.minionCity = 'seoul';
   if (WF.minionLab && CHARS[WF.minionLab]) WF.minionCity = CHARS[WF.minionLab].city;
+  if (WF.oppFight && CHARS[WF.oppFight]) WF.minionCity = CHARS[WF.oppFight].city;
+  // 城市对手按需加载：带了城市 / 姿势台 / 直打参数就先拉对应对手。
+  const CITY_OPP = {};
+  Object.keys(CHARS).forEach(id => { if (CHARS[id].opp) CITY_OPP[CHARS[id].city] = id; });
+  function want(id) { const b = bag[id]; return b && b.load ? b.load() : Promise.resolve(); }
+  if (WF.minionCity && CITY_OPP[WF.minionCity]) want(CITY_OPP[WF.minionCity]);
+  if (WF.minionLab) want(WF.minionLab);
+  if (WF.oppFight) want(WF.oppFight);
 
   function tintOf(rec, variant, srcSize) {
     if (variant === 'normal' || !variant) return rec.normal;
@@ -118,6 +166,7 @@
     const b = bag[id];
     if (!b) return false;
     if (!(WF.hdChar && WF.hdMinion && WF[b.conf.enabledFlag])) return false;
+    if (!b.started()) { b.load(); return false; }
     const r = b.frames[cell];
     return !!(r && !r.failed && !b.animLeft[r.anim] && isDefaultSheet(id, set));
   }
@@ -247,10 +296,40 @@
       lab.tip = d;
     }
   }
+  function labKeys() { return CHARS[WF.minionLab] && CHARS[WF.minionLab].opp ? OPP_LAB_KEYS : LAB_KEYS; }
+  function labAnims() {
+    const b = bag[WF.minionLab], E = WF.game && WF.game.p && WF.game.p[1];
+    const list = b ? b.anims : HD_ANIMS;
+    return list.filter(a => !E || !E.data || E.data.anims[a]);
+  }
   function labTip() {
     if (!lab.tip) return;
+    const opp = CHARS[lab.id] && CHARS[lab.id].opp;
+    const A = WF.game && WF.game.p && WF.game.p[1] && WF.game.p[1].data && WF.game.p[1].data.anims[lab.anim];
+    const list = labAnims(), k = list.indexOf(lab.anim);
     lab.tip.textContent = '姿势台 ' + (lab.id || '') + '  ' + lab.anim + '/' + String(lab.fi).padStart(3, '0') +
-      '\n1待机 2走 3连击 4重击 5出场 6防御 7受击 8倒地 9消散  [ ] 步进  G 地面线';
+      (A ? ' (共 ' + A.frames.length + ' 帧)' : '') + '  动作 ' + (k + 1) + '/' + list.length + (lab.playing ? '  ▶连播' : '') +
+      (opp ? '\n1待机 2走 3跑 4出场 5连击A 6重拳 7受击 8倒地 9庆祝 0超必杀  , . 换动作  [ ] 步进  P 连播  G 地面线'
+           : '\n1待机 2走 3连击 4重击 5出场 6防御 7受击 8倒地 9消散  [ ] 步进  G 地面线');
+  }
+  function labPlay() {
+    // 连播：按动作原表的 t 一帧帧推进（不改动画数据），播完回到 000 再停住
+    const g = WF.game, E = g && g.p && g.p[1];
+    const A = E && E.data && E.data.anims[lab.anim];
+    if (!A) return;
+    lab.playing = true;
+    const anim = lab.anim, tok = (lab.tok = (lab.tok || 0) + 1);
+    let fi = 0;
+    const step = () => {
+      if (lab.tok !== tok || lab.anim !== anim) return;
+      applyPose({ anim: anim, fi: fi });
+      lab.playing = true; labTip();
+      const t = (A.frames[fi] && A.frames[fi].t) || 2;
+      fi++;
+      if (fi >= A.frames.length) { setTimeout(() => { if (lab.tok === tok) { lab.playing = false; labTip(); } }, t * 1000 / (WF.CFG.FPS || 30)); return; }
+      setTimeout(step, t * 1000 / (WF.CFG.FPS || 30));
+    };
+    step();
   }
 
   function drawGroundLine(g) {
@@ -273,12 +352,21 @@
     window.addEventListener('keydown', ev => {
       if (!WF.minionLab || !WF.game) return;
       const g = WF.game;
-      if (LAB_KEYS[ev.code]) { applyPose({ anim: LAB_KEYS[ev.code], fi: 0 }); ev.preventDefault(); return; }
+      const K = labKeys();
+      if (K[ev.code]) { lab.tok = (lab.tok || 0) + 1; lab.playing = false; applyPose({ anim: K[ev.code], fi: 0 }); ev.preventDefault(); return; }
+      if (ev.code === 'Comma' || ev.code === 'Period') {
+        const list = labAnims(), k = list.indexOf(lab.anim), n = list.length;
+        const nk = ev.code === 'Period' ? (k + 1) % n : (k + n - 1) % n;
+        lab.tok = (lab.tok || 0) + 1; lab.playing = false;
+        applyPose({ anim: list[nk], fi: 0 }); ev.preventDefault(); return;
+      }
+      if (ev.code === 'KeyP') { labPlay(); ev.preventDefault(); return; }
       if (ev.code === 'KeyG') { lab.ground = !lab.ground; if (g.render) g.render(); ev.preventDefault(); return; }
       if (ev.code === 'BracketLeft' || ev.code === 'BracketRight') {
         const A = g.p[1] && g.p[1].data && g.p[1].data.anims[lab.anim];
         if (!A) return;
         const n = A.frames.length;
+        lab.tok = (lab.tok || 0) + 1; lab.playing = false;
         lab.fi = ev.code === 'BracketRight' ? (lab.fi + 1) % n : (lab.fi + n - 1) % n;
         applyPose({ anim: lab.anim, fi: lab.fi });
         ev.preventDefault();
@@ -405,6 +493,31 @@
     fx._minionSparkHooked = true;
   }
 
+  // 直打入口：等第一只小怪走到位、开始出题，就把它撤掉、跳到最后一波，走正式的「跑向街尾 → 擂台 → 城市对手登场镜头」。
+  const fight = { id: null, skipped: false };
+  function skipToOpponent(g) {
+    fight.id = WF.oppFight;
+    const t0 = Date.now();
+    const wait = () => {
+      const cp = g.camp, st = g.street;
+      if (cp && st && st.on && st.phase === 'fight' && g.state === 'question' && g.p[1] && g.p[1].mv && g.p[1].mv.minion) {
+        const M = g.p[1];
+        g.queue.length = 0;
+        g.q = null; g.pendingAttack = null; g.announce = null;
+        M.hp = 0; M.alpha = 0; M._scored = true; M.tween = null;
+        cp.mobs = [];
+        cp.wave = g.campWaves();
+        cp.restDone = true;
+        g.state = 'minionOut';
+        g.campStreetToEnd();
+        fight.skipped = true;
+        return;
+      }
+      if (Date.now() - t0 < 60000) setTimeout(wait, 50);
+    };
+    wait();
+  }
+
   function startWhenReady() {
     const t0 = Date.now();
     const tick = () => {
@@ -415,6 +528,7 @@
       }
       ready.then(() => {
         if (WF.minionCity) bootCity(g, WF.minionCity);
+        if (WF.oppFight) skipToOpponent(g);
         if (WF.minionLab) {
           const wait = () => {
             if (g.p && g.p[1] && g.street) {
@@ -440,6 +554,16 @@
     lab: lab,
     applyPose: applyPose,
     bootCity: function (city) { return bootCity(WF.game, city || WF.minionCity); },
+    want: want,
+    fight: fight,
+    labAnims: labAnims,
+    oppLoaded: function (id) {
+      const b = bag[id]; if (!b) return null;
+      const keys = Object.keys(b.cells);
+      return { cells: keys.length, loaded: keys.filter(c => b.frames[c] && ok(b.frames[c].normal) && !b.frames[c].failed).length,
+        failed: keys.filter(c => b.frames[c] && b.frames[c].failed).length, started: b.started() };
+    },
+    hdDrawn: function (id, cell) { const b = bag[id]; return !!(b && canUseHd(id, cell, WF.Sprites && WF.Sprites.img && WF.Sprites.img[id])); },
     info: function () {
       const g = WF.game, f = g && g.p && g.p[1], C = WF.CFG, WS = C.WORLD_SCALE || C.SCALE;
       const fr = f && f.frame();
