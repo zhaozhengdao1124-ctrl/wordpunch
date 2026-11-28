@@ -1,0 +1,295 @@
+{
+  "id": "foshan",
+  "name": "佛山",
+  "scene_name": "傍晚骑楼长街",
+  "time_of_day": "傍晚",
+  "viewport": [
+    192,
+    108
+  ],
+  "ground_y": 76,
+  "layers": [
+    {
+      "id": "sky",
+      "file": "run_sky.png",
+      "width": 192,
+      "height": 108,
+      "parallax": 0.1,
+      "repeat_x": true
+    },
+    {
+      "id": "far",
+      "file": "run_far.png",
+      "width": 256,
+      "height": 108,
+      "parallax": 0.3,
+      "repeat_x": true
+    },
+    {
+      "id": "mid",
+      "file": "run_mid.png",
+      "width": 384,
+      "height": 108,
+      "parallax": 0.6,
+      "repeat_x": true
+    },
+    {
+      "id": "near",
+      "file": "run_near.png",
+      "width": 384,
+      "height": 108,
+      "parallax": 0.85,
+      "repeat_x": true
+    },
+    {
+      "id": "floor",
+      "file": "run_floor.png",
+      "width": 192,
+      "height": 108,
+      "parallax": 1.0,
+      "repeat_x": true
+    }
+  ],
+  "props": [
+    {
+      "id": "gate",
+      "file": "prop_gate.png",
+      "name": "无字牌楼",
+      "layer": "mid",
+      "width": 82,
+      "height": 57,
+      "anchor_px": [
+        41,
+        56
+      ],
+      "anchor_y": 66,
+      "placement": {
+        "mode": "spaced_landmark",
+        "first_world_x": 260,
+        "suggested_interval_px": 900,
+        "end_clearance_px": 185
+      }
+    },
+    {
+      "id": "stall",
+      "file": "prop_stall.png",
+      "name": "茶摊",
+      "layer": "near",
+      "width": 46,
+      "height": 31,
+      "anchor_px": [
+        23,
+        30
+      ],
+      "anchor_y": 69,
+      "placement": {
+        "mode": "spaced_landmark",
+        "first_world_x": 415,
+        "suggested_interval_px": 840,
+        "end_clearance_px": 185
+      }
+    },
+    {
+      "id": "tree",
+      "file": "prop_tree.png",
+      "name": "灯笼架",
+      "layer": "near",
+      "width": 32,
+      "height": 64,
+      "anchor_px": [
+        16,
+        63
+      ],
+      "anchor_y": 69,
+      "placement": {
+        "mode": "spaced_landmark",
+        "first_world_x": 640,
+        "suggested_interval_px": 1250,
+        "end_clearance_px": 185
+      }
+    },
+    {
+      "id": "extra",
+      "file": "prop_extra.png",
+      "name": "悬挂醒狮头",
+      "layer": "mid",
+      "width": 34,
+      "height": 41,
+      "anchor_px": [
+        17,
+        40
+      ],
+      "anchor_y": 29,
+      "placement": {
+        "mode": "spaced_landmark",
+        "first_world_x": 830,
+        "suggested_interval_px": 1040,
+        "end_clearance_px": 185
+      }
+    },
+    {
+      "id": "end",
+      "file": "prop_end.png",
+      "name": "醫館擂台入口",
+      "layer": "mid",
+      "width": 116,
+      "height": 73,
+      "anchor_px": [
+        58,
+        72
+      ],
+      "anchor_y": 76,
+      "placement": {
+        "mode": "at_level_end",
+        "max_count": 1,
+        "offset_px": 0
+      }
+    }
+  ],
+  "dynamic_elements": [
+    {
+      "id": "lantern_flicker",
+      "file": "fx_lantern_flicker.png",
+      "frame_w": 12,
+      "frame_h": 18,
+      "cell_size": [
+        12,
+        18
+      ],
+      "frames": 4,
+      "frame_count": 4,
+      "ticks_per_frame": 3,
+      "frame_duration_ms": 100,
+      "frame_order": [
+        0,
+        1,
+        2,
+        3
+      ],
+      "sheet_layout": "horizontal",
+      "space": "repeat_with_layer",
+      "coordinate_layer": "near",
+      "repeat_world_layer_px": 384,
+      "anchor_left_px": 22,
+      "anchor_top_px": 16,
+      "layer": "near",
+      "anchor_y": 34,
+      "loop": true
+    }
+  ],
+  "palette_count": 22,
+  "palette": [
+    [
+      41,
+      39,
+      47
+    ],
+    [
+      62,
+      52,
+      53
+    ],
+    [
+      75,
+      54,
+      49
+    ],
+    [
+      77,
+      62,
+      56
+    ],
+    [
+      85,
+      72,
+      63
+    ],
+    [
+      100,
+      85,
+      74
+    ],
+    [
+      103,
+      71,
+      52
+    ],
+    [
+      104,
+      83,
+      91
+    ],
+    [
+      110,
+      66,
+      63
+    ],
+    [
+      119,
+      99,
+      87
+    ],
+    [
+      136,
+      114,
+      93
+    ],
+    [
+      138,
+      97,
+      63
+    ],
+    [
+      144,
+      104,
+      103
+    ],
+    [
+      153,
+      129,
+      106
+    ],
+    [
+      154,
+      89,
+      66
+    ],
+    [
+      180,
+      126,
+      112
+    ],
+    [
+      183,
+      133,
+      81
+    ],
+    [
+      201,
+      137,
+      80
+    ],
+    [
+      212,
+      157,
+      124
+    ],
+    [
+      214,
+      201,
+      158
+    ],
+    [
+      217,
+      176,
+      115
+    ],
+    [
+      232,
+      185,
+      136
+    ]
+  ],
+  "placement_notes": "暖褐骑楼与绿色长衫分色；道具在战斗带边缘或头顶；终点保持平地。",
+  "credits": "《我的拳》原创像素场景"
+}
