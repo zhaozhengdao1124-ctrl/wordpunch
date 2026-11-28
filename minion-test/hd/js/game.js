@@ -633,7 +633,7 @@ WF.Game = class {
     yield () => L.done;
     yield () => W.anim === 'idle' || W.done;
     yield 18;
-    // 临时测试街：这五只都没有庆祝帧。胜者带 minion 标记时不播 celebrate，直接结算。
+    // 临时测试街：这些挂钩小怪都没有庆祝帧。胜者带 minion 标记时不播 celebrate，直接结算。
     // 玩家打败街尾（大师兄/相扑）时，胜者（苏绫）仍按原表播庆祝。
     if (!(W && W.mv && W.mv.minion)) {
       W.play(W.has('celebrate') ? 'celebrate' : 'idle', Object.assign({ hold: true }, this.camp ? this.campCelebrateOpts(W) : {}));

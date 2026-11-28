@@ -206,7 +206,7 @@
     D.play('block', { to: 1, loop: false, next: 'idle' });
   };
   G.campIsMinion = function (f) {
-    // 临时测试街：大师兄/相扑顶街尾时 wave>WAVES，要走对手结算，不能再当小怪刷下一只。
+    // 临时测试街：大师兄/相扑/保镖顶街尾时 wave>WAVES，要走对手结算，不能再当小怪刷下一只。
     if (this.camp && this.camp.wave > this.campWaves()) return false;
     return !!(f && f.side === 1 && f.mv && f.mv.minion);
   };

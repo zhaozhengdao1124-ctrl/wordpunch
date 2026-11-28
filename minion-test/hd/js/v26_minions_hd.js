@@ -1,14 +1,16 @@
-// v26（仅临时测试街 minion-test）：已锁定的五只小怪全套接到现有绘制管线。
-// 胡同混混 / 练功学徒 / 不良少年：SRC=750 DST=50，固定脚位 fo || d.foot || [24,40]，着地末行 599。
-// 武馆大师兄 / 相扑力士：SRC=960 DST=64，固定脚位 fo || d.foot || [32,54]，着地末行 809。
+// v26（仅临时测试街 minion-test）：已锁定的九只小怪全套接到现有绘制管线。
+// 胡同混混 / 练功学徒 / 不良少年 / 剑道部女生 / 街头舞者 / 跆拳道黄带：SRC=750 DST=50，固定脚位 fo || d.foot || [24,40]，着地末行 599。
+// 武馆大师兄 / 相扑力士 / 夜店保镖：SRC=960 DST=64，固定脚位 fo || d.foot || [32,54]，着地末行 809。
 // 挂钩方式同卢克：不按每帧测到的 fx 重新居中。包内不含庆祝帧，也不画庆祝。
 // 查询参数：
-//   ?beijing=1  跳过地图，进北京街（混混、学徒，大师兄做精英和第 21 场街尾）
-//   ?tokyo=1    跳过地图，进东京街（只有不良少年；相扑做精英和街尾。不含剑道部女生）
+//   ?beijing=1  跳过地图，进北京街（混混、学徒交替，大师兄做精英和第 21 场街尾）
+//   ?tokyo=1    跳过地图，进东京街（不良少年与剑道部女生交替；相扑做精英和街尾。不再打雪乃）
+//   ?seoul=1    跳过地图，进首尔街（舞者与黄带交替；夜店保镖做精英和街尾。不再打韩多蔚）
 //   ?hunhunlab=1 / ?xuetulab=1 / ?dashixionglab=1 / ?badboylab=1 / ?sumolab=1
+//   ?kendolab=1 / ?dancerlab=1 / ?yellowbeltlab=1 / ?bouncerlab=1
 //                 姿势台（1 待机 2 走 3 连击 4 重击 5 出场 6 防御 7 受击 8 倒地 9 倒地消散；[ ] 步进；G 地面线）
 //   ?hdchar=0   同时退回原版图集（对照用）
-//   ?hdminion=0 只退回这五只的原版图集
+//   ?hdminion=0 只退回这九只的原版图集
 (function () {
   const WF = window.WF || (window.WF = {});
   let q = '';
@@ -22,11 +24,15 @@
   WF.hdMinion = flag('hdminion', WF.hdChar);
 
   const CHARS = {
-    bj_hunhun:     { src: 750, dst: 50, foot: [24, 40], lab: 'hunhunlab', city: 'beijing' },
-    bj_xuetu:      { src: 750, dst: 50, foot: [24, 40], lab: 'xuetulab',  city: 'beijing' },
-    bj_dashixiong: { src: 960, dst: 64, foot: [32, 54], lab: 'dashixionglab', city: 'beijing' },
-    ty_badboy:     { src: 750, dst: 50, foot: [24, 40], lab: 'badboylab', city: 'tokyo' },
-    ty_sumo:       { src: 960, dst: 64, foot: [32, 54], lab: 'sumolab',   city: 'tokyo' },
+    bj_hunhun:      { src: 750, dst: 50, foot: [24, 40], lab: 'hunhunlab', city: 'beijing' },
+    bj_xuetu:       { src: 750, dst: 50, foot: [24, 40], lab: 'xuetulab',  city: 'beijing' },
+    bj_dashixiong:  { src: 960, dst: 64, foot: [32, 54], lab: 'dashixionglab', city: 'beijing' },
+    ty_badboy:      { src: 750, dst: 50, foot: [24, 40], lab: 'badboylab', city: 'tokyo' },
+    ty_kendo:       { src: 750, dst: 50, foot: [24, 40], lab: 'kendolab',  city: 'tokyo' },
+    ty_sumo:        { src: 960, dst: 64, foot: [32, 54], lab: 'sumolab',   city: 'tokyo' },
+    sl_dancer:      { src: 750, dst: 50, foot: [24, 40], lab: 'dancerlab', city: 'seoul' },
+    sl_yellowbelt:  { src: 750, dst: 50, foot: [24, 40], lab: 'yellowbeltlab', city: 'seoul' },
+    sl_bouncer:     { src: 960, dst: 64, foot: [32, 54], lab: 'bouncerlab', city: 'seoul' },
   };
   const HD_ANIMS = ['idle', 'walk', 'combo_a', 'heavy_punch', 'block', 'hit_swap',
     'knocked_down', 'knocked_down_death', 'intro'];
@@ -71,7 +77,7 @@
     setTimeout(() => Object.keys(cells).filter(c => !CORE[animOf[c]]).forEach(c => loadOne(+c, cells[c], false)), 0);
     bag[id] = { conf: conf, cells: cells, animOf: animOf, frames: frames, animLeft: animLeft };
     conf.enabledFlag = 'hd_' + id;
-    WF[conf.enabledFlag] = flag('hd' + id.replace(/^(bj_|ty_)/, ''), WF.hdMinion);
+    WF[conf.enabledFlag] = flag('hd' + id.replace(/^(bj_|ty_|sl_)/, ''), WF.hdMinion);
     if (flag(conf.lab, false)) WF.minionLab = id;
   });
   if (pending === 0) allDone = true;
@@ -80,6 +86,7 @@
   WF.minionCity = null;
   if (flag('beijing', false)) WF.minionCity = 'beijing';
   if (flag('tokyo', false)) WF.minionCity = 'tokyo';
+  if (flag('seoul', false)) WF.minionCity = 'seoul';
   if (WF.minionLab && CHARS[WF.minionLab]) WF.minionCity = CHARS[WF.minionLab].city;
 
   function tintOf(rec, variant, srcSize) {
